@@ -1,0 +1,58 @@
+# Python
+.venv/
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/
+apps/api/src/bee_api.egg-info/
+packages/python/**/*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+uv.lock
+
+# Node
+node_modules/
+.turbo/
+dist/
+*.tsbuildinfo
+apps/*/pnpm-lock.yaml
+
+# Env & secrets
+.env
+.env.local
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+!*.env.example
+**/token.json
+**/gmail_credentials.json
+**/*credentials*.json
+!.env.example
+
+# Runtime data
+*.db
+*.sqlite
+*.sqlite3
+*.logs.jsonl
+*.log
+logs/
+**/logs/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Build / coverage
+build/
+**/build/
+coverage/
+.nyc_output/
+htmlcov/
+
+# Generated OpenAPI artifacts (checked in intentionally under packages/api-client/src/generated)
+# keep generated client; ignore temp exports
+/tmp-openapi.json
+openapi.snapshot.json

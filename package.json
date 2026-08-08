@@ -1,0 +1,20 @@
+{
+  "name": "bee",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "turbo run dev --filter=@bee/console",
+    "dev:console": "turbo run dev --filter=@bee/console",
+    "build": "turbo run build --filter=@bee/console",
+    "lint": "turbo run lint --filter=@bee/console",
+    "typecheck": "turbo run typecheck --filter=@bee/console",
+    "codegen": "node tools/scripts/generate-api-client.mjs",
+    "codegen:check": "node tools/scripts/generate-api-client.mjs --check"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.6.1",
+    "turbo": "^2.5.0",
+    "typescript": "~5.9.3"
+  }
+}

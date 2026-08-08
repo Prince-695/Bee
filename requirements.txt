@@ -1,0 +1,5 @@
+# Install via editable packages into .venv (see run.md):
+#   pip install -e packages/python/bee-logging
+#   pip install -e packages/python/bee-hive
+#   pip install -e packages/python/bee-core
+#   pip install -e apps/api

@@ -1,0 +1,6 @@
+packages:
+  - "apps/console"
+  - "packages/ui"
+  - "packages/api-client"
+  - "packages/eslint-config"
+  - "packages/typescript-config"

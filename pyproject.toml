@@ -1,0 +1,15 @@
+[project]
+name = "bee"
+version = "0.1.0"
+description = "Bee monorepo root"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+  "apps/api",
+  "apps/worker",
+  "packages/python/bee-core",
+  "packages/python/bee-hive",
+  "packages/python/bee-logging",
+]

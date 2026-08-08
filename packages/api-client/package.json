@@ -1,0 +1,18 @@
+{
+  "name": "@bee/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./conversation": "./src/conversation.ts",
+    "./generated": "./src/generated/schema.ts"
+  },
+  "scripts": {
+    "generate": "node ../../tools/scripts/generate-api-client.mjs"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.6.1",
+    "typescript": "~5.9.3"
+  }
+}

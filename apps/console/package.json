@@ -64,9 +64,18 @@
     "vite": "^7.3.1",
     "wait-on": "^9.1.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Prince-695/bee.git"
+  },
   "build": {
     "appId": "com.bee.app",
     "productName": "Bee",
+    "publish": {
+      "provider": "github",
+      "owner": "Prince-695",
+      "repo": "bee"
+    },
     "files": [
       "dist/**/*",
       "electron/**/*",

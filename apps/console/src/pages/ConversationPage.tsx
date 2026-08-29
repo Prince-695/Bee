@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, CheckCircle2, Loader2, RefreshCw, Send, Sparkles } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, RotateCcw, Send, Sparkles, Terminal, ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -122,7 +122,7 @@ export default function ConversationPage() {
   if (hydrating) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
       </div>
     );
   }
@@ -130,71 +130,80 @@ export default function ConversationPage() {
   return (
     <div className="w-full h-full overflow-hidden p-4 md:p-6">
       <div className="mx-auto grid h-full max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="flex min-h-0 flex-col overflow-hidden rounded-[28px] border-2 border-border bg-card shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
-          <div className="flex items-center justify-between gap-4 border-b-2 border-border px-5 py-4">
+        {/* Main Conversation Window */}
+        <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-xl">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-4 border-b border-zinc-800 px-5 py-4 bg-zinc-900/60">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl border-2 border-border bg-primary/10 text-primary">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
                 <Sparkles className="h-4 w-4" />
               </div>
               <div>
-                <h1 className="text-xl font-black tracking-tight">Agent Conversation</h1>
-                <p className="text-sm text-muted-foreground">Tell me what you want. I’ll ask follow-ups until I can plan safely.</p>
+                <h1 className="text-base font-bold text-white tracking-tight">AI Co-Engineer Workspace</h1>
+                <p className="text-xs text-zinc-400">Collaborative planning, code review, and execution stream.</p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className={`border px-3 py-1.5 text-xs font-bold uppercase tracking-[0.18em] ${conversationStatusTone(activeConversationState)}`}>
+              <span className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold uppercase tracking-wider ${conversationStatusTone(activeConversationState)}`}>
                 {conversationStatusLabel(activeConversationState)}
               </span>
-              <Button variant="outline" className="border-2 border-border" onClick={handleReset}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                New thread
+              <Button
+                variant="outline"
+                className="rounded-xl border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs"
+                onClick={handleReset}
+              >
+                <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                New Thread
               </Button>
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto bg-muted/25 px-5 py-5 dark:bg-muted/10">
+          {/* Messages Feed */}
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 space-y-4">
             {!visibleMessages.length ? (
-              <div className="flex h-full min-h-105 flex-col justify-center gap-6 rounded-3xl p-6">
-                <div className="max-w-2xl space-y-4">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                    <Sparkles className="h-3.5 w-3.5 text-primary" />
-                    Requirement gathering first
+              <div className="flex h-full min-h-[300px] flex-col justify-center gap-6 p-4 max-w-2xl mx-auto">
+                <div className="space-y-3">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-400">
+                    <Terminal className="h-3 w-3" /> Autonomous Task Planner
                   </div>
-                  <h2 className="text-3xl font-black tracking-tight md:text-4xl">Start with the problem, not the plan.</h2>
-                  <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-                    I’ll stay in conversation mode until I have enough detail to plan safely. Once the requirements are clear, I’ll generate the plan and open it for review.
+                  <h2 className="text-xl font-bold text-white tracking-tight">
+                    What are we building or fixing today?
+                  </h2>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Provide your engineering task or issue description. Bee will analyze the requirements, inspect the codebase, and build a self-healing Route.
                   </p>
                 </div>
 
-                <div className="grid gap-2 md:grid-cols-2">
-                  {conversationSuggestions.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => setDraft(item)}
-                      className="rounded-2xl border-2 border-border bg-card p-4 text-left text-sm font-medium shadow-xs transition-all hover:-translate-y-0.5 hover:bg-muted/50"
-                    >
-                      {item}
-                    </button>
-                  ))}
+                <div className="space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Suggested tasks</span>
+                  <div className="grid gap-2">
+                    {conversationSuggestions.map((prompt) => (
+                      <button
+                        key={prompt}
+                        onClick={() => {
+                          setDraft(prompt);
+                        }}
+                        className="p-3 rounded-xl border border-zinc-800 bg-zinc-950/60 hover:border-amber-500/40 hover:bg-zinc-900/80 text-left text-xs text-zinc-300 transition-all flex items-center justify-between group cursor-pointer"
+                      >
+                        <span>{prompt}</span>
+                        <ArrowRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                {visibleMessages.map((message) => (
-                  <ConversationMessageRow key={message.id} message={message} />
+                {visibleMessages.map((msg) => (
+                  <ConversationMessageRow key={msg.id} message={msg} />
                 ))}
+
                 {isSending && (
                   <div className="flex justify-start">
-                    <div className="mr-auto flex max-w-[70%] items-center gap-3 rounded-3xl border-2 border-border bg-card px-4 py-3 shadow-xs">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-muted">
-                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold">Thinking through the next question</p>
-                        <p className="text-xs text-muted-foreground">I’m checking what is still missing before I plan.</p>
-                      </div>
+                    <div className="flex items-center gap-2.5 rounded-2xl border border-zinc-800 bg-zinc-900/80 px-4 py-3 text-xs text-zinc-300">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-400" />
+                      <span>Bee is analyzing requirements & creating execution Route...</span>
                     </div>
                   </div>
                 )}
@@ -203,45 +212,50 @@ export default function ConversationPage() {
             )}
           </div>
 
-          <div className="border-t-2 border-border bg-background/90 p-4">
+          {/* Input Box */}
+          <div className="border-t border-zinc-800 bg-zinc-900/60 p-4">
             <form
-              onSubmit={(event) => {
-                event.preventDefault();
+              onSubmit={(e) => {
+                e.preventDefault();
                 void handleSubmit();
               }}
               className="space-y-3"
             >
               <Textarea
-                className="min-h-28 resize-none border-2 border-border bg-background p-4 text-sm shadow-xs outline-none placeholder:text-muted-foreground/45"
-                placeholder="Describe the problem, goal, or task here..."
+                className="min-h-24 resize-none rounded-xl border border-zinc-800 bg-black/50 p-3.5 text-xs text-zinc-200 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-amber-500"
+                placeholder="Describe your engineering goal (e.g., 'Run test suite and fix failing auth assertions')..."
                 value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
                     void handleSubmit();
                   }
                 }}
               />
 
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-chart-4" />
+                <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                   {activeConversationState === "planned"
-                    ? "A plan is ready. Open it to review and execute."
-                    : "I will keep asking until I have enough to plan safely."}
+                    ? "Route generated. Ready for Flight execution."
+                    : "Press Enter to submit, Shift+Enter for new line."}
                 </div>
 
-                <Button type="submit" className="border-2 border-border shadow-sm" disabled={isSending || !draft.trim()}>
+                <Button
+                  type="submit"
+                  className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold text-xs shadow-lg shadow-amber-500/20 px-4"
+                  disabled={isSending || !draft.trim()}
+                >
                   {isSending ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                      Planning
                     </>
                   ) : (
                     <>
-                      <Send className="mr-2 h-4 w-4" />
-                      Send
+                      <Send className="mr-1.5 h-3.5 w-3.5" />
+                      Send Goal
                     </>
                   )}
                 </Button>
@@ -249,7 +263,7 @@ export default function ConversationPage() {
             </form>
 
             {loadError && (
-              <div className="mt-3 flex items-start gap-2 border-2 border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+              <div className="mt-3 flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
                 <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 {loadError}
               </div>
@@ -257,6 +271,7 @@ export default function ConversationPage() {
           </div>
         </section>
 
+        {/* Side Rail */}
         <ConversationSideRail
           missingInfo={conversation?.missing_info ?? []}
           stateLabel={conversationStatusLabel(activeConversationState)}

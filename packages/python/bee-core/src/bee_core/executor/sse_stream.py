@@ -48,6 +48,34 @@ class FlightStream:
     def push_step_error(self, step: int, error: str) -> None:
         self.push("step_error", {"step": step, "error": error})
 
+    def push_self_heal_retry(self, step: int, retry_count: int, error: str) -> None:
+        self.push(
+            "self_heal_retry",
+            {"step": step, "retry_count": retry_count, "error": error},
+        )
+
+    def push_gate_pending(
+        self,
+        gate_id: str,
+        step: int,
+        server: str,
+        tool: str,
+        action_summary: str,
+    ) -> None:
+        self.push(
+            "gate_pending",
+            {
+                "gate_id": gate_id,
+                "step": step,
+                "server": server,
+                "tool": tool,
+                "action_summary": action_summary,
+            },
+        )
+
+    def push_gate_resolved(self, gate_id: str, status: str) -> None:
+        self.push("gate_resolved", {"gate_id": gate_id, "status": status})
+
     def push_route_generated(self, route: dict[str, Any]) -> None:
         self.push("route_generated", {"route": route})
 

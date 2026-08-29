@@ -144,15 +144,35 @@ export interface SSEFlightError {
   error: string;
 }
 
-/** @deprecated Prefer flight_* event types */
-export type SSEExecutionComplete = SSEFlightComplete & { type: "execution_complete" };
-/** @deprecated Prefer flight_* event types */
-export type SSEExecutionError = SSEFlightError & { type: "execution_error" };
+export interface SSESelfHealRetry {
+  type: "self_heal_retry";
+  step: number;
+  retry_count: number;
+  error: string;
+}
+
+export interface SSEGatePending {
+  type: "gate_pending";
+  gate_id: string;
+  step: number;
+  server: string;
+  tool: string;
+  action_summary: string;
+}
+
+export interface SSEGateResolved {
+  type: "gate_resolved";
+  gate_id: string;
+  status: string;
+}
 
 export type SSEEvent =
   | SSEStepStart
   | SSEStepComplete
   | SSEStepError
+  | SSESelfHealRetry
+  | SSEGatePending
+  | SSEGateResolved
   | SSELLMToken
   | SSEFlightComplete
   | SSEFlightError
@@ -378,6 +398,31 @@ export async function getHiveRegistry(): Promise<HiveRegistryStatus> {
 
 export async function getHealthStatus(): Promise<HealthStatus> {
   return await apiRequest<HealthStatus>("/api/health", { method: "GET" });
+}
+
+export interface ApprovalGateRecord {
+  gate_id: string;
+  route_id: string;
+  step_num: number;
+  server: string;
+  tool: string;
+  args: Record<string, unknown>;
+  action_summary: string;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  resolved_at: string | null;
+}
+
+export async function listApprovalGates(routeId?: string, status?: string): Promise<ApprovalGateRecord[]> {
+  return await apiRequest<ApprovalGateRecord[]>("/api/agent/gates", { method: "GET" }, { route_id: routeId, status });
+}
+
+export async function approveGate(gateId: string): Promise<ApprovalGateRecord> {
+  return await apiRequest<ApprovalGateRecord>(`/api/agent/gates/${gateId}/approve`, { method: "POST" });
+}
+
+export async function rejectGate(gateId: string): Promise<ApprovalGateRecord> {
+  return await apiRequest<ApprovalGateRecord>(`/api/agent/gates/${gateId}/reject`, { method: "POST" });
 }
 
 export async function queryLogs(params?: {

@@ -6,7 +6,12 @@
   "scripts": {
     "dev": "turbo run dev --filter=@bee/console",
     "dev:console": "turbo run dev --filter=@bee/console",
+    "dev:desktop": "pnpm --filter @bee/console dev:desktop",
     "build": "turbo run build --filter=@bee/console",
+    "build:desktop": "pnpm --filter @bee/console build:desktop",
+    "package:win": "pnpm --filter @bee/console package:win",
+    "package:linux": "pnpm --filter @bee/console package:linux",
+    "package:mac": "pnpm --filter @bee/console package:mac",
     "lint": "turbo run lint --filter=@bee/console",
     "typecheck": "turbo run typecheck --filter=@bee/console",
     "codegen": "node tools/scripts/generate-api-client.mjs",

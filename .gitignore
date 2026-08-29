@@ -45,9 +45,13 @@ logs/
 .vscode/*
 !.vscode/extensions.json
 
-# Build / coverage
+# Build / coverage / Electron release
 build/
 **/build/
+release/
+**/release/
+dist/
+**/dist/
 coverage/
 .nyc_output/
 htmlcov/

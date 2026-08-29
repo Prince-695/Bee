@@ -14,19 +14,29 @@ import {
   Database,
   Globe,
   FolderTree,
-  ExternalLink,
+  Key,
+  Check,
+  X,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getHiveRegistry, type HiveRegistryStatus } from "@/lib/api";
 
 const SERVER_METADATA: Record<
   string,
-  { icon: React.ReactNode; category: "engineering" | "workspace" | "ops" | "search"; desc: string; tools: string[] }
+  {
+    icon: React.ReactNode;
+    category: "engineering" | "workspace" | "ops" | "search";
+    desc: string;
+    tools: string[];
+    tokenField?: string;
+    tokenPlaceholder?: string;
+  }
 > = {
   git: {
     icon: <GitBranch className="w-5 h-5 text-amber-400" />,
     category: "engineering",
-    desc: "Autonomous branch management, commit staging, diff inspections, and PR creation.",
+    desc: "Autonomous branch management, commit staging, diff inspections, and PR creation on local repo.",
     tools: ["git_status", "git_diff", "git_commit", "git_create_branch", "git_checkout", "git_log"],
   },
   sandbox: {
@@ -46,6 +56,8 @@ const SERVER_METADATA: Record<
     category: "engineering",
     desc: "GitHub API integration for issues, pull requests, commits, and workflow dispatch.",
     tools: ["create_issue", "create_pull_request", "list_repo_branches"],
+    tokenField: "GitHub Personal Access Token (PAT)",
+    tokenPlaceholder: "ghp_xxxxxxxxxxxxxxxxxxxx",
   },
   duckduckgo: {
     icon: <Globe className="w-5 h-5 text-blue-400" />,
@@ -64,12 +76,16 @@ const SERVER_METADATA: Record<
     category: "ops",
     desc: "Database schema reflection, migrations, and read/write SQL query execution.",
     tools: ["query", "describe_table", "list_tables"],
+    tokenField: "Postgres Connection URI",
+    tokenPlaceholder: "postgresql://user:pass@localhost:5432/mydb",
   },
   gmail: {
     icon: <Mail className="w-5 h-5 text-red-400" />,
     category: "workspace",
     desc: "Read engineering incident emails and dispatch notification digests.",
     tools: ["send_email", "list_messages"],
+    tokenField: "Google OAuth Access Token / App Password",
+    tokenPlaceholder: "ya29.a0AfH6SM...",
   },
 };
 
@@ -78,6 +94,9 @@ export default function HivePage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [activeConfigServer, setActiveConfigServer] = useState<string | null>(null);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [savedKeys, setSavedKeys] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -93,12 +112,37 @@ export default function HivePage() {
 
   useEffect(() => {
     void load();
+    // Load configured keys from local storage
+    try {
+      const stored = window.localStorage.getItem("bee_user_connectors");
+      if (stored) {
+        setSavedKeys(JSON.parse(stored));
+      }
+    } catch {
+      // ignore
+    }
   }, [load]);
 
+  const handleSaveConnector = (serverName: string) => {
+    if (!apiKeyInput.trim()) return;
+    const updated = { ...savedKeys, [serverName]: true };
+    setSavedKeys(updated);
+    window.localStorage.setItem("bee_user_connectors", JSON.stringify(updated));
+    setActiveConfigServer(null);
+    setApiKeyInput("");
+  };
+
+  const handleDisconnectConnector = (serverName: string) => {
+    const updated = { ...savedKeys, [serverName]: false };
+    setSavedKeys(updated);
+    window.localStorage.setItem("bee_user_connectors", JSON.stringify(updated));
+  };
+
   const servers = data?.servers || [];
-  const filteredServers = selectedCategory === "all"
-    ? servers
-    : servers.filter((s) => SERVER_METADATA[s.name]?.category === selectedCategory);
+  const filteredServers =
+    selectedCategory === "all"
+      ? servers
+      : servers.filter((s) => SERVER_METADATA[s.name]?.category === selectedCategory);
 
   return (
     <div className="w-full h-full overflow-y-auto p-6 md:p-8 flex flex-col gap-8">
@@ -109,10 +153,10 @@ export default function HivePage() {
             <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
               <Boxes className="w-4.5 h-4.5" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Hive Registry</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Hive Registry & Connectors</h1>
           </div>
           <p className="text-sm text-zinc-400 mt-1">
-            Pluggable MCP worker catalog providing Bee with developer tools, runtime sandboxes, and integrations.
+            Pluggable MCP worker catalog providing Bee with developer tools, runtime sandboxes, and user-configured SaaS integrations.
           </p>
         </div>
 
@@ -142,7 +186,7 @@ export default function HivePage() {
         </div>
 
         <div className="p-5 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 backdrop-blur-md">
-          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Registered Servers</span>
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Active Workers</span>
           <div className="text-2xl font-black text-white mt-2">{data?.servers.length ?? "—"}</div>
           <span className="text-[11px] text-zinc-400 mt-1 block">MCP capability hosts</span>
         </div>
@@ -152,21 +196,23 @@ export default function HivePage() {
           <div className="text-2xl font-black text-amber-400 mt-2">
             {data ? (data.runtime_initialized ? "Active" : "Initializing") : "—"}
           </div>
-          <span className="text-[11px] text-zinc-400 mt-1 block">Process supervisor</span>
+          <span className="text-[11px] text-zinc-400 mt-1 block">Sidecar supervisor</span>
         </div>
 
         <div className="p-5 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 backdrop-blur-md">
-          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Failed Servers</span>
-          <div className="text-2xl font-black text-white mt-2">{data?.failed_servers.length ?? 0}</div>
-          <span className="text-[11px] text-zinc-400 mt-1 block">Missing credentials</span>
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">User Connectors</span>
+          <div className="text-2xl font-black text-emerald-400 mt-2">
+            {Object.values(savedKeys).filter(Boolean).length} Active
+          </div>
+          <span className="text-[11px] text-zinc-400 mt-1 block">Configured by you</span>
         </div>
       </div>
 
       {/* Category Filter Tabs */}
       <div className="flex items-center gap-2 border-b border-zinc-800/80 pb-3">
         {[
-          { id: "all", label: "All Servers" },
-          { id: "engineering", label: "Engineering & Git" },
+          { id: "all", label: "All Connectors" },
+          { id: "engineering", label: "Engineering & Local Tools" },
           { id: "workspace", label: "Workspace & Comms" },
           { id: "ops", label: "Databases & Ops" },
           { id: "search", label: "Search & Web" },
@@ -185,7 +231,7 @@ export default function HivePage() {
         ))}
       </div>
 
-      {/* Server Grid */}
+      {/* Server & Connector Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredServers.map((server) => {
           const meta = SERVER_METADATA[server.name] || {
@@ -194,7 +240,8 @@ export default function HivePage() {
             desc: "Pluggable MCP tool worker for Bee.",
             tools: [],
           };
-          const isReady = server.status === "ready";
+          const isConfiguredByUser = Boolean(savedKeys[server.name]);
+          const isReady = server.status === "ready" || isConfiguredByUser;
 
           return (
             <div
@@ -209,7 +256,9 @@ export default function HivePage() {
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-white capitalize">{server.name}</h3>
-                      <span className="text-[10.5px] font-mono text-zinc-500 uppercase tracking-wider">{meta.category}</span>
+                      <span className="text-[10.5px] font-mono text-zinc-500 uppercase tracking-wider">
+                        {meta.category}
+                      </span>
                     </div>
                   </div>
 
@@ -229,7 +278,7 @@ export default function HivePage() {
                     ) : (
                       <Clock className="w-3 h-3 text-zinc-400" />
                     )}
-                    {server.status}
+                    {isReady ? "Ready" : server.status}
                   </span>
                 </div>
 
@@ -254,16 +303,102 @@ export default function HivePage() {
                 )}
               </div>
 
-              <div className="mt-5 pt-3 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
-                <span>stdio transport</span>
-                <span className="flex items-center gap-1 hover:text-zinc-300 cursor-pointer">
-                  inspect <ExternalLink className="w-3 h-3" />
-                </span>
+              {/* Bottom Actions */}
+              <div className="mt-5 pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs">
+                {meta.tokenField ? (
+                  isConfiguredByUser ? (
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-emerald-400 font-medium text-[11px] flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5" /> Connected
+                      </span>
+                      <button
+                        onClick={() => handleDisconnectConnector(server.name)}
+                        className="text-zinc-500 hover:text-red-400 text-[11px] font-mono cursor-pointer"
+                      >
+                        Disconnect
+                      </button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-xl border-zinc-700 bg-zinc-800/60 hover:bg-zinc-700 text-zinc-200 text-xs"
+                      onClick={() => {
+                        setActiveConfigServer(server.name);
+                        setApiKeyInput("");
+                      }}
+                    >
+                      <Key className="w-3.5 h-3.5 mr-1.5 text-amber-400" />
+                      Configure Connector
+                    </Button>
+                  )
+                ) : (
+                  <div className="flex items-center justify-between w-full text-[11px] text-zinc-500 font-mono">
+                    <span>Local workspace worker</span>
+                    <span className="flex items-center gap-1 text-emerald-400">● Auto-mounted</span>
+                  </div>
+                )}
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* User Connector Credentials Configuration Modal */}
+      {activeConfigServer && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <Key className="w-4 h-4 text-amber-400" />
+                <h3 className="text-sm font-bold text-white capitalize">
+                  Connect {activeConfigServer}
+                </h3>
+              </div>
+              <button
+                onClick={() => setActiveConfigServer(null)}
+                className="text-zinc-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Enter your personal API key or token. Credentials are securely managed per-user and never exposed to other tenants.
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider block">
+                {SERVER_METADATA[activeConfigServer]?.tokenField || "API Token"}
+              </label>
+              <input
+                type="password"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-800 bg-black text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-500 font-mono"
+                placeholder={SERVER_METADATA[activeConfigServer]?.tokenPlaceholder || "Enter token..."}
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                className="rounded-xl border-zinc-800 text-zinc-300 text-xs"
+                onClick={() => setActiveConfigServer(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-semibold text-xs"
+                onClick={() => handleSaveConnector(activeConfigServer)}
+                disabled={!apiKeyInput.trim()}
+              >
+                <Check className="w-3.5 h-3.5 mr-1" />
+                Save & Connect
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

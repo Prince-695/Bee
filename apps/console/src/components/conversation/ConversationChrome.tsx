@@ -1,6 +1,6 @@
 import { ArrowRight, Bot } from "lucide-react";
 
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import type { ConversationMessage } from "@/lib/conversation";
 
 export const conversationSuggestions = [
@@ -72,7 +72,7 @@ export function ConversationSideRail({
   missingInfo,
   stateLabel,
   messageCount,
-  planId,
+  routeId,
   onOpenPlan,
 }: {
   missingInfo: string[];
@@ -121,14 +121,14 @@ export function ConversationSideRail({
             <span className="font-semibold">{messageCount}</span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">Plan</span>
-            <span className="font-semibold">{routeId ? planId : "Not yet"}</span>
+            <span className="text-muted-foreground">Route</span>
+            <span className="font-semibold">{routeId ? routeId : "Not yet"}</span>
           </div>
         </div>
 
         {routeId && (
           <Button className="mt-4 w-full border-2 border-border shadow-sm" onClick={onOpenPlan}>
-            Open plan
+            Open Route
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         )}

@@ -7,8 +7,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/components/ui/*": ["../../packages/ui/src/ui/*"]
+      "@/components/ui/*": ["../../packages/ui/src/ui/*"],
+      "@/*": ["./src/*"]
     }
   }
 }

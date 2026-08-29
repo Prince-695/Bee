@@ -1,6 +1,6 @@
 # bee-sdk & bee-cli — detailed future roadmap
 
-**Status:** Deferred. Scaffolds remain at [`packages/sdk`](../packages/sdk) and [`apps/cli`](../apps/cli). Do not implement until the Route/Flight HTTP surface and auth have stabilized (post master-plan Phases 0–2).
+**Status:** Deferred. Scaffolds remain at [`packages/sdk`](../packages/sdk) and [`apps/cli`](../apps/cli). Do not implement until the Route/Flight HTTP surface, auth, and AI Co-Engineer Hive tools have stabilized (post Phases 1–3).
 
 This document is the end-to-end build plan for when we pick them up.
 
@@ -12,9 +12,9 @@ This document is the end-to-end build plan for when we pick them up.
 |---|---|---|
 | **@bee/sdk** (TypeScript) | App embedders, automation scripts in Node | Typed programmatic access to Bee API |
 | **bee-sdk** (Python, optional) | Data / backend embedders | Thin wrapper over Bee API or `bee-core` |
-| **bee-cli** | Developers & CI | Terminal UX for chat, Route, Flight, Hive, logs |
+| **bee-cli** | Developers & CI | Terminal UX for task assignment, Route/Flight management, Hive inspection, and logs |
 
-Both must speak the **same contracts** as BEE Console (`route_id`, Flight SSE, Bearer auth).
+Both must speak the **same contracts** as BEE Console (`route_id`, Flight SSE, Bearer auth, Approval Gates).
 
 ---
 
@@ -26,6 +26,7 @@ Before writing SDK/CLI code:
    - `POST /api/auth/login|signup`, `GET /api/auth/me`
    - `POST /api/agent/route`, `POST /api/agent/flight/{route_id}`, stream endpoint
    - `POST /api/conversations/*`, `GET /api/hive/registry`, logs
+   - `POST /api/gates/{gate_id}/approve|reject` (Approval Gate endpoints)
 2. Keep `pnpm codegen` / `pnpm codegen:check` green
 3. Document auth: Bearer token + `access_token` query for SSE
 4. Version Bee API at least `0.3.0` when SDK ships
@@ -47,6 +48,7 @@ packages/sdk/
     auth.ts
     routes.ts
     flights.ts
+    gates.ts           # Approval Gate management
     conversations.ts
     hive.ts
     logs.ts
@@ -55,6 +57,7 @@ packages/sdk/
   examples/
     quick-flight.ts
     conversation.ts
+    approve-gate.ts
 ```
 
 ### Public API (target)
@@ -67,9 +70,14 @@ const bee = new BeeClient({
   token: process.env.BEE_TOKEN, // or bee.login(email, password)
 });
 
-const route = await bee.routes.create("Summarize open PRs and post to Slack");
+// Assign a task to your AI Co-Engineer
+const route = await bee.routes.create("Fix the N+1 query in UserService and add a regression test");
 for await (const event of bee.flights.stream(route.route_id)) {
   console.log(event);
+  // Handle approval gates
+  if (event.type === "gate_pending") {
+    await bee.gates.approve(event.gate_id);
+  }
 }
 const result = await bee.flights.execute(route.route_id);
 ```
@@ -81,6 +89,7 @@ const result = await bee.flights.execute(route.route_id);
 - Map API errors to `BeeApiError { code, message, status }`
 - SSE: wrap `EventSource` / undici stream for Node 18+
 - Export subpath `@bee/sdk/node` if browser vs Node EventSource differs
+- Add Approval Gate helpers: `gates.approve()`, `gates.reject()`, `gates.list()`
 - Unit tests with mocked fetch; one smoke integration test behind env flag
 
 ### Packaging
@@ -107,10 +116,11 @@ const result = await bee.flights.execute(route.route_id);
 | `bee login` | Interactive email/password → store token in `~/.config/bee/credentials.json` |
 | `bee logout` | Clear credentials |
 | `bee whoami` | `GET /api/auth/me` |
-| `bee chat "<prompt>"` | Start conversation or quick `agent/run` |
+| `bee task "<prompt>"` | Assign a task to Bee — creates Route and starts Flight |
 | `bee route create "<prompt>"` | Create Route; print `route_id` + summary table |
 | `bee route show <id>` | Fetch Route JSON |
 | `bee flight run <route_id>` | Execute Flight; stream steps to TTY |
+| `bee flight approve <gate_id>` | Approve a pending Approval Gate |
 | `bee hive list` | Hive Registry table (name, status, tools) |
 | `bee logs [--level] [--subsystem]` | Tail or query logs |
 | `bee config set api-url <url>` | Persist base URL |
@@ -120,15 +130,15 @@ const result = await bee.flights.execute(route.route_id);
 - Progress: step lines with Hive server icon/name
 - Exit codes: `0` ok, `1` API error, `2` auth, `3` validation
 - `--json` flag on all commands for scripting
-- CI example: `bee flight run "$ROUTE_ID" --json`
+- CI example: `bee task "Run security audit on ./src" --json`
 
 ### Implementation order
 
 1. Config + login/logout/whoami
 2. `route create` / `route show`
-3. `flight run` with SSE
+3. `flight run` with SSE + `flight approve`
 4. `hive list` + `logs`
-5. `chat` convenience
+5. `task` convenience (combines route + flight)
 
 ---
 
@@ -146,7 +156,7 @@ const result = await bee.flights.execute(route.route_id);
 
 - `docs/sdk-cli-roadmap.md` (this file) → promote sections into `docs/sdk.md` + `docs/cli.md`
 - Examples under `examples/sdk/` and `examples/cli/`
-- Console “copy as CLI” affordance (Later): show `bee route create '…'` for current prompt
+- Console "copy as CLI" affordance (Later): show `bee task '…'` for current prompt
 
 ---
 
@@ -172,9 +182,9 @@ const result = await bee.flights.execute(route.route_id);
 ## Suggested kickoff checklist
 
 - [ ] API version bump + OpenAPI freeze note in ROADMAP
-- [ ] Implement `@bee/sdk` BeeClient + auth + routes + flights
+- [ ] Implement `@bee/sdk` BeeClient + auth + routes + flights + gates
 - [ ] Examples green against local `just api`
 - [ ] Implement `bee` CLI bin on top of SDK
 - [ ] Document in `run.md` optional CLI install
 - [ ] Add CI matrix job for SDK unit tests
-- [ ] Decide publish timing (after multi-user/Hive UX)
+- [ ] Decide publish timing (after AI Co-Engineer tools + Desktop app stabilize)

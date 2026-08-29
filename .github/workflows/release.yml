@@ -5,16 +5,28 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release Tag (e.g. v0.1.0)"
+        required: false
+        default: "v0.1.0"
 
 permissions:
   contents: write
 
 jobs:
-  release-desktop:
-    name: Build & Package Desktop (${{ matrix.os }})
+  build-desktop:
+    name: Build (${{ matrix.os }})
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact-name: linux-binaries
+          - os: windows-latest
+            artifact-name: windows-binaries
+          - os: macos-latest
+            artifact-name: macos-binaries
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -37,7 +49,68 @@ jobs:
       - name: Build Web Bundle
         run: pnpm --filter @bee/console build
 
-      - name: Package Desktop Binary
+      - name: Package Linux Desktop Binary
+        if: runner.os == 'Linux'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm --filter @bee/console exec electron-builder --publish always
+        run: pnpm --filter @bee/console exec electron-builder --linux --publish never
+
+      - name: Package Windows Desktop Binary
+        if: runner.os == 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm --filter @bee/console exec electron-builder --win --publish never
+
+      - name: Package macOS Desktop Binary
+        if: runner.os == 'macOS'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm --filter @bee/console exec electron-builder --mac --publish never
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: |
+            apps/console/release/*.exe
+            apps/console/release/*.AppImage
+            apps/console/release/*.deb
+            apps/console/release/*.dmg
+            apps/console/release/*.zip
+            apps/console/release/*.blockmap
+            apps/console/release/latest*.yml
+          if-no-files-found: warn
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-desktop]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download All Platform Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-release
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name || inputs.tag_name || 'v0.1.0' }}
+          name: ${{ github.ref_name || inputs.tag_name || 'v0.1.0' }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          files: |
+            dist-release/**/*.exe
+            dist-release/**/*.AppImage
+            dist-release/**/*.deb
+            dist-release/**/*.dmg
+            dist-release/**/*.zip
+            dist-release/**/*.blockmap
+            dist-release/**/latest*.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

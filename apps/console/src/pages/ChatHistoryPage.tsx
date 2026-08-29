@@ -31,13 +31,14 @@ function formatDateTime(value: string | null | undefined): string {
 function statusTone(status: string): string {
   switch (status) {
     case "completed":
-      return "text-chart-4 bg-chart-4/10 border-chart-4/30";
+      return "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
     case "failed":
-      return "text-destructive bg-destructive/10 border-destructive/30";
+      return "text-red-400 bg-red-500/10 border-red-500/30";
+    case "flying":
     case "pending":
-      return "text-primary bg-primary/10 border-primary/30";
+      return "text-amber-400 bg-amber-500/10 border-amber-500/30";
     default:
-      return "text-muted-foreground bg-muted/60 border-border";
+      return "text-zinc-400 bg-zinc-800 border-zinc-700";
   }
 }
 

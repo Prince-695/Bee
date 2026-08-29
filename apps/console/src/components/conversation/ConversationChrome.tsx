@@ -13,14 +13,14 @@ export const conversationSuggestions = [
 export function conversationStatusTone(state: string | undefined): string {
   switch (state) {
     case "planned":
-      return "text-chart-4 bg-chart-4/10 border-chart-4/30";
+      return "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
     case "planning":
     case "gathering":
-      return "text-primary bg-primary/10 border-primary/30";
+      return "text-amber-400 bg-amber-500/10 border-amber-500/30";
     case "failed":
-      return "text-destructive bg-destructive/10 border-destructive/30";
+      return "text-red-400 bg-red-500/10 border-red-500/30";
     default:
-      return "text-muted-foreground bg-muted/60 border-border";
+      return "text-zinc-400 bg-zinc-800/80 border-zinc-700/60";
   }
 }
 
@@ -29,11 +29,11 @@ export function conversationStatusLabel(state: string | undefined): string {
     case "planned":
       return "Route ready";
     case "planning":
-      return "Building plan";
+      return "Building route";
     case "failed":
       return "Needs attention";
     case "gathering":
-      return "Gathering details";
+      return "Analyzing goal";
     default:
       return "Ready to chat";
   }
@@ -43,26 +43,26 @@ export function ConversationMessageRow({ message }: { message: ConversationMessa
   const isUser = message.role === "user";
   const isPending = Boolean((message.metadata as { isOptimistic?: boolean }).isOptimistic);
   const bubbleClassName = isUser
-    ? `ml-auto bg-primary text-primary-foreground border-primary/30 ${isPending ? "border-dashed opacity-85" : ""}`
-    : "mr-auto bg-card text-foreground border-border";
+    ? `ml-auto bg-amber-500 text-black font-medium border-amber-400 shadow-md shadow-amber-500/10 ${isPending ? "opacity-80" : ""}`
+    : "mr-auto bg-zinc-900 border-zinc-800 text-zinc-200";
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`max-w-[85%] rounded-3xl border-2 px-4 py-3 shadow-xs ${bubbleClassName}`}>
-        <div className="mb-2 flex items-center gap-2">
-          <div className={`flex h-7 w-7 items-center justify-center rounded-full border ${isUser ? "border-white/20 bg-white/10" : "border-border bg-muted"}`}>
-            {isUser ? <span className="text-[10px] font-black">You</span> : <Bot className="h-3.5 w-3.5 text-primary" />}
+      <div className={`max-w-[85%] rounded-2xl border px-4 py-3 shadow-sm ${bubbleClassName}`}>
+        <div className="mb-1.5 flex items-center gap-2">
+          <div className={`flex h-6 w-6 items-center justify-center rounded-lg border ${isUser ? "border-black/20 bg-black/10 text-black" : "border-zinc-700 bg-zinc-800 text-amber-400"}`}>
+            {isUser ? <span className="text-[10px] font-black">You</span> : <Bot className="h-3.5 w-3.5" />}
           </div>
-          <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isUser ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
-            {isUser ? "You" : "Bee"}
+          <span className={`text-[10px] font-bold uppercase tracking-wider ${isUser ? "text-black/80" : "text-zinc-400"}`}>
+            {isUser ? "You" : "Bee Co-Engineer"}
           </span>
           {isUser && isPending && (
-            <span className="rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-primary-foreground/80">
+            <span className="rounded-full border border-black/20 bg-black/10 px-2 py-0.2 text-[9px] font-bold uppercase tracking-wider text-black">
               Sending
             </span>
           )}
         </div>
-        <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
+        <p className="whitespace-pre-wrap text-xs leading-relaxed">{message.content}</p>
       </div>
     </div>
   );
@@ -83,61 +83,61 @@ export function ConversationSideRail({
 }) {
   return (
     <aside className="flex min-h-0 flex-col gap-4 overflow-hidden">
-      <div className="rounded-3xl border-2 border-border bg-card p-5 shadow-2xs">
-        <div className="mb-4 flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-border bg-primary/10 text-primary">
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-md p-5">
+        <div className="mb-4 flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-800 text-amber-400">
             <Bot className="h-4 w-4" />
           </div>
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-muted-foreground">What I still need</h2>
-            <p className="text-xs text-muted-foreground">The AI will ask for these if they are missing.</p>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-300">Context Requirements</h2>
+            <p className="text-[11px] text-zinc-500">Autonomous planning requirements.</p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
           {missingInfo.length > 0 ? (
             missingInfo.map((item) => (
-              <span key={item} className="rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium">
+              <span key={item} className="rounded-lg border border-zinc-800 bg-zinc-950/80 px-2.5 py-1 text-xs font-medium text-zinc-300">
                 {item}
               </span>
             ))
           ) : (
-            <span className="rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium">
-              Goal
+            <span className="rounded-lg border border-zinc-800 bg-zinc-950/80 px-2.5 py-1 text-xs font-medium text-emerald-400">
+              ● Ready to Plan
             </span>
           )}
         </div>
       </div>
 
-      <div className="rounded-3xl border-2 border-border bg-card p-5 shadow-2xs">
-        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">Conversation state</h3>
-        <div className="mt-4 space-y-3 text-sm">
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-md p-5">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Mission Session State</h3>
+        <div className="mt-4 space-y-3 text-xs">
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">State</span>
-            <span className="font-semibold">{stateLabel}</span>
+            <span className="text-zinc-400">State</span>
+            <span className="font-semibold text-zinc-200">{stateLabel}</span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">Messages</span>
-            <span className="font-semibold">{messageCount}</span>
+            <span className="text-zinc-400">Messages</span>
+            <span className="font-semibold text-zinc-200">{messageCount}</span>
           </div>
           <div className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">Route</span>
-            <span className="font-semibold">{routeId ? routeId : "Not yet"}</span>
+            <span className="text-zinc-400">Route</span>
+            <span className="font-mono text-amber-400 font-semibold">{routeId ? routeId : "Not planned"}</span>
           </div>
         </div>
 
         {routeId && (
-          <Button className="mt-4 w-full border-2 border-border shadow-sm" onClick={onOpenPlan}>
-            Open Route
+          <Button className="mt-4 w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold text-xs shadow-lg shadow-amber-500/20" onClick={onOpenPlan}>
+            Inspect Mission Control
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         )}
       </div>
 
-      <div className="rounded-3xl border-2 border-border bg-card p-5 shadow-2xs">
-        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">How to phrase it</h3>
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          Tell me the goal, the system you want to work with, any constraints, and what success looks like. If you only know the problem, say that first and I’ll narrow it down.
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-md p-5">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Engineering Directives</h3>
+        <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+          State your engineering objective (e.g. bug description, test failure, branch task). Bee autonomously queries code, runs tests, and repairs issues.
         </p>
       </div>
     </aside>

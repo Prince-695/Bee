@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.1.0",
   "packageManager": "pnpm@9.15.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Prince-695/bee.git"
+  },
   "scripts": {
     "dev": "turbo run dev --filter=@bee/console",
     "dev:console": "turbo run dev --filter=@bee/console",

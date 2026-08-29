@@ -134,6 +134,27 @@ MCP_SERVERS: Final[dict[str, dict[str, object]]] = {
             "PATH": _read_env("PATH"),
         },
     },
+    "git": {
+        "command": MCP_PYTHON_BIN,
+        "args": [str(_HIVE_LOCAL / "git_mcp_server.py")],
+        "env": {
+            "PATH": _read_env("PATH"),
+        },
+    },
+    "sandbox": {
+        "command": MCP_PYTHON_BIN,
+        "args": [str(_HIVE_LOCAL / "sandbox_runner_mcp_server.py")],
+        "env": {
+            "PATH": _read_env("PATH"),
+        },
+    },
+    "code_search": {
+        "command": MCP_PYTHON_BIN,
+        "args": [str(_HIVE_LOCAL / "code_search_mcp_server.py")],
+        "env": {
+            "PATH": _read_env("PATH"),
+        },
+    },
 }
 
 HIVE_REGISTRY = MCP_SERVERS

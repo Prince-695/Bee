@@ -55,9 +55,15 @@ function startupDiagnosticsPlugin(): Plugin {
 export default defineConfig({
   plugins: [startupDiagnosticsPlugin(), react(), tailwindcss()],
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@/components/ui": path.resolve(__dirname, "../../packages/ui/src/ui"),
-    },
+    alias: [
+      {
+        find: "@/components/ui",
+        replacement: path.resolve(__dirname, "../../packages/ui/src/ui"),
+      },
+      {
+        find: "@",
+        replacement: path.resolve(__dirname, "./src"),
+      },
+    ],
   },
 })

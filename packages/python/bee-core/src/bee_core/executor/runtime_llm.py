@@ -16,6 +16,8 @@ _client: Optional[OpenAI] = None
 
 
 def llm_extra_body() -> dict[str, Any]:
+    if not LLM_ENABLE_THINKING:
+        return {}
     return {
         "chat_template_kwargs": {"enable_thinking": LLM_ENABLE_THINKING},
         "reasoning_budget": LLM_REASONING_BUDGET,

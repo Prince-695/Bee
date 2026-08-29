@@ -1,4 +1,4 @@
-import { Badge } from "../ui/badge";
+import { Badge } from "@/components/ui/badge";
 
 export function ConfidenceBadge({ score }: { score: number }) {
   const variant = score > 80 ? "default" : score > 50 ? "secondary" : "destructive";

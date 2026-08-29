@@ -1,446 +1,437 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "../components/shared/ThemeToggle";
 import {
-  Network,
   ArrowRight,
   Sparkles,
   Zap,
   Shield,
-  GitBranch,
-  MessageSquare,
-  Database,
   Play,
-  Check,
-  Star,
+  Download,
+  Boxes,
+  RotateCcw,
+  ChevronDown,
+  BookOpen,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import {
+  detectUserOS,
+  triggerDirectDownload,
+  DOWNLOAD_OPTIONS,
+  type DownloadOption,
+  type SupportedOS,
+} from "@/lib/downloads";
 
 export default function LandingPage() {
-  const [prompt, setPrompt] = useState("");
   const navigate = useNavigate();
+  const [detectedOS, setDetectedOS] = useState<DownloadOption>(DOWNLOAD_OPTIONS["windows"]);
+  const [showAllDownloads, setShowAllDownloads] = useState(false);
+  const [activeTab, setActiveTab] = useState<"terminal" | "dag" | "healer">("terminal");
+  const activePrompt = "Run vitest auth suite, inspect failures with ripgrep, and auto-heal assertions";
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!prompt.trim()) return;
-    navigate("/app");
+  useEffect(() => {
+    setDetectedOS(detectUserOS());
+  }, []);
+
+  const handlePrimaryDownload = () => {
+    triggerDirectDownload(detectedOS);
   };
 
-  const templates = [
-    "Summarize Jira issues and post to Slack",
-    "Monitor GitHub PRs for failed CI",
-    "Sync Stripe invoices to Google Sheets",
-  ];
+  const handleDownloadSpecific = (osKey: SupportedOS) => {
+    triggerDirectDownload(DOWNLOAD_OPTIONS[osKey]);
+  };
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans relative overflow-x-hidden">
-      {/* ─── Navbar ─── */}
-      <nav className="sticky top-0 z-50 border-b-2 border-border bg-background/95 backdrop-blur-sm">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans relative overflow-x-hidden selection:bg-amber-500/30 selection:text-white">
+      {/* ─── Ambient Glow Background ─── */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-amber-500/10 via-amber-600/5 to-transparent blur-[140px] rounded-full" />
+        <div className="absolute top-[600px] -left-40 w-[600px] h-[600px] bg-purple-500/5 blur-[160px] rounded-full" />
+        <div className="absolute top-[900px] -right-40 w-[600px] h-[600px] bg-blue-500/5 blur-[160px] rounded-full" />
+      </div>
+
+      {/* ─── Sticky Navbar ─── */}
+      <nav className="sticky top-0 z-50 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-primary flex items-center justify-center border-2 border-border shadow-xs">
-              <Network className="w-4 h-4 text-primary-foreground" />
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
+              <Sparkles className="w-4.5 h-4.5 text-black" />
             </div>
-            <span className="font-bold text-lg tracking-tight">Bee</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-lg tracking-tight text-white">BEE</span>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                v0.1.0
+              </span>
+            </div>
           </Link>
 
-          <div className="hidden md:flex items-center gap-1">
-            {["Features", "How it Works", "Pricing"].map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase().replace(/\s/g, "-")}`}
-                className="px-3.5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {item}
-              </a>
-            ))}
+          <div className="hidden md:flex items-center gap-6 text-xs font-medium text-zinc-400">
+            <a href="#features" className="hover:text-zinc-200 transition-colors">Features</a>
+            <a href="#architecture" className="hover:text-zinc-200 transition-colors">Architecture</a>
+            <a href="#downloads" className="hover:text-zinc-200 transition-colors">Downloads</a>
+            <Link to="/docs" className="hover:text-amber-400 transition-colors flex items-center gap-1">
+              <BookOpen className="w-3.5 h-3.5" /> Documentation
+            </Link>
           </div>
 
           <div className="flex items-center gap-3">
-            <ThemeToggle />
             <Button
               variant="outline"
-              className="border-2 shadow-xs hidden sm:inline-flex"
+              className="rounded-xl border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 text-xs hidden sm:inline-flex"
               onClick={() => navigate("/login")}
             >
-              Log in
+              Sign In
             </Button>
             <Button
-              className="border-2 border-border shadow-sm"
-              onClick={() => navigate("/signup")}
+              className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold text-xs shadow-lg shadow-amber-500/20 px-4"
+              onClick={() => navigate("/app")}
             >
-              Get Started
-              <ArrowRight className="w-4 h-4 ml-1" />
+              Launch Console
+              <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
             </Button>
           </div>
         </div>
       </nav>
 
       {/* ─── Hero Section ─── */}
-      <section className="relative pt-20 pb-24 px-6">
-        {/* Decorative grid dots */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.04]" style={{
-          backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`,
-          backgroundSize: '24px 24px',
-        }} />
-
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="mb-8 flex flex-col items-center gap-4">
-            <div className="w-16 h-16 bg-primary flex items-center justify-center border-2 border-border shadow-sm">
-              <Network className="w-8 h-8 text-primary-foreground" />
-            </div>
-            <p className="text-4xl md:text-5xl font-black tracking-tighter">Bee</p>
+      <section className="relative pt-20 pb-20 px-6 z-10">
+        <div className="max-w-5xl mx-auto text-center">
+          {/* Release Badge */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-xs font-medium text-amber-400 mb-8 backdrop-blur-md">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span>Bee 0.1.0 Cross-Platform Desktop & Cloud Available</span>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight leading-[1.05] mb-6">
-            Routes across your Hive.{" "}
-            <span className="text-primary">Flights that get work done.</span>
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.08] mb-6">
+            The Autonomous AI Co-Engineer for{" "}
+            <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 bg-clip-text text-transparent">
+              Production Codebases.
+            </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-12 leading-relaxed">
-            Describe a task. Bee plans a Route, flies it with Hive workers, and
-            streams every step — GitHub, Slack, Jira, and more.
+          <p className="text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed mb-10 font-normal">
+            Bee creates multi-step Flights across your developer tools, executes tests in sandboxes,
+            self-heals broken code, and requires human authorization for critical actions.
           </p>
 
-          {/* ─── Chat Input (Hero) ─── */}
-          <div className="max-w-2xl mx-auto mb-8">
-            <form
-              onSubmit={handleSubmit}
-              className="relative border-2 border-border bg-card shadow-md hover:shadow-lg transition-shadow"
+          {/* Download & Launch Actions */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
+            {/* Primary Direct Download */}
+            <div className="relative inline-flex items-center">
+              <Button
+                size="lg"
+                className="h-12 px-6 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-black font-bold text-sm shadow-xl shadow-amber-500/25 flex items-center gap-2"
+                onClick={handlePrimaryDownload}
+              >
+                <Download className="w-4 h-4 stroke-[2.5]" />
+                Direct Download for {detectedOS.osName} ({detectedOS.fileExt})
+              </Button>
+
+              <button
+                onClick={() => setShowAllDownloads(!showAllDownloads)}
+                className="h-12 px-3 rounded-r-xl bg-amber-600 hover:bg-amber-700 text-black border-l border-amber-400/40 flex items-center justify-center cursor-pointer transition-colors"
+                title="Select other operating systems"
+              >
+                <ChevronDown className={`w-4 h-4 transition-transform ${showAllDownloads ? "rotate-180" : ""}`} />
+              </button>
+            </div>
+
+            <Button
+              size="lg"
+              variant="outline"
+              className="h-12 px-6 rounded-xl border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 text-sm font-semibold flex items-center gap-2"
+              onClick={() => navigate("/app")}
             >
-              <textarea
-                className="w-full min-h-[100px] max-h-[200px] bg-transparent resize-none p-5 pr-20 outline-none text-base md:text-lg placeholder:text-muted-foreground/50 leading-relaxed font-sans"
-                placeholder="e.g. Fetch all open Jira tickets, summarize with AI, and post to #dev-updates on Slack..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmit(e);
-                  }
-                }}
-              />
-              <div className="absolute bottom-3 right-3">
-                <Button
-                  type="submit"
-                  size="icon"
-                  className="w-11 h-11 border-2 border-border shadow-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
-                  disabled={prompt.length === 0}
-                >
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </div>
-            </form>
+              <Play className="w-3.5 h-3.5 fill-current" />
+              Open Cloud Workspace
+            </Button>
           </div>
 
-          {/* Template chips */}
-          <div className="flex flex-wrap justify-center gap-2">
-            {templates.map((txt, idx) => (
+          {/* Quick OS Pills Selector */}
+          <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-zinc-500 mb-12">
+            <span>Also available for:</span>
+            {Object.values(DOWNLOAD_OPTIONS).map((opt) => (
               <button
-                key={idx}
-                onClick={() => setPrompt(txt)}
-                className="px-4 py-2 border-2 border-border bg-card text-sm font-medium hover:bg-muted hover:shadow-xs transition-all text-left shadow-2xs"
+                key={opt.id}
+                onClick={() => handleDownloadSpecific(opt.id)}
+                className="px-2.5 py-1 rounded-lg border border-zinc-800 bg-zinc-900/60 hover:border-amber-500/40 hover:text-amber-400 transition-all font-mono text-[11px] text-zinc-400 cursor-pointer flex items-center gap-1"
               >
-                {txt}
+                <Download className="w-3 h-3 text-zinc-500" />
+                {opt.name}
               </button>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ─── Trusted By / Social Proof ─── */}
-      <section className="py-12 border-y-2 border-border bg-muted/30">
-        <div className="max-w-6xl mx-auto px-6">
-          <p className="text-center text-xs font-bold uppercase tracking-widest text-muted-foreground mb-8">
-            Trusted by teams at
-          </p>
-          <div className="flex flex-wrap justify-center items-center gap-10 md:gap-16">
-            {["Acme Corp", "TechFlow", "DataVault", "NeuraSoft", "BuildFast"].map((name) => (
-              <span key={name} className="text-lg font-bold text-muted-foreground/50 tracking-tight">
-                {name}
-              </span>
-            ))}
+          {/* ─── Interactive Hero Visualizer Terminal ─── */}
+          <div className="max-w-4xl mx-auto rounded-2xl border border-zinc-800/80 bg-zinc-900/50 backdrop-blur-xl shadow-2xl overflow-hidden text-left">
+            {/* Terminal Header */}
+            <div className="border-b border-zinc-800 px-4 py-3 bg-zinc-950/80 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-red-500/80" />
+                <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                <span className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                <span className="text-xs font-mono text-zinc-400 ml-2">bee-mission-control :: flight-9021</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                {(["terminal", "dag", "healer"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
+                      activeTab === tab
+                        ? "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                        : "text-zinc-500 hover:text-zinc-300"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Terminal Content */}
+            <div className="p-6 font-mono text-xs space-y-3 bg-black/80 min-h-[260px]">
+              {activeTab === "terminal" && (
+                <>
+                  <div className="text-zinc-500 flex items-center gap-2">
+                    <span className="text-amber-400">➜</span>
+                    <span className="text-zinc-300">{activePrompt}</span>
+                  </div>
+                  <div className="text-zinc-400">[PLANNER] Route compiled: 4 DAG steps across [sandbox, code_search, git]</div>
+                  <div className="text-emerald-400">[STEP 1] ▶️ sandbox.run_test_suite(cmd="vitest auth.test.ts") → 1 failed assertion</div>
+                  <div className="text-cyan-400">[SELF-HEAL] ⚡ Diagnosing assertion failure in AuthProvider.ts:L42...</div>
+                  <div className="text-zinc-300">[STEP 2] ▶️ code_search.code_ripgrep(query="validateSessionToken") → 3 occurrences</div>
+                  <div className="text-emerald-400">[STEP 3] ▶️ sandbox.run_test_suite(cmd="vitest auth.test.ts") → ✅ 14/14 tests passing</div>
+                  <div className="text-blue-400 flex items-center gap-2">
+                    <Shield className="w-3.5 h-3.5" />
+                    <span>[APPROVAL GATE] Pending authorization for git.git_commit("fix(auth): correct token validation logic")</span>
+                  </div>
+                </>
+              )}
+
+              {activeTab === "dag" && (
+                <div className="space-y-2.5">
+                  <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-between">
+                    <span className="text-emerald-400">Step 1: sandbox.run_test_suite</span>
+                    <span className="text-[10px] font-bold uppercase text-emerald-400">Complete (Self-Healed)</span>
+                  </div>
+                  <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-between">
+                    <span className="text-emerald-400">Step 2: code_search.code_ripgrep</span>
+                    <span className="text-[10px] font-bold uppercase text-emerald-400">Complete</span>
+                  </div>
+                  <div className="p-3 rounded-xl border border-blue-500/40 bg-blue-500/10 flex items-center justify-between animate-pulse">
+                    <span className="text-blue-400">Step 3: git.git_commit</span>
+                    <span className="text-[10px] font-bold uppercase text-blue-400">Approval Gate Pending</span>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "healer" && (
+                <div className="space-y-2 text-zinc-300 leading-relaxed">
+                  <div className="text-amber-400 font-bold">Self-Healing Execution Cycle:</div>
+                  <div className="text-zinc-400">1. Step output inspected for failure signatures & exit codes</div>
+                  <div className="text-zinc-400">2. Error context parsed and injected into diagnostic LLM prompt</div>
+                  <div className="text-zinc-400">3. Remediation executed and validated via sandbox runner</div>
+                  <div className="text-emerald-400 font-semibold">Result: 0 human intervention required for routine fixes.</div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ─── Features ─── */}
-      <section id="features" className="py-24 px-6">
+      {/* ─── Core Architecture & Flow ─── */}
+      <section id="architecture" className="py-20 px-6 border-t border-zinc-900 bg-zinc-950/60 relative z-10">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-4">
-              Everything you need
+            <span className="text-xs font-bold uppercase tracking-widest text-amber-400 font-mono">
+              Deterministic & Resilient
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight mt-2">
+              How Bee Autonomous Flights Work
             </h2>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              A complete platform for building, deploying, and monitoring AI-powered workflows.
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
               {
-                icon: <Sparkles className="w-6 h-6" />,
-                title: "Natural Language Input",
-                desc: "Just describe what you want. Our LLM planner breaks it down into executable steps.",
-                color: "bg-primary/10 text-primary",
+                step: "01",
+                title: "Intent & DAG Planning",
+                desc: "LLM compiler translates natural language goals into a structured DAG of tool executions.",
+                icon: <Zap className="w-5 h-5 text-amber-400" />,
               },
               {
-                icon: <GitBranch className="w-6 h-6" />,
-                title: "Visual DAG Builder",
-                desc: "See your workflow as a directed graph. Drag-and-drop nodes, edit connections, re-order steps.",
-                color: "bg-accent/20 text-accent-foreground",
+                step: "02",
+                title: "Hive MCP Tool Dispatch",
+                desc: "Local sandbox, Git, and search tools execute deterministically with exit code capturing.",
+                icon: <Boxes className="w-5 h-5 text-emerald-400" />,
               },
               {
-                icon: <Shield className="w-6 h-6" />,
-                title: "Human-in-the-Loop",
-                desc: "Set approval gates on sensitive actions. Stay in control while the agents do the work.",
-                color: "bg-destructive/10 text-destructive",
+                step: "03",
+                title: "Self-Healing Loop",
+                desc: "Failures trigger diagnostic reflection, automated code repair, and verification test runs.",
+                icon: <RotateCcw className="w-5 h-5 text-cyan-400" />,
               },
               {
-                icon: <Zap className="w-6 h-6" />,
-                title: "MCP Server Integration",
-                desc: "Connect to any MCP-compatible server. Jira, GitHub, Slack, Gmail — all supported out of the box.",
-                color: "bg-chart-3/20 text-chart-5",
+                step: "04",
+                title: "Zero-Trust Approval Gate",
+                desc: "Destructive actions (commits, pushes, migrations) require 1-click human authorization.",
+                icon: <Shield className="w-5 h-5 text-blue-400" />,
               },
-              {
-                icon: <Database className="w-6 h-6" />,
-                title: "Real-time Execution Logs",
-                desc: "Stream execution logs live. Inspect payloads, latencies, and errors as they happen.",
-                color: "bg-chart-4/20 text-chart-4",
-              },
-              {
-                icon: <MessageSquare className="w-6 h-6" />,
-                title: "AI Agent Chat",
-                desc: "Interact with agents conversationally. Adjust parameters, ask questions, refine on-the-fly.",
-                color: "bg-sidebar-primary/10 text-sidebar-primary",
-              },
-            ].map((feat, i) => (
-              <Card
-                key={i}
-                className="p-0 border-2 border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-default"
+            ].map((card) => (
+              <div
+                key={card.step}
+                className="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-md flex flex-col justify-between"
               >
-                <div className="p-6">
-                  <div className={`w-12 h-12 ${feat.color} flex items-center justify-center border-2 border-border shadow-2xs mb-5`}>
-                    {feat.icon}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-mono font-bold text-amber-400">{card.step}</span>
+                    <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700/60 flex items-center justify-center">
+                      {card.icon}
+                    </div>
                   </div>
-                  <h3 className="text-lg font-bold mb-2">{feat.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{feat.desc}</p>
+                  <h3 className="text-base font-bold text-white mb-2">{card.title}</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">{card.desc}</p>
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── How it Works ─── */}
-      <section id="how-it-works" className="py-24 px-6 border-y-2 border-border bg-muted/20">
-        <div className="max-w-5xl mx-auto">
+      {/* ─── Direct Platform Downloads Section ─── */}
+      <section id="downloads" className="py-20 px-6 border-t border-zinc-900 relative z-10">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-4">
-              Three steps. Zero code.
+            <span className="text-xs font-bold uppercase tracking-widest text-amber-400 font-mono">
+              Desktop Binaries
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight mt-2">
+              Download Bee for Your Operating System
             </h2>
-            <p className="text-lg text-muted-foreground">
-              From idea to execution in under a minute.
+            <p className="text-sm text-zinc-400 mt-2">
+              Cross-platform desktop application powered by React 19 and supervised Python FastAPI sidecar.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                step: "01",
-                title: "Describe",
-                desc: "Type what you want to automate in plain language. Our AI understands context, tools, and intent.",
-                icon: <MessageSquare className="w-6 h-6" />,
-              },
-              {
-                step: "02",
-                title: "Review & Connect",
-                desc: "See the generated DAG. Connect OAuth accounts for each service. Approve or edit the flow.",
-                icon: <GitBranch className="w-6 h-6" />,
-              },
-              {
-                step: "03",
-                title: "Execute",
-                desc: "Hit run. Watch real-time logs stream in. Approve gated steps. Celebrate automation.",
-                icon: <Play className="w-6 h-6" />,
-              },
-            ].map((s, i) => (
-              <div key={i} className="flex flex-col gap-4 p-6 border-2 border-border bg-card shadow-xs hover:shadow-sm transition-shadow">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl font-black text-primary tracking-tighter">{s.step}</span>
-                  <div className="w-10 h-10 bg-primary/10 border-2 border-border flex items-center justify-center text-primary">
-                    {s.icon}
-                  </div>
+            {/* Windows Card */}
+            <div className="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-md flex flex-col justify-between hover:border-amber-500/40 transition-all">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-white">Windows</h3>
+                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">x64</span>
                 </div>
-                <h3 className="text-xl font-bold">{s.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+                <p className="text-xs text-zinc-400 mb-6">
+                  Windows 10 / 11 64-bit installer with automated background updates and Python supervisor.
+                </p>
+                <div className="space-y-2 text-xs font-mono text-zinc-500 mb-6">
+                  <div>Package: NSIS Installer (.exe)</div>
+                  <div>Version: 0.1.0</div>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Metrics ─── */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { value: "10K+", label: "Workflows Run" },
-            { value: "99.9%", label: "Uptime" },
-            { value: "50ms", label: "Avg Response" },
-            { value: "15+", label: "Integrations" },
-          ].map((m, i) => (
-            <div key={i} className="text-center p-6 border-2 border-border bg-card shadow-xs">
-              <div className="text-4xl md:text-5xl font-black tracking-tighter text-primary mb-1">{m.value}</div>
-              <div className="text-sm font-medium text-muted-foreground">{m.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ─── Pricing ─── */}
-      <section id="pricing" className="py-24 px-6 border-y-2 border-border bg-muted/20">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-4">
-              Simple pricing
-            </h2>
-            <p className="text-lg text-muted-foreground">No hidden fees. Scale when you're ready.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              {
-                name: "Free",
-                price: "$0",
-                desc: "For individuals exploring automation",
-                features: ["5 workflows/month", "3 integrations", "Community support", "Basic logs"],
-                cta: "Get Started",
-                featured: false,
-              },
-              {
-                name: "Pro",
-                price: "$29",
-                desc: "For teams building real pipelines",
-                features: ["Unlimited workflows", "15+ integrations", "Priority support", "Advanced analytics", "Approval gates"],
-                cta: "Start Free Trial",
-                featured: true,
-              },
-              {
-                name: "Enterprise",
-                price: "Custom",
-                desc: "For orgs with complex requirements",
-                features: ["Everything in Pro", "SSO & RBAC", "Custom MCP servers", "Dedicated support", "SLA guarantee"],
-                cta: "Contact Sales",
-                featured: false,
-              },
-            ].map((plan, i) => (
-              <div
-                key={i}
-                className={`flex flex-col p-6 border-2 border-border bg-card shadow-xs ${
-                  plan.featured ? "shadow-md border-primary relative" : ""
-                }`}
+              <Button
+                className="w-full rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-semibold text-xs"
+                onClick={() => handleDownloadSpecific("windows")}
               >
-                {plan.featured && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-primary text-primary-foreground text-xs font-bold border-2 border-border shadow-xs">
-                    Popular
-                  </div>
-                )}
-                <h3 className="text-lg font-bold mb-1">{plan.name}</h3>
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-4xl font-black tracking-tighter">{plan.price}</span>
-                  {plan.price !== "Custom" && <span className="text-sm text-muted-foreground">/mo</span>}
+                <Download className="w-3.5 h-3.5 mr-1.5" />
+                Direct Download (.exe)
+              </Button>
+            </div>
+
+            {/* macOS Card */}
+            <div className="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-md flex flex-col justify-between hover:border-amber-500/40 transition-all">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-white">macOS</h3>
+                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">Universal</span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-6">{plan.desc}</p>
-                <ul className="flex flex-col gap-2.5 mb-8 flex-1">
-                  {plan.features.map((f, j) => (
-                    <li key={j} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-primary shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
+                <p className="text-xs text-zinc-400 mb-6">
+                  Native macOS application for Apple Silicon (M1/M2/M3/M4) and Intel x64 architectures.
+                </p>
+                <div className="space-y-2 text-xs font-mono text-zinc-500 mb-6">
+                  <div>Package: Disk Image (.dmg)</div>
+                  <div>Arch: Apple Silicon / Intel</div>
+                </div>
+              </div>
+              <div className="flex gap-2">
                 <Button
-                  variant={plan.featured ? "default" : "outline"}
-                  className={`w-full border-2 border-border shadow-xs ${plan.featured ? "" : ""}`}
-                  onClick={() => navigate("/signup")}
+                  className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-semibold text-xs"
+                  onClick={() => handleDownloadSpecific("mac-arm64")}
                 >
-                  {plan.cta}
+                  <Download className="w-3.5 h-3.5 mr-1" />
+                  Apple Silicon
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-xl border-zinc-700 text-zinc-300 text-xs"
+                  onClick={() => handleDownloadSpecific("mac-x64")}
+                >
+                  <Download className="w-3.5 h-3.5 mr-1" />
+                  Intel
                 </Button>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
 
-      {/* ─── Testimonials ─── */}
-      <section className="py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-4xl font-black tracking-tighter text-center mb-16">
-            Loved by developers
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              { name: "Sarah Chen", role: "Engineering Lead @ Acme", quote: "Bee replaced 3 internal tools for us. The DAG visualizer alone is worth it." },
-              { name: "Marcus Wei", role: "DevOps @ TechFlow", quote: "Setting up Jira→GitHub→Slack pipelines used to take days. Now it takes one sentence." },
-              { name: "Aisha Patel", role: "Product Manager", quote: "The approval gates give us confidence to automate things we never would have before." },
-            ].map((t, i) => (
-              <Card key={i} className="p-0 border-2 border-border shadow-xs">
-                <div className="p-6 flex flex-col gap-4">
-                  <div className="flex gap-1">
-                    {[...Array(5)].map((_, j) => (
-                      <Star key={j} className="w-4 h-4 fill-accent text-accent" />
-                    ))}
-                  </div>
-                  <p className="text-sm leading-relaxed text-muted-foreground italic">"{t.quote}"</p>
-                  <div className="pt-2 border-t border-border">
-                    <div className="font-bold text-sm">{t.name}</div>
-                    <div className="text-xs text-muted-foreground">{t.role}</div>
-                  </div>
+            {/* Linux Card */}
+            <div className="p-6 rounded-2xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-md flex flex-col justify-between hover:border-amber-500/40 transition-all">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-white">Linux</h3>
+                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">x86_64</span>
                 </div>
-              </Card>
-            ))}
+                <p className="text-xs text-zinc-400 mb-6">
+                  Universal AppImage standalone package and Debian/Ubuntu (.deb) distribution.
+                </p>
+                <div className="space-y-2 text-xs font-mono text-zinc-500 mb-6">
+                  <div>Package: AppImage / .deb</div>
+                  <div>Compatible: Ubuntu, Fedora, Arch</div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-semibold text-xs"
+                  onClick={() => handleDownloadSpecific("linux-appimage")}
+                >
+                  <Download className="w-3.5 h-3.5 mr-1" />
+                  AppImage
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-xl border-zinc-700 text-zinc-300 text-xs"
+                  onClick={() => handleDownloadSpecific("linux-deb")}
+                >
+                  <Download className="w-3.5 h-3.5 mr-1" />
+                  .deb
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
-
-      {/* ─── CTA ─── */}
-      <section className="py-24 px-6 border-t-2 border-border bg-primary/5">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-black tracking-tighter mb-4">
-            Ready to automate?
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto">
-            Start building intelligent workflows in seconds. No credit card required.
-          </p>
-          <Button
-            className="border-2 border-border shadow-md text-base px-8 h-12"
-            onClick={() => navigate("/signup")}
-          >
-            Launch BEE Console
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
         </div>
       </section>
 
       {/* ─── Footer ─── */}
-      <footer className="border-t-2 border-border bg-card py-12 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-primary flex items-center justify-center border-2 border-border">
-              <Network className="w-3.5 h-3.5 text-primary-foreground" />
+      <footer className="border-t border-zinc-900 py-12 px-6 bg-zinc-950">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 rounded-lg bg-amber-500 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-black" />
             </div>
-            <span className="font-bold tracking-tight">Bee</span>
+            <span className="font-bold text-sm text-white">BEE — Autonomous AI Co-Engineer</span>
           </div>
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">Docs</a>
-            <a href="#" className="hover:text-foreground transition-colors">GitHub</a>
-            <a href="#" className="hover:text-foreground transition-colors">Twitter</a>
-            <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
+
+          <div className="flex items-center gap-6 text-xs text-zinc-500">
+            <Link to="/docs" className="hover:text-zinc-300">Documentation</Link>
+            <a href="#downloads" className="hover:text-zinc-300">Downloads</a>
+            <Link to="/app" className="hover:text-zinc-300">Web Console</Link>
+            <a href="https://github.com/Prince-695/bee" target="_blank" rel="noreferrer" className="hover:text-zinc-300">
+              GitHub
+            </a>
           </div>
-          <p className="text-xs text-muted-foreground">
-            © 2026 Bee. All rights reserved.
-          </p>
+
+          <div className="text-xs text-zinc-600">
+            © 2026 Bee. Open autonomous engineering platform.
+          </div>
         </div>
       </footer>
     </div>

@@ -8,6 +8,7 @@ import ConversationPage from "./pages/ConversationPage";
 import ChatHistoryPage from "./pages/ChatHistoryPage";
 import HooksPage from "./pages/HooksPage";
 import HivePage from "./pages/HivePage";
+import DocsPage from "./pages/DocsPage";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   Activity,
@@ -20,6 +21,7 @@ import {
   Sparkles,
   ShieldCheck,
   Terminal,
+  BookOpen,
 } from "lucide-react";
 import { ThemeToggle } from "./components/shared/ThemeToggle";
 import { AuthGate } from "./components/AuthGate";
@@ -35,6 +37,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
     { to: "/app/hive", icon: <Boxes className="w-4.5 h-4.5" />, label: "Hive Registry" },
     { to: "/app/history", icon: <History className="w-4.5 h-4.5" />, label: "Flight Logs" },
     { to: "/app/hooks", icon: <Webhook className="w-4.5 h-4.5" />, label: "Triggers & Hooks" },
+    { to: "/docs", icon: <BookOpen className="w-4.5 h-4.5" />, label: "Documentation" },
   ];
 
   return (
@@ -139,6 +142,7 @@ export function App() {
         <Routes>
           {/* Public pages */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/docs" element={<DocsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
 

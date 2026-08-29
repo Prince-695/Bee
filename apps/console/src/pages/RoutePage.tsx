@@ -101,7 +101,7 @@ export default function RoutePage() {
     setTerminalLogs((prev) => [...prev, { text, type }]);
   };
 
-  const checkGates = async () => {
+  const checkGates = useCallback(async () => {
     if (!routeId) return;
     try {
       const gates = await listApprovalGates(routeId, "pending");
@@ -113,7 +113,7 @@ export default function RoutePage() {
     } catch {
       // ignore
     }
-  };
+  }, [routeId]);
 
   const handleApproveGate = async (gateId: string) => {
     try {
@@ -147,7 +147,7 @@ export default function RoutePage() {
 
     eventSource.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data) as SSEEvent & Record<string, any>;
+        const data = JSON.parse(event.data) as SSEEvent;
 
         switch (data.type) {
           case "step_start":
@@ -240,7 +240,7 @@ export default function RoutePage() {
     } finally {
       setIsExecuting(false);
     }
-  }, [routeId, isExecuting, finalSummary]);
+  }, [routeId, isExecuting, finalSummary, checkGates]);
 
   if (loadError) {
     return (

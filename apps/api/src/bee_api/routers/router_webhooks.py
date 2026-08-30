@@ -12,11 +12,20 @@ from pydantic import BaseModel, Field
 from bee_api.config import DB_PATH
 from bee_core.signals.signal_model import EngineeringSignal
 from bee_core.signals.signal_store import SignalStore
+from bee_core.signals.signal_policy import SignalPolicyEngine
 from bee_core.webhook_queue import task_queue
 
 router = APIRouter(tags=["webhooks", "signals"])
 GITHUB_WEBHOOK_SECRET = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
 _signal_store = SignalStore(DB_PATH)
+
+
+def _process_and_save_signal(sig: EngineeringSignal) -> Dict[str, Any]:
+    policy_match = SignalPolicyEngine.evaluate_signal(sig)
+    if policy_match:
+        sig.status = "matched_mission"
+        sig.matched_mission_id = policy_match["mission_id"]
+    return _signal_store.record_signal(sig)
 
 
 class SimulateSignalRequest(BaseModel):
@@ -65,7 +74,7 @@ async def github_webhook(request: Request) -> Dict[str, Any]:
         sender=sender,
         payload=payload,
     )
-    _signal_store.record_signal(sig)
+    _process_and_save_signal(sig)
 
     # Resume any waiting task queue items
     task_queue.resume_task("github_pr", {"event_type": event_type, "repo": repo_name, "pr": pr})
@@ -89,7 +98,7 @@ async def ci_webhook(request: Request) -> Dict[str, Any]:
         sender=sender,
         payload=payload,
     )
-    _signal_store.record_signal(sig)
+    _process_and_save_signal(sig)
     return {"status": "received", "signal_id": sig.signal_id}
 
 
@@ -107,7 +116,7 @@ async def sentry_webhook(request: Request) -> Dict[str, Any]:
         sender="sentry_monitor",
         payload=payload,
     )
-    _signal_store.record_signal(sig)
+    _process_and_save_signal(sig)
     return {"status": "received", "signal_id": sig.signal_id}
 
 
@@ -133,7 +142,7 @@ async def slack_webhook(request: Request) -> Dict[str, Any]:
         sender=user,
         payload={"channel": channel, "text": text},
     )
-    _signal_store.record_signal(sig)
+    _process_and_save_signal(sig)
     task_queue.resume_task("slack_message", {"user": user, "channel": channel, "text": text})
     return {"status": "received", "signal_id": sig.signal_id}
 
@@ -150,7 +159,7 @@ async def generic_webhook(request: Request) -> Dict[str, Any]:
         sender=payload.get("sender"),
         payload=payload,
     )
-    _signal_store.record_signal(sig)
+    _process_and_save_signal(sig)
     return {"status": "received", "signal_id": sig.signal_id}
 
 
@@ -177,5 +186,5 @@ async def simulate_signal(req: SimulateSignalRequest) -> Dict[str, Any]:
         sender=req.sender,
         payload=req.payload or {"simulated": True, "title": f"Simulated {req.event_type} on {req.repository}"},
     )
-    created = _signal_store.record_signal(sig)
+    created = _process_and_save_signal(sig)
     return {"success": True, "data": created}

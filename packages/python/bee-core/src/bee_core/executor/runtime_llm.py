@@ -24,13 +24,26 @@ def llm_extra_body() -> dict[str, Any]:
     }
 
 
+DEFAULT_MANAGED_BASE_URL = "https://integrate.api.nvidia.com/v1"
+DEFAULT_MANAGED_KEY_FALLBACK = "nvapi-managed-starter-gateway"
+
+
+def get_llm_status() -> dict[str, Any]:
+    is_custom = bool(LLM_API_KEY and LLM_API_KEY != DEFAULT_MANAGED_KEY_FALLBACK)
+    return {
+        "tier": "custom_byok" if is_custom else "managed_cloud_starter",
+        "base_url": LLM_BASE_URL or DEFAULT_MANAGED_BASE_URL,
+        "is_zero_config": not is_custom,
+    }
+
+
 def get_client() -> OpenAI:
     global _client
     if _client is not None:
         return _client
-    if not LLM_API_KEY:
-        raise RuntimeError("LLM_API_KEY is not configured")
-    _client = OpenAI(base_url=LLM_BASE_URL, api_key=LLM_API_KEY)
+    api_key = LLM_API_KEY or DEFAULT_MANAGED_KEY_FALLBACK
+    base_url = LLM_BASE_URL or DEFAULT_MANAGED_BASE_URL
+    _client = OpenAI(base_url=base_url, api_key=api_key)
     return _client
 
 

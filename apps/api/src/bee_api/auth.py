@@ -10,6 +10,7 @@ PUBLIC_PATH_PREFIXES = (
     "/api/auth/login",
     "/api/auth/signup",
     "/api/oauth",
+    "/api/signals",
     "/docs",
     "/openapi.json",
     "/redoc",

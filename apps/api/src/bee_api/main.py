@@ -15,6 +15,7 @@ from bee_api.routers.router_auth import router as auth_router
 from bee_api.routers.router_conversation import router as conversation_router
 from bee_api.routers.router_health import router as health_router
 from bee_api.routers.router_logs import router as logs_router
+from bee_api.routers.router_missions import router as missions_router
 from bee_api.routers.router_oauth import router as oauth_router
 from bee_api.routers.router_webhooks import router as webhooks_router
 from bee_core.executor.agent_runtime import pre_initialize_runtime, shutdown_runtime
@@ -58,5 +59,6 @@ app.include_router(agent_router)
 app.include_router(conversation_router)
 app.include_router(health_router)
 app.include_router(logs_router)
+app.include_router(missions_router)
 app.include_router(oauth_router)
 app.include_router(webhooks_router)

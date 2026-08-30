@@ -661,6 +661,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/security/redact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Redact Text
+         * @description Test and verify secret redaction on sensitive strings.
+         */
+        post: operations["test_redact_text_api_security_redact_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/security/spend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Total Spend
+         * @description Retrieve total prompt tokens, completion tokens, and estimated cost across all flights.
+         */
+        get: operations["get_total_spend_api_security_spend_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/security/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Usage Records
+         * @description List recent flight-level token usage records.
+         */
+        get: operations["list_usage_records_api_security_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/security/record-spend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record Flight Spend
+         * @description Record token consumption for an execution flight.
+         */
+        post: operations["record_flight_spend_api_security_record_spend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/webhooks/github": {
         parameters: {
             query?: never;
@@ -795,6 +875,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/webhooks/whatsapp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Verify Whatsapp Webhook
+         * @description Meta / WhatsApp Cloud API webhook verification challenge handshake.
+         */
+        get: operations["verify_whatsapp_webhook_webhooks_whatsapp_get"];
+        put?: never;
+        /**
+         * Whatsapp Inbound Webhook
+         * @description Handles interactive button replies from WhatsApp (e.g. APPROVE_<gate_id>, REJECT_<gate_id>).
+         */
+        post: operations["whatsapp_inbound_webhook_webhooks_whatsapp_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/channels/dispatch-gate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dispatch Gate Alert
+         * @description Dispatch a high-priority approval gate alert to WhatsApp, Slack, and Desktop.
+         */
+        post: operations["dispatch_gate_alert_api_channels_dispatch_gate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -855,6 +979,33 @@ export interface components {
             /** Signal Id */
             signal_id?: string | null;
         };
+        /** DispatchGateAlertRequest */
+        DispatchGateAlertRequest: {
+            /** Gate Id */
+            gate_id: string;
+            /** Route Id */
+            route_id: string;
+            /** Tool Name */
+            tool_name: string;
+            /** Action Summary */
+            action_summary: string;
+            /**
+             * Arguments
+             * @default {}
+             */
+            arguments: {
+                [key: string]: unknown;
+            };
+            /**
+             * Risk Level
+             * @default critical
+             */
+            risk_level: string;
+            /** Recipient Phone */
+            recipient_phone?: string | null;
+            /** Recipient Channel */
+            recipient_channel?: string | null;
+        };
         /** FrontendLogRequest */
         FrontendLogRequest: {
             /** Event */
@@ -870,6 +1021,27 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** RecordSpendRequest */
+        RecordSpendRequest: {
+            /**
+             * Model
+             * @default gemini-2.5-flash
+             */
+            model: string;
+            /** Prompt Tokens */
+            prompt_tokens: number;
+            /** Completion Tokens */
+            completion_tokens: number;
+            /** Route Id */
+            route_id?: string | null;
+            /** Flight Id */
+            flight_id?: string | null;
+        };
+        /** RedactTextRequest */
+        RedactTextRequest: {
+            /** Text */
+            text: string;
         };
         /** SimulateSignalRequest */
         SimulateSignalRequest: {
@@ -2036,6 +2208,131 @@ export interface operations {
             };
         };
     };
+    test_redact_text_api_security_redact_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RedactTextRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_total_spend_api_security_spend_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    list_usage_records_api_security_usage_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_flight_spend_api_security_record_spend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordSpendRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     github_webhook_webhooks_github_post: {
         parameters: {
             query?: never;
@@ -2192,6 +2489,96 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SimulateSignalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_whatsapp_webhook_webhooks_whatsapp_get: {
+        parameters: {
+            query?: {
+                "hub.mode"?: string | null;
+                "hub.verify_token"?: string | null;
+                "hub.challenge"?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    whatsapp_inbound_webhook_webhooks_whatsapp_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    dispatch_gate_alert_api_channels_dispatch_gate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DispatchGateAlertRequest"];
             };
         };
         responses: {

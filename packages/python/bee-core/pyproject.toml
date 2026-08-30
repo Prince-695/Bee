@@ -8,6 +8,8 @@ dependencies = [
   "bee-logging",
   "openai==2.31.0",
   "python-dotenv==1.0.1",
+  "pydantic>=2.8,<3",
+  "requests>=2.31.0",
 ]
 
 [build-system]

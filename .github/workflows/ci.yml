@@ -43,7 +43,7 @@ jobs:
       - name: Unit tests
         run: |
           . .venv/bin/activate
-          python -m unittest discover -s apps/api/tests -t .
+          pytest apps/api/tests
       - name: OpenAPI export smoke
         run: |
           . .venv/bin/activate

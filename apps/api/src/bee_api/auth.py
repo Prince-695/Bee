@@ -9,6 +9,7 @@ PUBLIC_PATH_PREFIXES = (
     "/api/health",
     "/api/auth/login",
     "/api/auth/signup",
+    "/api/oauth",
     "/docs",
     "/openapi.json",
     "/redoc",

@@ -18,6 +18,7 @@ from bee_api.routers.router_logs import router as logs_router
 from bee_api.routers.router_missions import router as missions_router
 from bee_api.routers.router_oauth import router as oauth_router
 from bee_api.routers.router_webhooks import router as webhooks_router
+from bee_api.routers.router_whatsapp import router as whatsapp_router
 from bee_core.executor.agent_runtime import pre_initialize_runtime, shutdown_runtime
 from bee_core.stores.chat_store import init_db
 from bee_core.stores.conversation_store import init_db as init_conversation_db
@@ -62,3 +63,4 @@ app.include_router(logs_router)
 app.include_router(missions_router)
 app.include_router(oauth_router)
 app.include_router(webhooks_router)
+app.include_router(whatsapp_router)

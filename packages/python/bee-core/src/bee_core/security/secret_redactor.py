@@ -8,13 +8,13 @@ from typing import Any, Dict, List, Tuple
 # Comprehensive regex patterns for API keys, tokens, credentials, and private keys
 SECRET_PATTERNS: List[Tuple[str, re.Pattern[str]]] = [
     ("OPENAI_KEY", re.compile(r"sk-[a-zA-Z0-9_\-]{20,}")),
-    ("GITHUB_TOKEN", re.compile(r"gh[pousr]-[a-zA-Z0-9]{36,}")),
+    ("GITHUB_TOKEN", re.compile(r"gh[pousr][_\-][a-zA-Z0-9]{30,}")),
     ("SLACK_TOKEN", re.compile(r"xox[baprs]-[0-9]{10,}-[0-9]{10,}-[a-zA-Z0-9]{24,}")),
     ("AWS_ACCESS_KEY", re.compile(r"AKIA[0-9A-Z]{16}")),
     ("AWS_SECRET_KEY", re.compile(r"(?i)aws_secret_access_key\s*=\s*['\"]?([a-zA-Z0-9/+=]{40})['\"]?")),
     ("JWT_TOKEN", re.compile(r"eyJ[a-zA-Z0-9_\-]{10,}\.eyJ[a-zA-Z0-9_\-]{10,}\.[a-zA-Z0-9_\-]{10,}")),
     ("PRIVATE_KEY", re.compile(r"-----BEGIN [A-Z ]+ PRIVATE KEY-----[\s\S]+?-----END [A-Z ]+ PRIVATE KEY-----")),
-    ("DATABASE_URI", re.compile(r"(?i)(postgres|postgresql|mysql|mongodb|redis)://[a-zA-Z0-9_\-\.]+:[^@]+@[a-zA-Z0-9_\-\.]+")),
+    ("DATABASE_URI", re.compile(r"(?i)(postgres|postgresql|mysql|mongodb|redis)://[a-zA-Z0-9_\-\.]+:[^@]+@[a-zA-Z0-9_\-\.:]+(/[a-zA-Z0-9_\-\.]*)?")),
     ("GENERIC_BEARER", re.compile(r"(?i)bearer\s+[a-zA-Z0-9_\-\.]{25,}")),
 ]
 

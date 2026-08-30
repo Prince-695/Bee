@@ -12,6 +12,7 @@ PUBLIC_PATH_PREFIXES = (
     "/api/channels",
     "/api/missions",
     "/api/oauth",
+    "/api/security",
     "/api/signals",
     "/docs",
     "/openapi.json",

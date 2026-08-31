@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from fastapi import Request
-
 from bee_core.stores.user_store import get_user_for_token
-
 
 PUBLIC_PATH_PREFIXES = (
     "/api/health",
@@ -18,6 +16,7 @@ PUBLIC_PATH_PREFIXES = (
     "/openapi.json",
     "/redoc",
     "/webhooks/",
+    "/v1/",
 )
 
 

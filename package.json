@@ -8,16 +8,19 @@
     "url": "https://github.com/Prince-695/bee.git"
   },
   "scripts": {
-    "dev": "turbo run dev --filter=@bee/console",
+    "dev": "turbo run dev",
     "dev:console": "turbo run dev --filter=@bee/console",
+    "dev:web": "turbo run dev --filter=@bee/web",
     "dev:desktop": "pnpm --filter @bee/console dev:desktop",
-    "build": "turbo run build --filter=@bee/console",
+    "build": "turbo run build",
+    "build:console": "turbo run build --filter=@bee/console",
+    "build:web": "turbo run build --filter=@bee/web",
     "build:desktop": "pnpm --filter @bee/console build:desktop",
     "package:win": "pnpm --filter @bee/console package:win",
     "package:linux": "pnpm --filter @bee/console package:linux",
     "package:mac": "pnpm --filter @bee/console package:mac",
-    "lint": "turbo run lint --filter=@bee/console",
-    "typecheck": "turbo run typecheck --filter=@bee/console",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
     "codegen": "node tools/scripts/generate-api-client.mjs",
     "codegen:check": "node tools/scripts/generate-api-client.mjs --check"
   },

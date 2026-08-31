@@ -1,5 +1,6 @@
 packages:
   - "apps/console"
+  - "apps/web"
   - "packages/ui"
   - "packages/api-client"
   - "packages/eslint-config"

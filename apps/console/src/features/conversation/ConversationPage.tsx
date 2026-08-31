@@ -17,7 +17,7 @@ import {
   conversationSuggestions,
   conversationStatusLabel,
   conversationStatusTone,
-} from "../components/conversation/ConversationChrome";
+} from "@/components/conversation/ConversationChrome";
 
 const CONVERSATION_KEY = "bee.activeConversationId";
 

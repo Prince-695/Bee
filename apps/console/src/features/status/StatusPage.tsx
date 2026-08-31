@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { SystemMetrics } from "../components/status/SystemMetrics";
+import { SystemMetrics } from "@/components/status/SystemMetrics";
 import { Button } from "@/components/ui/button";
 import {
   Activity,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Download, Play, Copy, Check } from "lucide-react";
@@ -12,12 +12,8 @@ import {
 
 export function HeroSection() {
   const navigate = useNavigate();
-  const [detectedOS, setDetectedOS] = useState<DownloadOption>(DOWNLOAD_OPTIONS["windows"]);
+  const [detectedOS] = useState<DownloadOption>(() => detectUserOS());
   const [copiedCli, setCopiedCli] = useState(false);
-
-  useEffect(() => {
-    setDetectedOS(detectUserOS());
-  }, []);
 
   const handlePrimaryDownload = () => {
     triggerDirectDownload(detectedOS);

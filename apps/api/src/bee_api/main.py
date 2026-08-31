@@ -20,6 +20,8 @@ from bee_api.routers.router_oauth import router as oauth_router
 from bee_api.routers.router_security import router as security_router
 from bee_api.routers.router_webhooks import router as webhooks_router
 from bee_api.routers.router_whatsapp import router as whatsapp_router
+from bee_api.routers.v1.router_auth import router as v1_auth_router
+from bee_core.db.connection import get_db_engine
 from bee_core.executor.agent_runtime import pre_initialize_runtime, shutdown_runtime
 from bee_core.stores.chat_store import init_db
 from bee_core.stores.conversation_store import init_db as init_conversation_db
@@ -31,6 +33,7 @@ from bee_logging import write_log
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await write_log("INFO", "gateway", "application_startup")
+    await get_db_engine().init_db()
     init_db()
     init_conversation_db()
     init_user_db()
@@ -49,13 +52,14 @@ async def lifespan(_: FastAPI):
         print("\nBee API stopped.")
 
 
-app = FastAPI(title="Bee API", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="Bee API", version="1.0.0", lifespan=lifespan)
 
 add_cors_middleware(app, CORS_ALLOWED_ORIGINS)
 add_auth_middleware(app)
 add_request_logging_middleware(app)
 add_global_exception_handler(app)
 
+app.include_router(v1_auth_router)
 app.include_router(auth_router)
 app.include_router(agent_router)
 app.include_router(conversation_router)

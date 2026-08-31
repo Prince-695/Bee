@@ -21,6 +21,8 @@ from bee_api.routers.router_security import router as security_router
 from bee_api.routers.router_webhooks import router as webhooks_router
 from bee_api.routers.router_whatsapp import router as whatsapp_router
 from bee_api.routers.v1.router_auth import router as v1_auth_router
+from bee_api.routers.v1.router_users import router as v1_users_router
+from bee_api.routers.v1.router_tenants import router as v1_tenants_router
 from bee_core.db.connection import get_db_engine
 from bee_core.executor.agent_runtime import pre_initialize_runtime, shutdown_runtime
 from bee_core.stores.chat_store import init_db
@@ -60,6 +62,8 @@ add_request_logging_middleware(app)
 add_global_exception_handler(app)
 
 app.include_router(v1_auth_router)
+app.include_router(v1_users_router)
+app.include_router(v1_tenants_router)
 app.include_router(auth_router)
 app.include_router(agent_router)
 app.include_router(conversation_router)

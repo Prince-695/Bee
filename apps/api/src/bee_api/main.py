@@ -59,7 +59,40 @@ async def lifespan(_: FastAPI):
         print("\nBee API stopped.")
 
 
-app = FastAPI(title="Bee API", version="1.0.0", lifespan=lifespan)
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+
+app = FastAPI(
+    title="Bee API",
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+)
+
+static_dir = Path(__file__).parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url or "/openapi.json",
+        title="Bee API — Swagger Documentation",
+        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+        swagger_favicon_url="/static/logo.png",
+    )
+
+
+@app.get("/redoc", include_in_schema=False)
+async def custom_redoc_html():
+    return get_redoc_html(
+        openapi_url=app.openapi_url or "/openapi.json",
+        title="Bee API — ReDoc",
+        redoc_favicon_url="/static/logo.png",
+    )
 
 add_cors_middleware(app, CORS_ALLOWED_ORIGINS)
 add_auth_middleware(app)

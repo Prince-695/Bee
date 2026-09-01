@@ -5,7 +5,6 @@ import {
   History,
   Webhook,
   Boxes,
-  Sparkles,
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
@@ -36,9 +35,11 @@ export function DesktopSidebar({ collapsed, onToggleCollapse }: DesktopSidebarPr
       {/* Brand Header */}
       <div className={`${collapsed ? "px-3" : "px-5"} mb-6 flex items-center justify-between`}>
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
-            <Sparkles className="w-5 h-5 text-black" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Bee Logo"
+            className="w-10 h-10 rounded-xl object-contain shrink-0 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform"
+          />
           {!collapsed && (
             <div className="flex flex-col">
               <span className="font-bold text-lg tracking-tight text-white flex items-center gap-1.5">

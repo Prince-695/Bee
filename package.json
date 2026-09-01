@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "turbo run dev",
-    "dev:api": "uvicorn bee_api.main:app --host 0.0.0.0 --port 8000 --reload",
+    "dev:api": "PYTHONPATH=apps/api/src:packages/python/bee-core/src:packages/python/bee-hive/src:packages/python/bee-logging/src ./.venv/bin/python -m uvicorn bee_api.main:app --host 0.0.0.0 --port 8000 --reload",
     "dev:console": "turbo run dev --filter=@bee/console",
     "dev:web": "turbo run dev --filter=@bee/web",
     "dev:desktop": "pnpm --filter @bee/console dev:desktop",

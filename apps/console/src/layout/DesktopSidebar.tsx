@@ -1,103 +1,113 @@
 import { Link, useLocation } from "react-router-dom";
 import {
-  Activity,
+  Home,
   Bot,
+  Boxes,
   History,
   Webhook,
-  Boxes,
-  ShieldCheck,
-  ChevronLeft,
-  ChevronRight,
+  BookOpen,
+  Rocket,
+  HelpCircle,
+  Sparkles,
 } from "lucide-react";
 
-interface DesktopSidebarProps {
-  collapsed: boolean;
-  onToggleCollapse: () => void;
-}
-
-export function DesktopSidebar({ collapsed, onToggleCollapse }: DesktopSidebarProps) {
+export function DesktopSidebar() {
   const location = useLocation();
 
-  const navItems = [
-    { to: "/", icon: <Activity className="w-4.5 h-4.5" />, label: "Teammate Board" },
-    { to: "/chat", icon: <Bot className="w-4.5 h-4.5" />, label: "Co-Engineer Workspace" },
-    { to: "/hive", icon: <Boxes className="w-4.5 h-4.5" />, label: "Hive Connectors" },
-    { to: "/logs", icon: <History className="w-4.5 h-4.5" />, label: "Flight Logs & Spend" },
-    { to: "/hooks", icon: <Webhook className="w-4.5 h-4.5" />, label: "Triggers & Hooks" },
+  const mainNavItems = [
+    { to: "/", icon: <Home className="w-5 h-5" />, label: "Dashboard & Missions" },
+    { to: "/chat", icon: <Bot className="w-5 h-5" />, label: "Co-Engineer Chat" },
+    { to: "/hive", icon: <Boxes className="w-5 h-5" />, label: "Hive MCP Registry" },
+    { to: "/logs", icon: <History className="w-5 h-5" />, label: "Flight Logs & Spend" },
+    { to: "/hooks", icon: <Webhook className="w-5 h-5" />, label: "Signals & Hooks" },
+  ];
+
+  const secondaryNavItems = [
+    { to: "https://bee.dev/docs", icon: <BookOpen className="w-5 h-5" />, label: "Docs & Academy" },
+    { to: "https://github.com/Prince-695/Bee", icon: <Rocket className="w-5 h-5" />, label: "Releases & GitHub" },
+    { to: "https://bee.dev/#faq", icon: <HelpCircle className="w-5 h-5" />, label: "Help & Support" },
   ];
 
   return (
-    <aside
-      className={`${
-        collapsed ? "w-18" : "w-64"
-      } border-r border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl flex flex-col py-5 transition-all duration-300 shrink-0 relative z-30`}
-    >
-      {/* Brand Header */}
-      <div className={`${collapsed ? "px-3" : "px-5"} mb-6 flex items-center justify-between`}>
-        <Link to="/" className="flex items-center gap-3 group">
-          <img
-            src="/logo.png"
-            alt="Bee Logo"
-            className="w-10 h-10 rounded-xl object-contain shrink-0 shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform"
-          />
-          {!collapsed && (
-            <div className="flex flex-col">
-              <span className="font-bold text-lg tracking-tight text-white flex items-center gap-1.5">
-                BEE <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">Desktop</span>
-              </span>
-              <span className="text-[11px] text-zinc-400 font-medium">Autonomous Co-Engineer</span>
-            </div>
-          )}
-        </Link>
-      </div>
+    <aside className="w-20 bg-[#0F1014] border-r border-zinc-800/60 flex flex-col items-center py-5 shrink-0 z-30 select-none">
+      {/* Top Brand Logo Icon in Rounded Square Pill */}
+      <Link
+        to="/"
+        className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-700/60 flex items-center justify-center text-amber-400 hover:border-amber-500/80 hover:shadow-lg hover:shadow-amber-500/20 transition-all group mb-6 relative"
+        title="Bee Autonomous Co-Engineer"
+      >
+        <img
+          src="/logo.png"
+          alt="Bee Logo"
+          className="w-7 h-7 object-contain group-hover:scale-110 transition-transform"
+        />
+        <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-[#0F1014] flex items-center justify-center">
+          <Sparkles className="w-2 h-2 text-black" />
+        </div>
+      </Link>
 
-      {/* Navigation Items */}
-      <nav className={`flex-1 w-full flex flex-col gap-1.5 ${collapsed ? "px-2" : "px-3"}`}>
-        {navItems.map((item) => {
+      {/* Primary Navigation Icon Stack */}
+      <nav className="flex-1 w-full flex flex-col items-center gap-2.5 px-3">
+        {mainNavItems.map((item) => {
           const isActive =
             item.to === "/"
-              ? location.pathname === "/" || location.pathname.startsWith("/app/status") || location.pathname.startsWith("/route")
+              ? location.pathname === "/" || location.pathname.startsWith("/app/status")
               : location.pathname.startsWith(item.to);
 
           return (
             <Link
               key={item.to}
               to={item.to}
-              className={`flex items-center ${
-                collapsed ? "justify-center" : ""
-              } gap-3 px-3 py-2.5 rounded-xl border transition-all group ${
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all relative group ${
                 isActive
-                  ? "bg-amber-500/10 text-amber-400 border-amber-500/30 font-semibold shadow-xs shadow-amber-500/5"
-                  : "text-zinc-400 border-transparent hover:bg-zinc-900/90 hover:text-zinc-200 hover:border-zinc-800"
+                  ? "bg-zinc-800 text-amber-400 shadow-md shadow-black/40 border border-zinc-700/60"
+                  : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/80"
               }`}
-              title={collapsed ? item.label : undefined}
+              title={item.label}
             >
-              <div className="shrink-0 group-hover:scale-110 transition-transform">{item.icon}</div>
-              {!collapsed && <span className="text-[13.5px] tracking-wide">{item.label}</span>}
+              {item.icon}
+              <span className="absolute left-16 px-2.5 py-1 rounded-lg bg-zinc-900 text-zinc-100 text-[11px] font-medium whitespace-nowrap shadow-xl border border-zinc-800 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                {item.label}
+              </span>
             </Link>
           );
         })}
+
+        {/* Divider */}
+        <div className="w-8 h-px bg-zinc-800/80 my-2" />
+
+        {/* Secondary Navigation Items */}
+        {secondaryNavItems.map((item) => (
+          <a
+            key={item.label}
+            href={item.to}
+            target="_blank"
+            rel="noreferrer"
+            className="w-11 h-11 rounded-2xl flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/60 transition-all relative group"
+            title={item.label}
+          >
+            {item.icon}
+            <span className="absolute left-16 px-2.5 py-1 rounded-lg bg-zinc-900 text-zinc-100 text-[11px] font-medium whitespace-nowrap shadow-xl border border-zinc-800 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
+              {item.label}
+            </span>
+          </a>
+        ))}
       </nav>
 
-      {/* Collapse Toggle */}
-      <div className={`${collapsed ? "px-2" : "px-3"} mt-auto pt-4 border-t border-zinc-900 flex flex-col gap-2`}>
-        <button
-          onClick={onToggleCollapse}
-          className="w-full flex items-center justify-center p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 border border-transparent hover:border-zinc-800 transition-colors"
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      {/* Bottom Pinned User Profile Avatar with Online Status Dot */}
+      <div className="pt-4 flex flex-col items-center gap-3">
+        <Link
+          to="/"
+          className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-zinc-700/80 hover:border-amber-400 transition-colors group"
+          title="Lead Engineer (Online)"
         >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
-
-        {!collapsed && (
-          <div className="px-3 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800/80 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs text-zinc-300 font-mono font-medium">Hive Active</span>
-            </div>
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          </div>
-        )}
+          <img
+            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+            alt="User Avatar"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+          />
+          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#0F1014]" />
+        </Link>
       </div>
     </aside>
   );

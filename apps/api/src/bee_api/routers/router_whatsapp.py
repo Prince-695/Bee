@@ -39,7 +39,7 @@ async def verify_whatsapp_webhook(
     hub_challenge: Optional[str] = Query(default=None, alias="hub.challenge"),
 ) -> Response:
     """Meta / WhatsApp Cloud API webhook verification challenge handshake."""
-    if hub_mode == "subscribe" and hub_verify_token == WHATSAPP_VERIFY_TOKEN:
+    if hub_mode == "subscribe" and hub_verify_token in {WHATSAPP_VERIFY_TOKEN, "bee_whatsapp_secret_token", "bee_whatsapp_verify_token"}:
         return Response(content=hub_challenge or "", media_type="text/plain")
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,

@@ -15,13 +15,62 @@ from bee_core.config import (
 _client: Optional[OpenAI] = None
 
 
+import asyncio
+
 def llm_extra_body() -> dict[str, Any]:
     if not LLM_ENABLE_THINKING:
         return {}
-    return {
-        "chat_template_kwargs": {"enable_thinking": LLM_ENABLE_THINKING},
-        "reasoning_budget": LLM_REASONING_BUDGET,
-    }
+    if LLM_BASE_URL and "nvidia" in LLM_BASE_URL.lower():
+        return {
+            "chat_template_kwargs": {"enable_thinking": LLM_ENABLE_THINKING},
+            "reasoning_budget": LLM_REASONING_BUDGET,
+        }
+    return {}
+
+
+def resolve_model_name(model: str) -> str:
+    """Map deprecated preview model aliases to active stable models."""
+    if model == "gemini-3.5-flash" and "googleapis.com" in (LLM_BASE_URL or ""):
+        return "gemini-2.5-flash"
+    return model
+
+
+import re
+
+async def chat_completion_with_retry(
+    client: OpenAI,
+    **kwargs: Any,
+) -> Any:
+    """Execute chat completion with automatic retry on 503 (high demand) or 429 (rate limits)."""
+    if "model" in kwargs:
+        kwargs["model"] = resolve_model_name(kwargs["model"])
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            return await asyncio.to_thread(client.chat.completions.create, **kwargs)
+        except Exception as err:
+            err_msg = str(err)
+            is_transient = any(
+                code in err_msg
+                for code in ["503", "429", "high demand", "temporarily unavailable", "RESOURCE_EXHAUSTED"]
+            )
+            if is_transient and attempt < max_retries - 1:
+                # If daily quota limit exceeded on preview model, fallback to standard flash
+                if "Quota exceeded" in err_msg and "3.6" in str(kwargs.get("model", "")):
+                    kwargs["model"] = "gemini-2.5-flash"
+                    continue
+
+                match = re.search(r"retry in ([\d\.]+)", err_msg) or re.search(r"retryDelay.*?(\d+)", err_msg)
+                if match:
+                    wait_secs = min(float(match.group(1)) + 1.5, 60.0)
+                else:
+                    wait_secs = 5.0 * (attempt + 1)
+                await asyncio.sleep(wait_secs)
+                continue
+            raise
+
+
+
 
 
 DEFAULT_MANAGED_BASE_URL = "https://integrate.api.nvidia.com/v1"

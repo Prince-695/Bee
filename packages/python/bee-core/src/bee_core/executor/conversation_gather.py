@@ -8,6 +8,7 @@ from bee_hive.registry import MCP_SERVERS
 from bee_core.executor.agent_runtime import runtime_status
 from bee_core.executor.hive_runtime import ensure_runtime
 from bee_core.executor.runtime_llm import (
+    chat_completion_with_retry,
     extract_text_content,
     get_client,
     llm_extra_body,
@@ -127,11 +128,38 @@ def _default_gather_response(session: dict[str, Any]) -> dict[str, Any]:
 
 
 async def gather_requirements(session: dict[str, Any]) -> dict[str, Any]:
+    prompt = session.get("initial_prompt") or ""
+    if not prompt and session.get("messages"):
+        for m in reversed(session.get("messages", [])):
+            if m.get("role") == "user" and m.get("content"):
+                prompt = m["content"]
+                break
+
+    prompt_words = prompt.strip().split()
+    action_keywords = {
+        "run", "test", "tests", "pytest", "build", "fix", "deploy", "check",
+        "create", "add", "update", "delete", "remove", "install", "inspect",
+        "find", "list", "explain", "show", "git", "python", "pnpm", "npm",
+        "debug", "make", "docker", "migrate", "verify", "lint"
+    }
+    has_action = any(w.lower().strip(",.:;!?") in action_keywords for w in prompt_words)
+    has_code_or_path = any(x in prompt for x in [".py", ".ts", ".tsx", ".js", ".json", "/", "\\", "http", "api"])
+
+    # Fast-path: If prompt is actionable or sufficiently detailed, skip LLM call
+    if (len(prompt_words) >= 5 and (has_action or has_code_or_path)) or len(prompt_words) >= 12:
+        return {
+            "assistant_message": "Requirement clarified. Proceeding to route planning.",
+            "can_proceed": True,
+            "missing_info": [],
+            "requirement_summary": prompt.strip(),
+            "planning_prompt": prompt.strip(),
+        }
+
     await ensure_runtime()
     messages = _build_gather_messages(session)
     client = get_client()
-
-    response = client.chat.completions.create(
+    response = await chat_completion_with_retry(
+        client,
         model=LLM_MODEL,
         messages=messages,
         temperature=0.2,

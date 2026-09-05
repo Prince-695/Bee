@@ -7,14 +7,16 @@ import aiosqlite
 from typing import Any, Dict, List, Optional
 from bee_core.db.schema import POSTGRES_SCHEMA, SQLITE_SCHEMA
 
+_SENTINEL = object()
+
 # Global database manager instance
 _db_engine: Optional[DatabaseEngine] = None
 
 
 class DatabaseEngine:
-    def __init__(self, database_url: Optional[str] = None, sqlite_path: str = "./bee.db"):
-        if database_url is not None:
-            self.database_url = database_url if database_url != "" else None
+    def __init__(self, database_url: Any = _SENTINEL, sqlite_path: str = "./bee.db"):
+        if database_url is not _SENTINEL:
+            self.database_url = database_url if database_url else None
         else:
             self.database_url = os.getenv("DATABASE_URL") or os.getenv("NEON_DATABASE_URL")
         self.sqlite_path = sqlite_path
@@ -22,6 +24,8 @@ class DatabaseEngine:
 
     async def init_db(self) -> None:
         """Initialize database schema tables."""
+        # Always ensure local SQLite tables exist for offline and test resilience
+        await self._init_sqlite()
         if self.is_postgres:
             try:
                 import asyncpg
@@ -33,9 +37,6 @@ class DatabaseEngine:
             except Exception:
                 # Fallback to local SQLite if remote PostgreSQL is unreachable or offline
                 self.is_postgres = False
-                await self._init_sqlite()
-        else:
-            await self._init_sqlite()
 
     async def _init_sqlite(self) -> None:
         async with aiosqlite.connect(self.sqlite_path) as db:

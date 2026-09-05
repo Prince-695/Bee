@@ -6,8 +6,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-_API_DIR = Path(__file__).resolve().parents[2]
-load_dotenv(_API_DIR / ".env", override=True)
+_REPO_ROOT = Path(__file__).resolve().parents[4]
+load_dotenv(_REPO_ROOT / ".env", override=True)
 
 from bee_core.config import (  # noqa: E402
     CORS_ALLOWED_ORIGINS,

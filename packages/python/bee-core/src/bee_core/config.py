@@ -11,9 +11,8 @@ _REPO_ROOT = Path(__file__).resolve().parents[5]
 _API_ROOT = _REPO_ROOT / "apps" / "api"
 _HIVE_LOCAL = _REPO_ROOT / "tools" / "hive-local"
 
-# Prefer apps/api/.env, then repo .env
-load_dotenv(_API_ROOT / ".env", override=True)
-load_dotenv(_REPO_ROOT / ".env", override=False)
+# Single source of truth: root .env
+load_dotenv(_REPO_ROOT / ".env", override=True)
 
 
 def _read_env(name: str, default: str = "") -> str:

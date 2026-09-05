@@ -12,12 +12,13 @@ from bee_core.config import (
 from bee_core.executor.hive_runtime import ensure_runtime
 from bee_core.executor.prompts import PLANNING_PROMPT, SERVER_ICONS
 from bee_core.executor.runtime_llm import (
+    chat_completion_with_retry,
     extract_text_content,
     get_client,
     llm_extra_body,
     parse_route_json,
 )
-from bee_core.stores.chat_store import save_chat
+from bee_core.stores.chat_store import get_chat, save_chat
 from bee_logging import write_log
 
 _pending_routes: dict[str, dict[str, Any]] = {}
@@ -28,7 +29,15 @@ def store_route(route: dict[str, Any]) -> None:
 
 
 def get_route(route_id: str) -> dict[str, Any] | None:
-    return _pending_routes.get(route_id)
+    if route_id in _pending_routes:
+        return _pending_routes[route_id]
+    chat = get_chat(route_id)
+    if chat and chat.get("route_json"):
+        route = chat["route_json"]
+        if isinstance(route, dict):
+            _pending_routes[route_id] = route
+            return route
+    return None
 
 
 def list_routes() -> list[dict[str, Any]]:
@@ -75,7 +84,8 @@ async def create_route(user_prompt: str) -> dict[str, Any]:
     ]
 
     client = get_client()
-    response = client.chat.completions.create(
+    response = await chat_completion_with_retry(
+        client,
         model=LLM_MODEL,
         messages=messages,
         temperature=LLM_TEMPERATURE,

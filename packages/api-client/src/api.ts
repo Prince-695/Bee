@@ -298,13 +298,20 @@ async function apiRequest<T>(
     ...options,
     headers,
   });
-  const payload = (await response.json()) as ApiResponse<T>;
-  if (!response.ok || !payload.success || payload.data === undefined) {
+  const payload = (await response.json()) as any;
+  if (!response.ok) {
     const errorMessage =
-      payload.error?.message || `Request failed (${response.status})`;
+      payload?.error?.message || payload?.detail || `Request failed (${response.status})`;
     throw new Error(errorMessage);
   }
-  return payload.data;
+  // Support both enveloped { success: true, data: T } and direct T payloads
+  if (payload && typeof payload === "object" && "success" in payload) {
+    if (!payload.success || payload.data === undefined) {
+      throw new Error(payload.error?.message || "Request failed");
+    }
+    return payload.data as T;
+  }
+  return payload as T;
 }
 
 export async function signup(
@@ -331,6 +338,115 @@ export async function login(email: string, password: string): Promise<AuthSessio
 
 export async function getMe(): Promise<AuthUser> {
   return await apiRequest<AuthUser>("/api/auth/me", { method: "GET" });
+}
+
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  return await apiRequest<{ message: string }>("/v1/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(
+  email: string,
+  otpCode: string,
+  newPassword: string
+): Promise<{ message: string }> {
+  return await apiRequest<{ message: string }>("/v1/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({
+      email,
+      otp_code: otpCode,
+      new_password: newPassword,
+    }),
+  });
+}
+
+export async function getOAuthUrl(
+  provider: "github" | "google" | string
+): Promise<{ provider: string; authorization_url: string; state: string }> {
+  return await apiRequest<{ provider: string; authorization_url: string; state: string }>(
+    `/v1/auth/${provider}/login`,
+    { method: "GET" }
+  );
+}
+
+export interface TenantWorkspace {
+  id: string;
+  name: string;
+  type: string;
+  slug: string;
+  plan: string;
+  role: string;
+}
+
+export async function createWorkspace(
+  name: string,
+  plan = "free"
+): Promise<TenantWorkspace> {
+  return await apiRequest<TenantWorkspace>("/v1/tenants", {
+    method: "POST",
+    body: JSON.stringify({ name, plan }),
+  });
+}
+
+export async function listWorkspaces(): Promise<TenantWorkspace[]> {
+  return await apiRequest<TenantWorkspace[]>("/v1/tenants", { method: "GET" });
+}
+
+export interface OAuthProviderInfo {
+  id: string;
+  name: string;
+  category: string;
+  icon: string;
+  auth_type: string;
+  configured: boolean;
+  authorize_url: string;
+}
+
+export interface ConnectorInfo {
+  user_id: string;
+  provider: string;
+  scopes: string[];
+  metadata: Record<string, unknown>;
+  connected_at: string;
+  updated_at: string;
+}
+
+export async function getOAuthProviders(): Promise<OAuthProviderInfo[]> {
+  return await apiRequest<OAuthProviderInfo[]>("/api/oauth/providers", {
+    method: "GET",
+  });
+}
+
+export async function getConnectors(): Promise<ConnectorInfo[]> {
+  return await apiRequest<ConnectorInfo[]>("/api/oauth/connectors", {
+    method: "GET",
+  });
+}
+
+export async function connectConnector(
+  provider: string,
+  accessToken: string,
+  metadata: Record<string, unknown> = {}
+): Promise<ConnectorInfo> {
+  return await apiRequest<ConnectorInfo>("/api/oauth/connect", {
+    method: "POST",
+    body: JSON.stringify({
+      provider,
+      access_token: accessToken,
+      metadata,
+    }),
+  });
+}
+
+export async function disconnectConnector(
+  provider: string
+): Promise<{ disconnected: boolean; provider: string }> {
+  return await apiRequest<{ disconnected: boolean; provider: string }>(
+    `/api/oauth/connectors/${provider}/disconnect`,
+    { method: "POST" }
+  );
 }
 
 export function logout() {

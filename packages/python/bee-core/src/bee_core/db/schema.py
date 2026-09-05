@@ -149,6 +149,15 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     ip_address TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS sync_state (
+    entity_type TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
+    sync_status TEXT NOT NULL DEFAULT 'pending', -- 'pending' | 'synced' | 'conflict'
+    last_synced_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (entity_type, entity_id)
+);
 """
 
 # SQLite DDL for zero-config local desktop execution
@@ -298,5 +307,14 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     metadata_json TEXT DEFAULT '{}',
     ip_address TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sync_state (
+    entity_type TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
+    sync_status TEXT NOT NULL DEFAULT 'pending', -- 'pending' | 'synced' | 'conflict'
+    last_synced_at TEXT,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (entity_type, entity_id)
 );
 """

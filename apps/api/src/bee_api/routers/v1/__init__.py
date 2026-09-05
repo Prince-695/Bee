@@ -8,6 +8,7 @@ from bee_api.routers.v1.router_approvals import router as approvals_router
 from bee_api.routers.v1.router_memory import router as memory_router
 from bee_api.routers.v1.router_usage import router as usage_router
 from bee_api.routers.v1.router_runtimes import router as runtimes_router
+from bee_api.routers.v1.router_sync import router as sync_router
 
 __all__ = [
     "auth_router",
@@ -18,4 +19,6 @@ __all__ = [
     "memory_router",
     "usage_router",
     "runtimes_router",
+    "sync_router",
 ]
+

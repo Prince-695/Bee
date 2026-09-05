@@ -31,15 +31,15 @@ export function DesktopHeader({ activeFlightTitle = "Desktop Engine Online" }: D
   }, []);
 
   return (
-    <header className="h-14 border-b border-zinc-800/80 bg-zinc-950/60 backdrop-blur-xl px-6 flex items-center justify-between shrink-0 z-20">
+    <header className="h-14 border-b border-border bg-card/80 backdrop-blur-xl px-6 flex items-center justify-between shrink-0 z-20 transition-colors duration-200">
       {/* Active Flight / Workspace Breadcrumb */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-mono">
+        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary border border-primary/30 text-xs font-mono">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span className="font-bold">FAST-MCP SIDECAR</span>
         </div>
-        <span className="text-zinc-600 text-xs">/</span>
-        <span className="text-xs text-zinc-300 font-medium">{activeFlightTitle}</span>
+        <span className="text-muted-foreground text-xs">/</span>
+        <span className="text-xs text-foreground font-medium">{activeFlightTitle}</span>
       </div>
 
       {/* Right Controls */}
@@ -48,32 +48,32 @@ export function DesktopHeader({ activeFlightTitle = "Desktop Engine Online" }: D
         <button
           onClick={handleManualSync}
           title="Click to trigger sync with Cloud PostgreSQL"
-          className="flex items-center gap-2 px-3 py-1 rounded-xl bg-zinc-900/80 border border-zinc-800 text-xs font-mono transition-colors hover:border-zinc-700"
+          className="flex items-center gap-2 px-3 py-1 rounded-xl bg-secondary/80 border border-border text-xs font-mono transition-colors hover:border-primary/50 text-foreground cursor-pointer"
         >
           {syncStatus === "synced" && (
             <>
-              <Cloud className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-400 font-medium">Cloud Synced</span>
-              <span className="text-zinc-500 text-[10px] hidden md:inline">({lastSyncTime})</span>
+              <Cloud className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+              <span className="text-emerald-600 dark:text-emerald-400 font-medium">Cloud Synced</span>
+              <span className="text-muted-foreground text-[10px] hidden md:inline">({lastSyncTime})</span>
             </>
           )}
           {syncStatus === "offline" && (
             <>
-              <CloudOff className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-amber-400 font-medium">Offline (bee.db)</span>
-              <RefreshCw className="w-3 h-3 text-zinc-500 ml-1 hover:text-white" />
+              <CloudOff className="w-3.5 h-3.5 text-primary" />
+              <span className="text-primary font-medium">Offline (bee.db)</span>
+              <RefreshCw className="w-3 h-3 text-muted-foreground ml-1 hover:text-foreground" />
             </>
           )}
           {syncStatus === "syncing" && (
             <>
-              <RefreshCw className="w-3.5 h-3.5 text-sky-400 animate-spin" />
-              <span className="text-sky-400 font-medium">Syncing...</span>
+              <RefreshCw className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 animate-spin" />
+              <span className="text-sky-600 dark:text-sky-400 font-medium">Syncing...</span>
             </>
           )}
         </button>
 
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-xl bg-zinc-900/60 border border-zinc-800 text-xs text-zinc-400 font-mono">
-          <Terminal className="w-3.5 h-3.5 text-zinc-500" />
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-xl bg-secondary/60 border border-border text-xs text-muted-foreground font-mono">
+          <Terminal className="w-3.5 h-3.5 text-muted-foreground" />
           <span>Port: 8000</span>
         </div>
 

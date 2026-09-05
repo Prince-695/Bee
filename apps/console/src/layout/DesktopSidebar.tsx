@@ -29,11 +29,11 @@ export function DesktopSidebar() {
   ];
 
   return (
-    <aside className="w-20 bg-[#0F1014] border-r border-zinc-800/60 flex flex-col items-center py-5 shrink-0 z-30 select-none">
+    <aside className="w-20 bg-sidebar border-r border-sidebar-border flex flex-col items-center py-5 shrink-0 z-30 select-none transition-colors duration-200">
       {/* Top Brand Logo Icon in Rounded Square Pill */}
       <Link
         to="/"
-        className="w-12 h-12 rounded-2xl bg-zinc-900 border border-zinc-700/60 flex items-center justify-center text-amber-400 hover:border-amber-500/80 hover:shadow-lg hover:shadow-amber-500/20 transition-all group mb-6 relative"
+        className="w-12 h-12 rounded-2xl bg-card border border-border flex items-center justify-center text-primary hover:border-primary/80 hover:shadow-lg hover:shadow-primary/20 transition-all group mb-6 relative"
         title="Bee Autonomous Co-Engineer"
       >
         <img
@@ -41,8 +41,8 @@ export function DesktopSidebar() {
           alt="Bee Logo"
           className="w-7 h-7 object-contain group-hover:scale-110 transition-transform"
         />
-        <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-[#0F1014] flex items-center justify-center">
-          <Sparkles className="w-2 h-2 text-black" />
+        <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-primary border-2 border-sidebar flex items-center justify-center">
+          <Sparkles className="w-2 h-2 text-primary-foreground" />
         </div>
       </Link>
 
@@ -60,13 +60,13 @@ export function DesktopSidebar() {
               to={item.to}
               className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all relative group ${
                 isActive
-                  ? "bg-zinc-800 text-amber-400 shadow-md shadow-black/40 border border-zinc-700/60"
-                  : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/80"
+                  ? "bg-primary/15 text-primary shadow-sm border border-primary/30"
+                  : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
               }`}
               title={item.label}
             >
               {item.icon}
-              <span className="absolute left-16 px-2.5 py-1 rounded-lg bg-zinc-900 text-zinc-100 text-[11px] font-medium whitespace-nowrap shadow-xl border border-zinc-800 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
+              <span className="absolute left-16 px-2.5 py-1 rounded-lg bg-popover text-popover-foreground text-[11px] font-medium whitespace-nowrap shadow-xl border border-border pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
                 {item.label}
               </span>
             </Link>
@@ -74,7 +74,7 @@ export function DesktopSidebar() {
         })}
 
         {/* Divider */}
-        <div className="w-8 h-px bg-zinc-800/80 my-2" />
+        <div className="w-8 h-px bg-border my-2" />
 
         {/* Secondary Navigation Items */}
         {secondaryNavItems.map((item) => (
@@ -83,11 +83,11 @@ export function DesktopSidebar() {
             href={item.to}
             target="_blank"
             rel="noreferrer"
-            className="w-11 h-11 rounded-2xl flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/60 transition-all relative group"
+            className="w-11 h-11 rounded-2xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all relative group"
             title={item.label}
           >
             {item.icon}
-            <span className="absolute left-16 px-2.5 py-1 rounded-lg bg-zinc-900 text-zinc-100 text-[11px] font-medium whitespace-nowrap shadow-xl border border-zinc-800 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
+            <span className="absolute left-16 px-2.5 py-1 rounded-lg bg-popover text-popover-foreground text-[11px] font-medium whitespace-nowrap shadow-xl border border-border pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-50">
               {item.label}
             </span>
           </a>
@@ -98,7 +98,7 @@ export function DesktopSidebar() {
       <div className="pt-4 flex flex-col items-center gap-3">
         <Link
           to="/"
-          className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-zinc-700/80 hover:border-amber-400 transition-colors group"
+          className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors group"
           title="Lead Engineer (Online)"
         >
           <img
@@ -106,7 +106,7 @@ export function DesktopSidebar() {
             alt="User Avatar"
             className="w-full h-full object-cover group-hover:scale-110 transition-transform"
           />
-          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#0F1014]" />
+          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-sidebar" />
         </Link>
       </div>
     </aside>

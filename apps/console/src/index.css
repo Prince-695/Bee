@@ -152,103 +152,87 @@
   background: #3f3f46;
 }
 
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(245, 158, 11, 0.45);
-  }
-}
-
-.pulse-glow {
-  animation: pulseGlow 2.5s ease-in-out infinite;
-}
-
-/* Skeuomorphic + Glassmorphism Fusion Design System */
+/* Minimalist, Sleek Engineering Design System */
+.minimal-card,
 .skeuo-glass-card {
-  background: color-mix(in srgb, var(--card) 80%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--card);
   border: 1px solid var(--border);
-  box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.4),
-    0 8px 32px 0 rgba(0, 0, 0, 0.35);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  transition: border-color 0.15s ease;
 }
 
+.minimal-card-hover:hover,
+.skeuo-glass-card:hover {
+  border-color: rgba(255, 178, 44, 0.35);
+}
+
+.minimal-deck,
 .skeuo-glass-deck {
-  background: color-mix(in srgb, var(--background) 72%, transparent);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 178, 44, 0.25);
-  box-shadow:
-    inset 0 1px 2px 0 rgba(255, 178, 44, 0.2),
-    inset 0 -2px 6px 0 rgba(0, 0, 0, 0.6),
-    0 12px 40px -4px rgba(0, 0, 0, 0.5),
-    0 0 25px rgba(255, 178, 44, 0.08);
-}
-
-.skeuo-button-primary {
-  background: linear-gradient(180deg, #FFC04D 0%, #FFB22C 48%, #E59816 100%);
-  color: #121316;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.5),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.25),
-    0 2px 6px rgba(0, 0, 0, 0.35),
-    0 0 18px rgba(255, 178, 44, 0.35);
-  transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.skeuo-button-primary:hover {
-  filter: brightness(1.05);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.6),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.2),
-    0 4px 12px rgba(0, 0, 0, 0.45),
-    0 0 24px rgba(255, 178, 44, 0.5);
-}
-.skeuo-button-primary:active {
-  transform: translateY(1px);
-  box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.35),
-    0 1px 2px rgba(0, 0, 0, 0.2),
-    0 0 10px rgba(255, 178, 44, 0.2);
-}
-
-.skeuo-button-secondary {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: var(--card);
   border: 1px solid var(--border);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.12),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.25);
-  transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.skeuo-button-secondary:hover {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
-  border-color: rgba(255, 178, 44, 0.4);
-}
-.skeuo-button-secondary:active {
-  transform: translateY(1px);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  border-radius: 1rem;
+  box-shadow: none;
 }
 
+.minimal-button-primary,
+.skeuo-button-primary {
+  background: #FFB22C;
+  color: #121316;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  box-shadow: none;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.minimal-button-primary:hover,
+.skeuo-button-primary:hover {
+  background: #FFA000;
+  box-shadow: none;
+  filter: none;
+}
+
+.minimal-button-primary:active,
+.skeuo-button-primary:active {
+  transform: none;
+  background: #E59000;
+  box-shadow: none;
+}
+
+.minimal-button-secondary,
+.skeuo-button-secondary {
+  background: var(--secondary);
+  color: var(--foreground);
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.minimal-button-secondary:hover,
+.skeuo-button-secondary:hover {
+  background: color-mix(in srgb, var(--secondary) 85%, var(--foreground));
+  border-color: rgba(255, 178, 44, 0.3);
+  box-shadow: none;
+}
+
+.minimal-button-secondary:active,
+.skeuo-button-secondary:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.minimal-terminal,
 .skeuo-inset-terminal {
-  background: #0B0C0E;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow:
-    inset 0 2px 8px rgba(0, 0, 0, 0.8),
-    inset 0 1px 2px rgba(0, 0, 0, 0.9),
-    0 1px 0 rgba(255, 255, 255, 0.04);
+  background: #0E0F12;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: none;
 }
 
 .honey-led-active {
-  box-shadow: 0 0 8px #FFB22C, 0 0 16px rgba(255, 178, 44, 0.6);
-  animation: pulseLed 1.8s ease-in-out infinite;
-}
-
-@keyframes pulseLed {
-  0%, 100% { opacity: 0.85; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 12px #FFB22C, 0 0 22px rgba(255, 178, 44, 0.85); }
+  background-color: #FFB22C;
+  box-shadow: none;
 }

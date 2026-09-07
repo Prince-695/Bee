@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Activity,
   Bot,
-  CheckCircle2,
   AlertTriangle,
   Play,
   RotateCcw,
@@ -17,11 +15,9 @@ import {
   ExternalLink,
   Check,
   X,
-  Smartphone,
   Cpu,
   Boxes,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   listApprovalGates,
   approveGate,
@@ -49,7 +45,7 @@ const FLEET_AGENTS = [
     state: "running",
     toolsUsed: 64,
     activeTask: "Running pytest on apps/api/tests",
-    icon: <Cpu className="w-4 h-4 text-amber-400" />,
+    icon: <Cpu className="w-4 h-4 text-amber-500" />,
   },
   {
     id: "fixer",
@@ -59,7 +55,7 @@ const FLEET_AGENTS = [
     state: "active",
     toolsUsed: 52,
     activeTask: "Synthesizing AST diff for security fix",
-    icon: <Zap className="w-4 h-4 text-primary fill-primary" />,
+    icon: <Zap className="w-4 h-4 text-primary" />,
   },
   {
     id: "guard",
@@ -98,75 +94,67 @@ interface MissionFlight {
 
 const INITIAL_MISSIONS: MissionFlight[] = [
   {
-    id: "fl_01",
-    routeId: "mission_auto_fr7y",
-    title: "Auto-Heal Failing Pytest in test_security_budget.py",
-    stage: "Fixer",
-    stageNum: 3,
+    id: "m-01",
+    routeId: "route-084",
+    title: "Sanitize XSS vectors & enforce timing-safe HMAC in auth middleware",
+    stage: "Tester",
+    stageNum: 2,
     status: "running",
-    duration: "24.2s",
-    filesTouched: "router_security.py (+8, -2)",
-    tokens: "4.8k tokens",
+    duration: "1m 12s",
+    filesTouched: "apps/api/src/bee_api/middleware.py (+14, -6)",
+    tokens: "48.2k tokens",
   },
   {
-    id: "fl_02",
-    routeId: "route_sec_audit_9",
-    title: "Zero-Leak Secret Redaction Ingress Scan",
-    stage: "Scribe",
-    stageNum: 5,
-    status: "completed",
-    duration: "14.2s",
-    filesTouched: "connection.py (0 secrets leaked)",
-    tokens: "3.2k tokens",
-  },
-  {
-    id: "fl_03",
-    routeId: "route_sentry_triage_4",
-    title: "Triage Sentry Ingress Crash: Auth Middleware Token Parser",
+    id: "m-02",
+    routeId: "route-083",
+    title: "Zero-Trust Approval Gate: Authorize Stripe webhook secret rotation",
     stage: "Guard",
     stageNum: 4,
     status: "gate_pending",
-    duration: "31.0s",
-    filesTouched: "auth_middleware.py (+15, -4)",
-    tokens: "6.9k tokens",
+    duration: "42s",
+    filesTouched: "apps/api/src/bee_api/routers/v1/router_billing.py (+28, -2)",
+    tokens: "31.5k tokens",
+  },
+  {
+    id: "m-03",
+    routeId: "route-082",
+    title: "Self-healing test retry for PostgreSQL asyncpg connection teardown",
+    stage: "Scribe",
+    stageNum: 5,
+    status: "completed",
+    duration: "3m 45s",
+    filesTouched: "packages/python/bee-core/src/bee_core/db/connection.py (+8, -1)",
+    tokens: "84.1k tokens",
   },
 ];
 
 export default function StatusPage() {
   const navigate = useNavigate();
   const [pendingGates, setPendingGates] = useState<ApprovalGateRecord[]>([]);
-  const [missions, setMissions] = useState<MissionFlight[]>(INITIAL_MISSIONS);
+  const [missions] = useState<MissionFlight[]>(INITIAL_MISSIONS);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [resolvedGateId, setResolvedGateId] = useState<string | null>(null);
 
   const fetchGates = useCallback(async () => {
     try {
-      const gates = await listApprovalGates(undefined, "pending").catch(() => []);
-      if (gates && gates.length > 0) {
-        setPendingGates(gates);
-      } else {
-        // High-fidelity fallback gate
-        setPendingGates([
-          {
-            gate_id: "gate_commit_991b",
-            route_id: "route_sentry_triage_4",
-            step_num: 4,
-            server: "git_agent",
-            tool: "git_commit",
-            args: {
-              branch: "fix/auth-middleware-crash",
-              files: ["auth_middleware.py", "test_auth_v1.py"],
-              message: "fix(auth): prevent null pointer on malformed bearer token",
-            },
-            action_summary: "Commit 2 modified files to branch fix/auth-middleware-crash",
-            status: "pending",
-            created_at: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
-            resolved_at: null,
-          },
-        ]);
-      }
+      const gates = await listApprovalGates();
+      setPendingGates(gates);
     } catch {
-      // Fallback
+      // Mock fallback if API offline
+      setPendingGates([
+        {
+          gate_id: "gate-sample-01",
+          route_id: "route-083",
+          step_num: 4,
+          server: "git",
+          tool: "git_commit_push",
+          action_summary: "Commit and push security patches to feat/auth-hardening",
+          args: { branch: "feat/auth-hardening", files: ["middleware.py"] },
+          status: "pending",
+          created_at: new Date().toISOString(),
+          resolved_at: null,
+        },
+      ]);
     }
   }, []);
 
@@ -174,75 +162,61 @@ export default function StatusPage() {
     fetchGates();
   }, [fetchGates]);
 
-  const handleApprove = async (gateId: string) => {
-    setResolvedGateId(gateId);
-    try {
-      await approveGate(gateId).catch(() => {});
-    } finally {
-      setTimeout(() => {
-        setPendingGates((prev) => prev.filter((g) => g.gate_id !== gateId));
-        setMissions((prev) =>
-          prev.map((m) =>
-            m.status === "gate_pending" ? { ...m, status: "completed", stage: "Scribe", stageNum: 5 } : m
-          )
-        );
-        setResolvedGateId(null);
-      }, 600);
-    }
-  };
-
-  const handleReject = async (gateId: string) => {
-    setResolvedGateId(gateId);
-    try {
-      await rejectGate(gateId).catch(() => {});
-    } finally {
-      setTimeout(() => {
-        setPendingGates((prev) => prev.filter((g) => g.gate_id !== gateId));
-        setMissions((prev) =>
-          prev.map((m) =>
-            m.status === "gate_pending" ? { ...m, status: "failed" } : m
-          )
-        );
-        setResolvedGateId(null);
-      }, 600);
-    }
-  };
-
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await fetchGates();
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
+  const handleApprove = async (gateId: string) => {
+    setResolvedGateId(gateId);
+    try {
+      await approveGate(gateId);
+    } catch {
+      // Local optimistic clearance
+    }
+    setTimeout(() => {
+      setPendingGates((prev) => prev.filter((g) => g.gate_id !== gateId));
+      setResolvedGateId(null);
+    }, 400);
+  };
+
+  const handleReject = async (gateId: string) => {
+    setResolvedGateId(gateId);
+    try {
+      await rejectGate(gateId);
+    } catch {
+      // Local optimistic clearance
+    }
+    setTimeout(() => {
+      setPendingGates((prev) => prev.filter((g) => g.gate_id !== gateId));
+      setResolvedGateId(null);
+    }, 400);
+  };
+
   return (
-    <div className="flex-1 h-full overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 font-sans bg-background text-foreground transition-colors duration-200">
-      {/* ─── 1. Cockpit Master Header ─── */}
-      <div className="skeuo-glass-card rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border border-border/70 shadow-lg">
-        <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shadow-[0_0_16px_rgba(255,178,44,0.25)]">
-            <Activity className="w-5 h-5" />
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* ─── 1. Header & Quick Flight Launch ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-foreground tracking-tight">
+              Mission Control
+            </h1>
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-secondary text-muted-foreground border border-border">
+              Fleet Active
+            </span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-foreground">
-                Autonomous Mission Control & Teammate Board
-              </h1>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 font-bold uppercase flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Fleet Active
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Real-time orchestration of specialized Bee agent swarms, active mission routes, and zero-trust approval gates.
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Orchestration of specialized agent swarms, flight routes, and zero-trust approval gates.
+          </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleRefresh}
-            className="skeuo-button-secondary text-xs px-3.5 py-2 rounded-xl text-muted-foreground hover:text-foreground font-medium flex items-center gap-1.5 transition-all cursor-pointer"
+            className="text-xs px-3 py-1.5 rounded-md border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
             title="Refresh Fleet Telemetry"
           >
             <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
@@ -251,15 +225,15 @@ export default function StatusPage() {
 
           <button
             onClick={() => navigate("/hooks")}
-            className="skeuo-button-secondary text-xs px-3.5 py-2 rounded-xl text-foreground font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+            className="text-xs px-3 py-1.5 rounded-md border border-border bg-card hover:bg-secondary text-foreground font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Radio className="w-3.5 h-3.5 text-primary" />
-            <span>Signal Simulator</span>
+            <span>Signals</span>
           </button>
 
           <button
             onClick={() => navigate("/chat")}
-            className="skeuo-button-primary text-xs px-4 py-2 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
+            className="minimal-button-primary text-xs px-3.5 py-1.5 rounded-md font-semibold flex items-center gap-1.5 cursor-pointer"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>Launch Flight</span>
@@ -267,141 +241,117 @@ export default function StatusPage() {
         </div>
       </div>
 
-      {/* ─── 2. Top Telemetry HUD Capsules ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* Capsule 1: Autonomous Fix Rate */}
-        <div className="skeuo-glass-card rounded-2xl p-4.5 border border-border/70 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+      {/* ─── 2. Top Telemetry Metrics Strip ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Metric 1: Autonomous Fix Rate */}
+        <div className="bg-card rounded-xl p-4 border border-border transition-colors hover:border-border/80">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
               Autonomous Fix Rate
             </span>
-            <Badge variant="outline" className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 border-emerald-500/30">
-              SELF-HEALING
-            </Badge>
+            <span className="text-[10px] font-mono text-emerald-500 font-semibold">
+              96.4%
+            </span>
           </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-black text-foreground font-mono">96.4%</span>
-            <span className="text-xs text-muted-foreground font-mono">54 / 56 resolved</span>
-          </div>
-          <div className="mt-3 h-1.5 w-full rounded-full bg-secondary/80 overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 w-[96.4%] rounded-full" />
+          <div className="text-2xl font-bold text-foreground font-mono">54 / 56</div>
+          <div className="mt-2 text-xs text-muted-foreground font-mono">
+            Self-healed without human intervention
           </div>
         </div>
 
-        {/* Capsule 2: Active Missions */}
-        <div className="skeuo-glass-card rounded-2xl p-4.5 border border-border/70 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              Mission Swarm
+        {/* Metric 2: Active Swarm */}
+        <div className="bg-card rounded-xl p-4 border border-border transition-colors hover:border-border/80">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              Active Flights
             </span>
-            <span className="flex items-center gap-1 text-[10px] text-primary font-mono font-bold">
-              <Radio className="w-3 h-3 animate-pulse" /> LIVE
-            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-black text-foreground font-mono">3 Active</span>
-            <span className="text-xs text-muted-foreground font-mono">12 today</span>
-          </div>
-          <div className="mt-3 flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>0 failing builds • 100% test pass</span>
+          <div className="text-2xl font-bold text-foreground font-mono">3 Active</div>
+          <div className="mt-2 text-xs text-muted-foreground font-mono">
+            12 flights completed today
           </div>
         </div>
 
-        {/* Capsule 3: Approval Gates */}
-        <div className="skeuo-glass-card rounded-2xl p-4.5 border border-border/70 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+        {/* Metric 3: Pending Approval Gates */}
+        <div className="bg-card rounded-xl p-4 border border-border transition-colors hover:border-border/80">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
               Pending Gates
             </span>
             {pendingGates.length > 0 ? (
-              <Badge variant="outline" className="text-[10px] font-mono text-amber-500 bg-amber-500/10 border-amber-500/30 font-bold">
-                ACTION REQUIRED
-              </Badge>
+              <span className="text-[10px] font-mono text-amber-500 font-bold">REQUIRED</span>
             ) : (
-              <Badge variant="outline" className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 border-emerald-500/30">
-                CLEARED
-              </Badge>
+              <span className="text-[10px] font-mono text-emerald-500 font-semibold">CLEARED</span>
             )}
           </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-black text-foreground font-mono">
-              {pendingGates.length} Gate{pendingGates.length === 1 ? "" : "s"}
-            </span>
-            <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
-              <Smartphone className="w-3 h-3 text-emerald-500" /> WhatsApp Synced
-            </span>
+          <div className="text-2xl font-bold text-foreground font-mono">
+            {pendingGates.length} Gate{pendingGates.length === 1 ? "" : "s"}
           </div>
-          <div className="mt-3 text-[10px] text-muted-foreground font-mono truncate">
-            {pendingGates.length > 0 ? "Awaiting engineer signature" : "All permissions authorized"}
+          <div className="mt-2 text-xs text-muted-foreground font-mono truncate">
+            {pendingGates.length > 0 ? "Awaiting engineer approval" : "All operations cleared"}
           </div>
         </div>
 
-        {/* Capsule 4: Fleet Spend & Latency */}
-        <div className="skeuo-glass-card rounded-2xl p-4.5 border border-border/70 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              Fleet Latency & Spend
+        {/* Metric 4: Fleet Latency & Spend */}
+        <div className="bg-card rounded-xl p-4 border border-border transition-colors hover:border-border/80">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              Avg Latency / Spend
             </span>
-            <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary bg-primary/10">
-              OPTIMIZED
-            </Badge>
+            <span className="text-[10px] font-mono text-primary font-semibold">$14.82 USD</span>
           </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-black text-foreground font-mono">18.4s</span>
-            <span className="text-xs text-emerald-500 font-mono font-bold">$14.82 USD</span>
-          </div>
-          <div className="mt-3 text-[10px] text-muted-foreground font-mono flex items-center justify-between">
-            <span>Gemini 2.5 Flash</span>
-            <span className="text-foreground font-semibold">1.48M Tokens</span>
+          <div className="text-2xl font-bold text-foreground font-mono">18.4s</div>
+          <div className="mt-2 text-xs text-muted-foreground font-mono">
+            1.48M tokens • Gemini 2.5 Flash
           </div>
         </div>
       </div>
 
       {/* ─── 3. Zero-Trust Approval Gate Resolution Banner (Urgent if pending) ─── */}
       {pendingGates.length > 0 && (
-        <div className="skeuo-glass-card rounded-2xl p-5 border-2 border-amber-500/50 shadow-[0_0_24px_rgba(255,178,44,0.15)] relative overflow-hidden animate-in fade-in duration-200">
+        <div className="bg-card rounded-xl p-4 border border-amber-500/40 relative overflow-hidden transition-all">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0 mt-0.5">
-                <AlertTriangle className="w-5 h-5" />
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shrink-0 mt-0.5">
+                <AlertTriangle className="w-4 h-4" />
               </div>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-500">
-                    Zero-Trust Approval Gate Required
+                  <span className="text-[11px] font-mono font-semibold uppercase tracking-wide text-amber-500">
+                    Approval Gate Required
                   </span>
-                  <Badge variant="outline" className="text-[10px] font-mono text-muted-foreground border-border">
+                  <span className="text-[10px] font-mono text-muted-foreground">
                     {pendingGates[0].server}.{pendingGates[0].tool}
-                  </Badge>
+                  </span>
                 </div>
-                <h3 className="text-sm font-bold text-foreground">
+                <h3 className="text-sm font-semibold text-foreground">
                   {pendingGates[0].action_summary}
                 </h3>
                 <p className="text-xs text-muted-foreground font-mono">
-                  Route ID: <span className="text-primary font-semibold">{pendingGates[0].route_id}</span> • Step #{pendingGates[0].step_num}
+                  Route: <span className="text-primary font-medium">{pendingGates[0].route_id}</span> • Step #{pendingGates[0].step_num}
                 </p>
               </div>
             </div>
 
             {/* Approval Decision Pushers */}
-            <div className="flex items-center gap-2.5 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => handleReject(pendingGates[0].gate_id)}
                 disabled={resolvedGateId === pendingGates[0].gate_id}
-                className="px-4 py-2 rounded-xl text-xs font-bold border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 <X className="w-3.5 h-3.5" />
-                <span>Reject & Abort</span>
+                <span>Reject</span>
               </button>
 
               <button
                 onClick={() => handleApprove(pendingGates[0].gate_id)}
                 disabled={resolvedGateId === pendingGates[0].gate_id}
-                className="skeuo-button-primary px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
+                className="minimal-button-primary px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 <Check className="w-3.5 h-3.5" />
-                <span>Approve & Execute</span>
+                <span>Approve & Run</span>
               </button>
             </div>
           </div>
@@ -413,61 +363,48 @@ export default function StatusPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bot className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-bold text-foreground">
-              Bee Agent Swarm Fleet (5 Specialized AI Workers)
-            </h3>
+            <h2 className="text-sm font-bold text-foreground">
+              AI Co-Engineer Fleet
+            </h2>
           </div>
           <span className="text-xs font-mono text-muted-foreground">
-            All agents synchronized via FastMCP Sidecar
+            5 workers connected
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {FLEET_AGENTS.map((agent) => (
             <div
               key={agent.id}
-              className="skeuo-glass-card rounded-2xl p-4 border border-border/60 hover:border-primary/40 transition-all flex flex-col justify-between space-y-3 group"
+              className="bg-card rounded-xl p-3.5 border border-border hover:border-primary/40 transition-colors flex flex-col justify-between space-y-2.5"
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="w-8 h-8 rounded-xl bg-secondary/80 border border-border/70 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-lg bg-secondary/80 border border-border flex items-center justify-center">
                     {agent.icon}
                   </div>
-                  <span
-                    className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
-                      agent.state === "running" || agent.state === "active"
-                        ? "bg-amber-500/15 border-amber-500/30 text-amber-500"
-                        : agent.state === "guarding"
-                        ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-500"
-                        : "bg-secondary border-border text-muted-foreground"
-                    }`}
-                  >
+                  <span className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground">
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
                         agent.state === "running" || agent.state === "active"
-                          ? "bg-amber-500 animate-pulse"
+                          ? "bg-amber-500"
                           : agent.state === "guarding"
-                          ? "bg-emerald-500 animate-pulse"
-                          : "bg-muted-foreground"
+                          ? "bg-emerald-500"
+                          : "bg-muted-foreground/50"
                       }`}
                     />
                     {agent.status}
                   </span>
                 </div>
 
-                <div className="font-bold text-sm text-foreground">{agent.name}</div>
+                <div className="font-semibold text-xs text-foreground">{agent.name}</div>
                 <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
                   {agent.role}
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-border/40 space-y-1">
-                <div className="text-[10px] text-muted-foreground font-mono truncate">
-                  {agent.activeTask}
-                </div>
-                <div className="text-[10px] font-mono text-primary font-semibold">
-                  {agent.toolsUsed} tool invocations today
-                </div>
+              <div className="pt-2 border-t border-border/40 text-[10px] text-muted-foreground font-mono truncate">
+                {agent.activeTask}
               </div>
             </div>
           ))}
@@ -479,74 +416,70 @@ export default function StatusPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-bold text-foreground">
-              Active Missions & Autonomous Flight Queue
-            </h3>
+            <h2 className="text-sm font-bold text-foreground">
+              Flight Queue
+            </h2>
           </div>
           <button
             onClick={() => navigate("/logs")}
-            className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
           >
-            <span>View All Flight Logs</span>
+            <span>View all logs</span>
             <ArrowRight className="w-3 h-3" />
           </button>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {missions.map((m) => (
             <div
               key={m.id}
-              className="skeuo-glass-card rounded-2xl p-4.5 border border-border/60 hover:border-primary/40 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+              className="bg-card rounded-xl p-3.5 sm:p-4 border border-border hover:border-primary/40 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-3"
             >
               {/* Mission Details */}
               <div className="space-y-1.5 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
+                  <span className="text-xs font-mono font-semibold text-primary">
                     {m.routeId}
                   </span>
                   {m.status === "completed" && (
-                    <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> COMPLETED
+                    <span className="text-[10px] font-medium text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">
+                      Completed
                     </span>
                   )}
                   {m.status === "running" && (
-                    <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Radio className="w-3 h-3 animate-pulse" /> EXECUTING ({m.stage})
+                    <span className="text-[10px] font-medium text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      Executing ({m.stage})
                     </span>
                   )}
                   {m.status === "gate_pending" && (
-                    <span className="text-[10px] font-bold text-amber-500 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" /> APPROVAL GATE PENDING
-                    </span>
-                  )}
-                  {m.status === "failed" && (
-                    <span className="text-[10px] font-bold text-red-500 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full">
-                      ABORTED
+                    <span className="text-[10px] font-medium text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+                      Approval Gate Pending
                     </span>
                   )}
                 </div>
 
-                <h4 className="text-sm font-bold text-foreground">{m.title}</h4>
+                <h3 className="text-xs sm:text-sm font-medium text-foreground">{m.title}</h3>
 
                 {/* Pipeline Progress Stages */}
-                <div className="flex items-center gap-2 pt-1 text-xs">
+                <div className="flex items-center gap-1.5 pt-0.5 text-xs">
                   {["Scout", "Tester", "Fixer", "Guard", "Scribe"].map((stg, i) => {
                     const isPassed = i + 1 < m.stageNum;
                     const isCurrent = i + 1 === m.stageNum;
                     return (
                       <div key={stg} className="flex items-center gap-1">
                         <span
-                          className={`text-[10px] font-mono px-2 py-0.5 rounded-md border ${
+                          className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
                             isPassed
-                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500 font-bold"
+                              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
                               : isCurrent
-                              ? "bg-primary/15 border-primary/40 text-primary font-bold shadow-[0_0_8px_rgba(255,178,44,0.3)]"
-                              : "bg-secondary/40 border-border/40 text-muted-foreground"
+                              ? "bg-primary/10 border-primary/30 text-primary font-semibold"
+                              : "bg-secondary/30 border-transparent text-muted-foreground/60"
                           }`}
                         >
                           {stg}
                         </span>
-                        {i < 4 && <span className="text-muted-foreground/40 text-[10px]">→</span>}
+                        {i < 4 && <span className="text-muted-foreground/30 text-[10px]">/</span>}
                       </div>
                     );
                   })}
@@ -554,20 +487,20 @@ export default function StatusPage() {
               </div>
 
               {/* Mission Stats & Actions */}
-              <div className="flex items-center justify-between lg:justify-end gap-4 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-border/40">
+              <div className="flex items-center justify-between lg:justify-end gap-3 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-border/40">
                 <div className="text-right text-xs font-mono space-y-0.5">
                   <div className="text-muted-foreground flex items-center gap-1 justify-end">
-                    <Clock className="w-3 h-3" /> {m.duration} • {m.tokens}
+                    <Clock className="w-3 h-3" /> {m.duration}
                   </div>
-                  <div className="text-foreground/90 font-medium">{m.filesTouched}</div>
+                  <div className="text-muted-foreground text-[11px]">{m.filesTouched}</div>
                 </div>
 
                 <button
                   onClick={() => navigate(`/route/${m.routeId}`)}
-                  className="skeuo-button-secondary text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer text-foreground hover:border-primary/40"
+                  className="text-xs px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-secondary text-foreground font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <span>Inspect Route</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-primary" />
+                  <span>Inspect</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
               </div>
             </div>
@@ -575,44 +508,44 @@ export default function StatusPage() {
         </div>
       </div>
 
-      {/* ─── 6. Quick Launch Scenario Deck ─── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+      {/* ─── 6. Quick Launch Scenarios ─── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
         <button
           onClick={() => navigate("/chat")}
-          className="skeuo-glass-card rounded-2xl p-4.5 border border-border/60 hover:border-primary/40 text-left transition-all group cursor-pointer"
+          className="bg-card rounded-xl p-3.5 border border-border hover:border-primary/40 text-left transition-colors cursor-pointer"
         >
-          <div className="flex items-center gap-2 mb-1.5 text-primary font-bold text-xs">
-            <Zap className="w-4 h-4" />
+          <div className="flex items-center gap-2 mb-1 text-primary font-semibold text-xs">
+            <Zap className="w-3.5 h-3.5" />
             <span>Auto-Fix Broken Tests</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Spawns Scout & Tester agents to reproduce failing pytest or vitest runs and apply AST patches.
+            Spawns Scout & Tester to reproduce failing test suites and synthesize AST patches.
           </p>
         </button>
 
         <button
           onClick={() => navigate("/hive")}
-          className="skeuo-glass-card rounded-2xl p-4.5 border border-border/60 hover:border-primary/40 text-left transition-all group cursor-pointer"
+          className="bg-card rounded-xl p-3.5 border border-border hover:border-primary/40 text-left transition-colors cursor-pointer"
         >
-          <div className="flex items-center gap-2 mb-1.5 text-primary font-bold text-xs">
-            <Boxes className="w-4 h-4" />
+          <div className="flex items-center gap-2 mb-1 text-primary font-semibold text-xs">
+            <Boxes className="w-3.5 h-3.5" />
             <span>Connect MCP Database</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Audit Postgres or SQLite schema migrations and execute zero-leak sanitized queries.
+            Inspect schema migrations and run zero-leak sanitized database queries.
           </p>
         </button>
 
         <button
           onClick={() => navigate("/hooks")}
-          className="skeuo-glass-card rounded-2xl p-4.5 border border-border/60 hover:border-primary/40 text-left transition-all group cursor-pointer"
+          className="bg-card rounded-xl p-3.5 border border-border hover:border-primary/40 text-left transition-colors cursor-pointer"
         >
-          <div className="flex items-center gap-2 mb-1.5 text-primary font-bold text-xs">
-            <Radio className="w-4 h-4" />
-            <span>Simulate GitHub PR Webhook</span>
+          <div className="flex items-center gap-2 mb-1 text-primary font-semibold text-xs">
+            <Radio className="w-3.5 h-3.5" />
+            <span>Simulate PR Webhook</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Dispatches a synthetic pull request signal to evaluate autonomous review and approval gates.
+            Dispatches synthetic pull request signals to test autonomous review and approval gates.
           </p>
         </button>
       </div>

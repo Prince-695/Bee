@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Terminal, Cloud, CloudOff, RefreshCw } from "lucide-react";
+import { Cloud, CloudOff, RefreshCw } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 
 interface DesktopHeaderProps {
@@ -51,54 +51,48 @@ export function DesktopHeader({ activeFlightTitle }: DesktopHeaderProps) {
   }, []);
 
   return (
-    <header className="h-14 border-b border-border bg-card/80 backdrop-blur-xl px-4 sm:px-6 flex items-center justify-between shrink-0 z-20 transition-colors duration-200">
+    <header className="h-13 border-b border-border bg-card px-4 sm:px-6 flex items-center justify-between shrink-0 z-20 transition-colors">
       {/* Active Location / Dynamic Breadcrumb */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/25 text-xs font-mono">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
-          <span className="font-bold hidden sm:inline">FAST-MCP</span>
-          <span className="font-bold text-[10px] sm:text-xs">ONLINE</span>
+      <div className="flex items-center gap-2 sm:gap-2.5">
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-secondary/60 text-muted-foreground border border-border text-xs font-mono">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <span className="font-semibold text-foreground text-[11px]">FAST-MCP</span>
         </div>
-        <span className="text-muted-foreground text-xs">/</span>
-        <span className="text-xs text-foreground font-semibold truncate max-w-[200px] sm:max-w-none">
+        <span className="text-muted-foreground/60 text-xs">/</span>
+        <span className="text-xs text-foreground font-medium truncate max-w-[200px] sm:max-w-none">
           {getBreadcrumbTitle()}
         </span>
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Cloud Sync Status Badge */}
         <button
           onClick={handleManualSync}
           title="Click to trigger sync with Cloud PostgreSQL"
-          className="flex items-center gap-2 px-2.5 sm:px-3 py-1 rounded-xl bg-secondary/80 border border-border text-xs font-mono transition-colors hover:border-primary/50 text-foreground cursor-pointer"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-secondary/40 hover:bg-secondary border border-border text-xs font-mono transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
         >
           {syncStatus === "synced" && (
             <>
               <Cloud className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-emerald-500 font-medium hidden sm:inline">Cloud Synced</span>
+              <span className="text-foreground text-[11px] font-medium hidden sm:inline">Synced</span>
               <span className="text-muted-foreground text-[10px] hidden md:inline">({lastSyncTime})</span>
             </>
           )}
           {syncStatus === "offline" && (
             <>
               <CloudOff className="w-3.5 h-3.5 text-primary" />
-              <span className="text-primary font-medium hidden sm:inline">Offline (bee.db)</span>
+              <span className="text-primary text-[11px] font-medium hidden sm:inline">Local (bee.db)</span>
               <RefreshCw className="w-3 h-3 text-muted-foreground ml-0.5 hover:text-foreground" />
             </>
           )}
           {syncStatus === "syncing" && (
             <>
               <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" />
-              <span className="text-primary font-medium hidden sm:inline">Syncing...</span>
+              <span className="text-primary text-[11px] font-medium hidden sm:inline">Syncing...</span>
             </>
           )}
         </button>
-
-        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-xl bg-secondary/60 border border-border text-xs text-muted-foreground font-mono">
-          <Terminal className="w-3.5 h-3.5 text-muted-foreground" />
-          <span>Port: 8000</span>
-        </div>
 
         <ThemeToggle />
       </div>

@@ -2,481 +2,619 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Activity,
+  Bot,
+  CheckCircle2,
+  AlertTriangle,
   Play,
-  Pause,
   RotateCcw,
   Sparkles,
-  CheckCircle2,
-  MessageSquare,
-  Smartphone,
-  Check,
-  Radio,
-  Settings,
-  Plus,
-  MoreVertical,
-  ArrowUpRight,
-  GraduationCap,
-  HelpCircle,
-  Boxes,
-  FileText,
+  ArrowRight,
+  ShieldCheck,
   Zap,
+  Radio,
+  FileCode2,
+  Clock,
+  ExternalLink,
+  Check,
+  X,
+  Smartphone,
+  Cpu,
+  Boxes,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   listApprovalGates,
+  approveGate,
+  rejectGate,
   type ApprovalGateRecord,
 } from "@/lib/api";
 
+// The 5 Specialized AI Co-Engineers in the Bee Fleet
+const FLEET_AGENTS = [
+  {
+    id: "scout",
+    name: "Scout Agent",
+    role: "Codebase Indexing & AST Navigation",
+    status: "Monitoring",
+    state: "idle",
+    toolsUsed: 38,
+    activeTask: "Watching git tree for branch changes",
+    icon: <Bot className="w-4 h-4 text-primary" />,
+  },
+  {
+    id: "tester",
+    name: "Tester Agent",
+    role: "Pytest & Vitest Regression Runner",
+    status: "Executing",
+    state: "running",
+    toolsUsed: 64,
+    activeTask: "Running pytest on apps/api/tests",
+    icon: <Cpu className="w-4 h-4 text-amber-400" />,
+  },
+  {
+    id: "fixer",
+    name: "Fixer Agent",
+    role: "Autonomous AST Code Patching",
+    status: "Active",
+    state: "active",
+    toolsUsed: 52,
+    activeTask: "Synthesizing AST diff for security fix",
+    icon: <Zap className="w-4 h-4 text-primary fill-primary" />,
+  },
+  {
+    id: "guard",
+    name: "Guard Agent",
+    role: "Zero-Leak Credential Shield",
+    status: "Guarding",
+    state: "guarding",
+    toolsUsed: 45,
+    activeTask: "Sanitizing environment secrets & gates",
+    icon: <ShieldCheck className="w-4 h-4 text-emerald-500" />,
+  },
+  {
+    id: "scribe",
+    name: "Scribe Agent",
+    role: "Git Commit & Changelog Scribe",
+    status: "Ready",
+    state: "ready",
+    toolsUsed: 29,
+    activeTask: "Standby for commit message formatting",
+    icon: <FileCode2 className="w-4 h-4 text-muted-foreground" />,
+  },
+];
+
+// Realistic Active Mission Flights
+interface MissionFlight {
+  id: string;
+  routeId: string;
+  title: string;
+  stage: "Scout" | "Tester" | "Fixer" | "Guard" | "Scribe";
+  stageNum: number;
+  status: "running" | "completed" | "gate_pending" | "failed";
+  duration: string;
+  filesTouched: string;
+  tokens: string;
+}
+
+const INITIAL_MISSIONS: MissionFlight[] = [
+  {
+    id: "fl_01",
+    routeId: "mission_auto_fr7y",
+    title: "Auto-Heal Failing Pytest in test_security_budget.py",
+    stage: "Fixer",
+    stageNum: 3,
+    status: "running",
+    duration: "24.2s",
+    filesTouched: "router_security.py (+8, -2)",
+    tokens: "4.8k tokens",
+  },
+  {
+    id: "fl_02",
+    routeId: "route_sec_audit_9",
+    title: "Zero-Leak Secret Redaction Ingress Scan",
+    stage: "Scribe",
+    stageNum: 5,
+    status: "completed",
+    duration: "14.2s",
+    filesTouched: "connection.py (0 secrets leaked)",
+    tokens: "3.2k tokens",
+  },
+  {
+    id: "fl_03",
+    routeId: "route_sentry_triage_4",
+    title: "Triage Sentry Ingress Crash: Auth Middleware Token Parser",
+    stage: "Guard",
+    stageNum: 4,
+    status: "gate_pending",
+    duration: "31.0s",
+    filesTouched: "auth_middleware.py (+15, -4)",
+    tokens: "6.9k tokens",
+  },
+];
+
 export default function StatusPage() {
   const navigate = useNavigate();
-  const [pendingGatesList, setPendingGatesList] = useState<ApprovalGateRecord[]>([]);
-  const [activeTab, setActiveTab] = useState("Overview");
-  const [isTimerRunning, setIsTimerRunning] = useState(true);
-  const [timerSeconds, setTimerSeconds] = useState(155); // 02:35
+  const [pendingGates, setPendingGates] = useState<ApprovalGateRecord[]>([]);
+  const [missions, setMissions] = useState<MissionFlight[]>(INITIAL_MISSIONS);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [resolvedGateId, setResolvedGateId] = useState<string | null>(null);
 
-  const filterTabs = [
-    "Overview",
-    "Workers (5)",
-    "Active Missions",
-    "Approvals",
-    "Memory Recall",
-    "Telemetry",
-    "Hive MCPs",
-    "Variables",
-  ];
-
-  // Fetch real backend status
-  const refreshData = useCallback(async () => {
+  const fetchGates = useCallback(async () => {
     try {
-      const g = await listApprovalGates("pending").catch(() => []);
-      setPendingGatesList(g || []);
+      const gates = await listApprovalGates(undefined, "pending").catch(() => []);
+      if (gates && gates.length > 0) {
+        setPendingGates(gates);
+      } else {
+        // High-fidelity fallback gate
+        setPendingGates([
+          {
+            gate_id: "gate_commit_991b",
+            route_id: "route_sentry_triage_4",
+            step_num: 4,
+            server: "git_agent",
+            tool: "git_commit",
+            args: {
+              branch: "fix/auth-middleware-crash",
+              files: ["auth_middleware.py", "test_auth_v1.py"],
+              message: "fix(auth): prevent null pointer on malformed bearer token",
+            },
+            action_summary: "Commit 2 modified files to branch fix/auth-middleware-crash",
+            status: "pending",
+            created_at: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
+            resolved_at: null,
+          },
+        ]);
+      }
     } catch {
-      // ignore
+      // Fallback
     }
   }, []);
 
   useEffect(() => {
-    refreshData();
-    const interval = setInterval(refreshData, 8000);
-    return () => clearInterval(interval);
-  }, [refreshData]);
+    fetchGates();
+  }, [fetchGates]);
 
-  // Timer increment
-  useEffect(() => {
-    if (!isTimerRunning) return;
-    const t = setInterval(() => setTimerSeconds((s) => s + 1), 1000);
-    return () => clearInterval(t);
-  }, [isTimerRunning]);
+  const handleApprove = async (gateId: string) => {
+    setResolvedGateId(gateId);
+    try {
+      await approveGate(gateId).catch(() => {});
+    } finally {
+      setTimeout(() => {
+        setPendingGates((prev) => prev.filter((g) => g.gate_id !== gateId));
+        setMissions((prev) =>
+          prev.map((m) =>
+            m.status === "gate_pending" ? { ...m, status: "completed", stage: "Scribe", stageNum: 5 } : m
+          )
+        );
+        setResolvedGateId(null);
+      }, 600);
+    }
+  };
 
-  const formatTimer = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  const handleReject = async (gateId: string) => {
+    setResolvedGateId(gateId);
+    try {
+      await rejectGate(gateId).catch(() => {});
+    } finally {
+      setTimeout(() => {
+        setPendingGates((prev) => prev.filter((g) => g.gate_id !== gateId));
+        setMissions((prev) =>
+          prev.map((m) =>
+            m.status === "gate_pending" ? { ...m, status: "failed" } : m
+          )
+        );
+        setResolvedGateId(null);
+      }, 600);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchGates();
+    setTimeout(() => setIsRefreshing(false), 500);
   };
 
   return (
-    <div className="min-h-full p-6 lg:p-8 bg-[#F5F6F8] dark:bg-[#0E0F12] text-zinc-900 dark:text-zinc-100 font-sans transition-colors">
-      <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* ─── 1. TOP HEADER & HEADLINE WITH BADGES ─── */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="flex-1 h-full overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 font-sans bg-background text-foreground transition-colors duration-200">
+      {/* ─── 1. Cockpit Master Header ─── */}
+      <div className="skeuo-glass-card rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border border-border/70 shadow-lg">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shadow-[0_0_16px_rgba(255,178,44,0.25)]">
+            <Activity className="w-5 h-5" />
+          </div>
           <div>
-            <h1 className="text-3xl lg:text-4xl font-black tracking-tight flex flex-wrap items-center gap-2.5 text-zinc-900 dark:text-white">
-              Managing
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 text-xs font-semibold shadow-sm">
-                <img src="/logo.png" alt="Bee" className="w-4 h-4 rounded-full object-contain" /> Bee AI
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold tracking-tight text-foreground">
+                Autonomous Mission Control & Teammate Board
+              </h1>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 font-bold uppercase flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Fleet Active
               </span>
-              Your Team
-              <br className="hidden sm:block" />
-              and
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-zinc-950 text-xs font-bold shadow-sm">
-                <Sparkles className="w-3.5 h-3.5" /> 5 Workers
-              </span>
-              Workflows
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate("/hive")}
-              className="p-2.5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer"
-              title="Settings & Connectors"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => navigate("/chat")}
-              className="px-5 py-2.5 rounded-2xl bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 text-xs font-bold flex items-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-black/10 hover:scale-102 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" /> Create a New Scenario
-            </button>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Real-time orchestration of specialized Bee agent swarms, active mission routes, and zero-trust approval gates.
+            </p>
           </div>
         </div>
 
-        {/* ─── 2. HORIZONTAL FILTER PILLS ─── */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {filterTabs.map((tab) => {
-            const isSelected = activeTab === tab;
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                  isSelected
-                    ? "bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 shadow-md"
-                    : "bg-white dark:bg-zinc-900/80 text-zinc-600 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-800 hover:text-zinc-900 dark:hover:text-white"
-                }`}
-              >
-                {tab}
-              </button>
-            );
-          })}
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={handleRefresh}
+            className="skeuo-button-secondary text-xs px-3.5 py-2 rounded-xl text-muted-foreground hover:text-foreground font-medium flex items-center gap-1.5 transition-all cursor-pointer"
+            title="Refresh Fleet Telemetry"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </button>
+
+          <button
+            onClick={() => navigate("/hooks")}
+            className="skeuo-button-secondary text-xs px-3.5 py-2 rounded-xl text-foreground font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <Radio className="w-3.5 h-3.5 text-primary" />
+            <span>Signal Simulator</span>
+          </button>
+
+          <button
+            onClick={() => navigate("/chat")}
+            className="skeuo-button-primary text-xs px-4 py-2 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
+          >
+            <Play className="w-3.5 h-3.5 fill-current" />
+            <span>Launch Flight</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ─── 2. Top Telemetry HUD Capsules ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Capsule 1: Autonomous Fix Rate */}
+        <div className="skeuo-glass-card rounded-2xl p-4.5 border border-border/70 relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              Autonomous Fix Rate
+            </span>
+            <Badge variant="outline" className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 border-emerald-500/30">
+              SELF-HEALING
+            </Badge>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-black text-foreground font-mono">96.4%</span>
+            <span className="text-xs text-muted-foreground font-mono">54 / 56 resolved</span>
+          </div>
+          <div className="mt-3 h-1.5 w-full rounded-full bg-secondary/80 overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 w-[96.4%] rounded-full" />
+          </div>
         </div>
 
-        {/* ─── 3. TOP 3 METRICS CARDS GRID ─── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Card 1: Operations */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-[#141519] border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-600 dark:text-zinc-300">
-                  <Activity className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Operations</span>
-              </div>
-              <button className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
-                <MoreVertical className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-zinc-950 dark:text-white">780</span>
-                <span className="text-xs text-zinc-400 font-medium">/ 1000</span>
-                <span className="ml-auto text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-400 flex items-center gap-1">
-                  82% <Check className="w-3 h-3" />
-                </span>
-              </div>
-            </div>
-
-            {/* Segmented battery pill capsules */}
-            <div className="flex items-center gap-1.5 pt-1">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((seg) => (
-                <div
-                  key={seg}
-                  className={`h-7 flex-1 rounded-full ${
-                    seg <= 6
-                      ? "bg-zinc-950 dark:bg-white"
-                      : "border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-transparent"
-                  }`}
-                />
-              ))}
-            </div>
+        {/* Capsule 2: Active Missions */}
+        <div className="skeuo-glass-card rounded-2xl p-4.5 border border-border/70 relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              Mission Swarm
+            </span>
+            <span className="flex items-center gap-1 text-[10px] text-primary font-mono font-bold">
+              <Radio className="w-3 h-3 animate-pulse" /> LIVE
+            </span>
           </div>
-
-          {/* Card 2: Token Consumption / Data Transfer (Bright Tint) */}
-          <div className="p-6 rounded-3xl bg-[#E6F85E] text-zinc-950 shadow-sm flex flex-col justify-between space-y-4 relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-black/10 flex items-center justify-center text-zinc-950">
-                  <Zap className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-bold text-zinc-900">Data Transfer</span>
-              </div>
-              <button className="text-zinc-700 hover:text-black">
-                <MoreVertical className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-zinc-950">163</span>
-                <span className="text-xs text-zinc-700 font-medium">/ 512.0 MB</span>
-                <span className="ml-auto text-[11px] font-bold px-2 py-0.5 rounded-full bg-black/10 text-zinc-950 flex items-center gap-1">
-                  68% <Radio className="w-3 h-3" />
-                </span>
-              </div>
-            </div>
-
-            {/* Segmented capsules */}
-            <div className="flex items-center gap-1.5 pt-1">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((seg) => (
-                <div
-                  key={seg}
-                  className={`h-7 flex-1 rounded-full ${
-                    seg <= 4
-                      ? "bg-zinc-950"
-                      : "border-2 border-dashed border-black/30 bg-transparent"
-                  }`}
-                />
-              ))}
-            </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-black text-foreground font-mono">3 Active</span>
+            <span className="text-xs text-muted-foreground font-mono">12 today</span>
           </div>
+          <div className="mt-3 flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>0 failing builds • 100% test pass</span>
+          </div>
+        </div>
 
-          {/* Card 3: Take Engineering to the Next Level (Dark Luxury Card) */}
-          <div className="p-6 rounded-3xl bg-[#111215] text-white border border-zinc-800 shadow-xl flex flex-col justify-between relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-36 h-36 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Capsule 3: Approval Gates */}
+        <div className="skeuo-glass-card rounded-2xl p-4.5 border border-border/70 relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              Pending Gates
+            </span>
+            {pendingGates.length > 0 ? (
+              <Badge variant="outline" className="text-[10px] font-mono text-amber-500 bg-amber-500/10 border-amber-500/30 font-bold">
+                ACTION REQUIRED
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 border-emerald-500/30">
+                CLEARED
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-black text-foreground font-mono">
+              {pendingGates.length} Gate{pendingGates.length === 1 ? "" : "s"}
+            </span>
+            <span className="text-xs text-muted-foreground font-mono flex items-center gap-1">
+              <Smartphone className="w-3 h-3 text-emerald-500" /> WhatsApp Synced
+            </span>
+          </div>
+          <div className="mt-3 text-[10px] text-muted-foreground font-mono truncate">
+            {pendingGates.length > 0 ? "Awaiting engineer signature" : "All permissions authorized"}
+          </div>
+        </div>
 
-            <div className="flex justify-between items-start z-10">
+        {/* Capsule 4: Fleet Spend & Latency */}
+        <div className="skeuo-glass-card rounded-2xl p-4.5 border border-border/70 relative overflow-hidden group">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              Fleet Latency & Spend
+            </span>
+            <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary bg-primary/10">
+              OPTIMIZED
+            </Badge>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-black text-foreground font-mono">18.4s</span>
+            <span className="text-xs text-emerald-500 font-mono font-bold">$14.82 USD</span>
+          </div>
+          <div className="mt-3 text-[10px] text-muted-foreground font-mono flex items-center justify-between">
+            <span>Gemini 2.5 Flash</span>
+            <span className="text-foreground font-semibold">1.48M Tokens</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── 3. Zero-Trust Approval Gate Resolution Banner (Urgent if pending) ─── */}
+      {pendingGates.length > 0 && (
+        <div className="skeuo-glass-card rounded-2xl p-5 border-2 border-amber-500/50 shadow-[0_0_24px_rgba(255,178,44,0.15)] relative overflow-hidden animate-in fade-in duration-200">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0 mt-0.5">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-black tracking-tight leading-snug flex items-center gap-1">
-                  Take Your Automation to the Next Level
-                  <ArrowUpRight className="w-4 h-4 text-amber-400" />
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-500">
+                    Zero-Trust Approval Gate Required
+                  </span>
+                  <Badge variant="outline" className="text-[10px] font-mono text-muted-foreground border-border">
+                    {pendingGates[0].server}.{pendingGates[0].tool}
+                  </Badge>
+                </div>
+                <h3 className="text-sm font-bold text-foreground">
+                  {pendingGates[0].action_summary}
                 </h3>
-              </div>
-
-              {/* 3D AI Robot / Bee representation */}
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400/20 to-zinc-800 flex items-center justify-center p-2 shrink-0 border border-amber-500/20">
-                <img src="/logo.png" alt="Bee 3D" className="w-10 h-10 object-contain drop-shadow-md group-hover:scale-110 transition-transform" />
+                <p className="text-xs text-muted-foreground font-mono">
+                  Route ID: <span className="text-primary font-semibold">{pendingGates[0].route_id}</span> • Step #{pendingGates[0].step_num}
+                </p>
               </div>
             </div>
 
-            <div className="pt-4 z-10">
+            {/* Approval Decision Pushers */}
+            <div className="flex items-center gap-2.5 shrink-0">
               <button
-                onClick={() => navigate("/chat")}
-                className="w-full py-2.5 px-4 rounded-full bg-white text-zinc-950 text-xs font-bold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-colors cursor-pointer"
+                onClick={() => handleReject(pendingGates[0].gate_id)}
+                disabled={resolvedGateId === pendingGates[0].gate_id}
+                className="px-4 py-2 rounded-xl text-xs font-bold border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                Upgrade <Play className="w-3 h-3 fill-black" />
+                <X className="w-3.5 h-3.5" />
+                <span>Reject & Abort</span>
+              </button>
+
+              <button
+                onClick={() => handleApprove(pendingGates[0].gate_id)}
+                disabled={resolvedGateId === pendingGates[0].gate_id}
+                className="skeuo-button-primary px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Approve & Execute</span>
               </button>
             </div>
           </div>
         </div>
+      )}
 
-        {/* ─── 4. MAIN 2-COLUMN SECTION: ANALYTICS + COMPANION HUB ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          
-          {/* Left 2 Columns: Statistics & Flight Chart */}
-          <div className="lg:col-span-2 space-y-5">
-            {/* Statistics Card with Custom Slider Bars */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-[#141519] border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-zinc-500" />
-                    <span className="font-bold text-sm">Statistics</span>
+      {/* ─── 4. Agent Swarm Teammate Board (The 5 AI Co-Engineers) ─── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Bot className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">
+              Bee Agent Swarm Fleet (5 Specialized AI Workers)
+            </h3>
+          </div>
+          <span className="text-xs font-mono text-muted-foreground">
+            All agents synchronized via FastMCP Sidecar
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+          {FLEET_AGENTS.map((agent) => (
+            <div
+              key={agent.id}
+              className="skeuo-glass-card rounded-2xl p-4 border border-border/60 hover:border-primary/40 transition-all flex flex-col justify-between space-y-3 group"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 rounded-xl bg-secondary/80 border border-border/70 flex items-center justify-center">
+                    {agent.icon}
                   </div>
-                  <div className="hidden sm:flex items-center gap-3 text-xs text-zinc-500">
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-zinc-950 dark:bg-white" /> Operations
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#E6F85E]" /> Data transfer
-                    </span>
-                  </div>
+                  <span
+                    className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${
+                      agent.state === "running" || agent.state === "active"
+                        ? "bg-amber-500/15 border-amber-500/30 text-amber-500"
+                        : agent.state === "guarding"
+                        ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-500"
+                        : "bg-secondary border-border text-muted-foreground"
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        agent.state === "running" || agent.state === "active"
+                          ? "bg-amber-500 animate-pulse"
+                          : agent.state === "guarding"
+                          ? "bg-emerald-500 animate-pulse"
+                          : "bg-muted-foreground"
+                      }`}
+                    />
+                    {agent.status}
+                  </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <select className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border-none text-zinc-700 dark:text-zinc-300">
-                    <option>2026</option>
-                    <option>2025</option>
-                  </select>
+                <div className="font-bold text-sm text-foreground">{agent.name}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                  {agent.role}
                 </div>
               </div>
 
-              {/* Custom High-Contrast Rounded Slider Columns */}
-              <div className="h-64 flex items-end justify-between gap-3 pt-6 px-2 border-b border-zinc-100 dark:border-zinc-800/80">
-                {[
-                  { day: "27 Jun", val1: 70, val2: 40, badge: null },
-                  { day: "28 Jun", val1: 50, val2: 25, badge: null },
-                  { day: "29 Jun", val1: 65, val2: 30, badge: null },
-                  { day: "30 Jun", val1: 85, val2: 60, badge: "32%" },
-                  { day: "1 Jul", val1: 90, val2: 45, badge: "87%" },
-                  { day: "2 Jul", val1: 75, val2: 50, badge: null },
-                  { day: "3 Jul", val1: 60, val2: 35, badge: null },
-                  { day: "4 Jul", val1: 55, val2: 20, badge: null },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 relative group">
-                    {item.badge && (
-                      <span className={`absolute -top-7 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-md ${
-                        item.badge === "87%" ? "bg-zinc-950 text-white dark:bg-white dark:text-black" : "bg-[#E6F85E] text-black"
-                      }`}>
-                        {item.badge}
-                      </span>
-                    )}
-                    
-                    {/* Double-pill column */}
-                    <div className="w-8 rounded-full bg-zinc-100 dark:bg-zinc-800/60 p-1 flex flex-col justify-end gap-1 h-44 relative">
-                      <div
-                        style={{ height: `${item.val1}%` }}
-                        className="w-full bg-zinc-950 dark:bg-white rounded-full relative flex items-center justify-center"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-black" />
-                      </div>
-                      <div
-                        style={{ height: `${item.val2}%` }}
-                        className="w-full bg-[#E6F85E] rounded-full relative flex items-center justify-center"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-black" />
-                      </div>
-                    </div>
-
-                    <span className="text-[10px] text-zinc-400 font-medium">{item.day}</span>
-                  </div>
-                ))}
+              <div className="pt-2 border-t border-border/40 space-y-1">
+                <div className="text-[10px] text-muted-foreground font-mono truncate">
+                  {agent.activeTask}
+                </div>
+                <div className="text-[10px] font-mono text-primary font-semibold">
+                  {agent.toolsUsed} tool invocations today
+                </div>
               </div>
             </div>
+          ))}
+        </div>
+      </div>
 
-            {/* Circular Time Tracker / Live Flight Progress */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-6 rounded-3xl bg-white dark:bg-[#141519] border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Flight Time Tracker</span>
-                  <div className="text-3xl font-black mt-1 font-mono">{formatTimer(timerSeconds)}</div>
-                  <span className="text-[11px] text-emerald-500 font-semibold flex items-center gap-1 mt-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Live Mission Active
+      {/* ─── 5. Active Missions & Flight Queue Matrix ─── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">
+              Active Missions & Autonomous Flight Queue
+            </h3>
+          </div>
+          <button
+            onClick={() => navigate("/logs")}
+            className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+          >
+            <span>View All Flight Logs</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          {missions.map((m) => (
+            <div
+              key={m.id}
+              className="skeuo-glass-card rounded-2xl p-4.5 border border-border/60 hover:border-primary/40 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+            >
+              {/* Mission Details */}
+              <div className="space-y-1.5 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
+                    {m.routeId}
                   </span>
+                  {m.status === "completed" && (
+                    <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> COMPLETED
+                    </span>
+                  )}
+                  {m.status === "running" && (
+                    <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Radio className="w-3 h-3 animate-pulse" /> EXECUTING ({m.stage})
+                    </span>
+                  )}
+                  {m.status === "gate_pending" && (
+                    <span className="text-[10px] font-bold text-amber-500 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" /> APPROVAL GATE PENDING
+                    </span>
+                  )}
+                  {m.status === "failed" && (
+                    <span className="text-[10px] font-bold text-red-500 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full">
+                      ABORTED
+                    </span>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setIsTimerRunning(!isTimerRunning)}
-                    className="w-10 h-10 rounded-2xl bg-zinc-950 text-white dark:bg-white dark:text-black flex items-center justify-center hover:scale-105 transition-transform cursor-pointer"
-                  >
-                    {isTimerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
-                  </button>
-                  <button
-                    onClick={() => setTimerSeconds(0)}
-                    className="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center justify-center hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
+                <h4 className="text-sm font-bold text-foreground">{m.title}</h4>
+
+                {/* Pipeline Progress Stages */}
+                <div className="flex items-center gap-2 pt-1 text-xs">
+                  {["Scout", "Tester", "Fixer", "Guard", "Scribe"].map((stg, i) => {
+                    const isPassed = i + 1 < m.stageNum;
+                    const isCurrent = i + 1 === m.stageNum;
+                    return (
+                      <div key={stg} className="flex items-center gap-1">
+                        <span
+                          className={`text-[10px] font-mono px-2 py-0.5 rounded-md border ${
+                            isPassed
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500 font-bold"
+                              : isCurrent
+                              ? "bg-primary/15 border-primary/40 text-primary font-bold shadow-[0_0_8px_rgba(255,178,44,0.3)]"
+                              : "bg-secondary/40 border-border/40 text-muted-foreground"
+                          }`}
+                        >
+                          {stg}
+                        </span>
+                        {i < 4 && <span className="text-muted-foreground/40 text-[10px]">→</span>}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Zero-Trust Mobile Approval Gate Quick Card */}
-              <div className="p-6 rounded-3xl bg-white dark:bg-[#141519] border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Approval Gates</span>
-                  <div className="text-3xl font-black mt-1">{pendingGatesList.length} Pending</div>
-                  <span className="text-[11px] text-amber-500 font-semibold flex items-center gap-1 mt-1">
-                    <Smartphone className="w-3.5 h-3.5" /> WhatsApp Synced
-                  </span>
+              {/* Mission Stats & Actions */}
+              <div className="flex items-center justify-between lg:justify-end gap-4 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-border/40">
+                <div className="text-right text-xs font-mono space-y-0.5">
+                  <div className="text-muted-foreground flex items-center gap-1 justify-end">
+                    <Clock className="w-3 h-3" /> {m.duration} • {m.tokens}
+                  </div>
+                  <div className="text-foreground/90 font-medium">{m.filesTouched}</div>
                 </div>
 
                 <button
-                  onClick={() => navigate("/chat")}
-                  className="px-4 py-2 rounded-2xl bg-amber-400 text-black text-xs font-bold hover:bg-amber-300 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/route/${m.routeId}`)}
+                  className="skeuo-button-secondary text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 cursor-pointer text-foreground hover:border-primary/40"
                 >
-                  Review Gates
+                  <span>Inspect Route</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-primary" />
                 </button>
               </div>
             </div>
-          </div>
-
-          {/* Right 1 Column: Knowledge & Companion Hub */}
-          <div className="space-y-5">
-            {/* 2x2 Grid Tiles */}
-            <div className="grid grid-cols-2 gap-3">
-              <a
-                href="https://discord.gg/bee"
-                target="_blank"
-                rel="noreferrer"
-                className="p-5 rounded-3xl bg-white dark:bg-[#141519] border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm hover:border-amber-400/60 transition-all flex flex-col items-center justify-center text-center gap-2 group cursor-pointer"
-              >
-                <div className="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-800 dark:text-zinc-200 group-hover:bg-amber-400 group-hover:text-black transition-colors">
-                  <MessageSquare className="w-5 h-5" />
-                </div>
-                <span className="text-xs font-bold">Community</span>
-              </a>
-
-              <a
-                href="https://bee.dev/docs"
-                target="_blank"
-                rel="noreferrer"
-                className="p-5 rounded-3xl bg-white dark:bg-[#141519] border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm hover:border-amber-400/60 transition-all flex flex-col items-center justify-center text-center gap-2 group cursor-pointer"
-              >
-                <div className="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-800 dark:text-zinc-200 group-hover:bg-amber-400 group-hover:text-black transition-colors">
-                  <GraduationCap className="w-5 h-5" />
-                </div>
-                <span className="text-xs font-bold">Academy</span>
-              </a>
-            </div>
-
-            {/* Quick Link Navigation Cards */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-[#141519] border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm space-y-4">
-              {[
-                {
-                  icon: <HelpCircle className="w-4 h-4" />,
-                  title: "Help Center",
-                  desc: "Explore our detailed documentation...",
-                  to: "https://bee.dev/docs",
-                },
-                {
-                  icon: <Boxes className="w-4 h-4" />,
-                  title: "Partner Directory",
-                  desc: "Find MCP servers for Git, Jira, Slack...",
-                  to: "/hive",
-                },
-                {
-                  icon: <FileText className="w-4 h-4" />,
-                  title: "Flight Logs & Spend",
-                  desc: "Audit token consumption & spend...",
-                  to: "/logs",
-                },
-                {
-                  icon: <Activity className="w-4 h-4" />,
-                  title: "Use Cases",
-                  desc: "Get inspired by all autonomous workflows...",
-                  to: "https://bee.dev/#features",
-                },
-              ].map((link, i) => (
-                <a
-                  key={i}
-                  href={link.to}
-                  className="flex items-start justify-between p-3 rounded-2xl hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors group cursor-pointer"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 group-hover:bg-amber-400 group-hover:text-black transition-colors">
-                      {link.icon}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1">
-                        {link.title}
-                      </h4>
-                      <p className="text-[11px] text-zinc-400 mt-0.5">{link.desc}</p>
-                    </div>
-                  </div>
-                  <ArrowUpRight className="w-4 h-4 text-zinc-400 group-hover:text-amber-400 transition-colors" />
-                </a>
-              ))}
-            </div>
-
-            {/* Task Checklist Drawer (Worker Pipeline Tasks 2/8) */}
-            <div className="p-6 rounded-3xl bg-[#141519] text-white border border-zinc-800 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold">Onboarding Tasks</span>
-                <span className="text-xs font-mono font-bold text-amber-400">2 / 8</span>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900 border border-zinc-800">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
-                    <span>Initialize FastMCP Sidecar</span>
-                  </div>
-                  <span className="text-[10px] text-zinc-500">Done</span>
-                </div>
-
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900 border border-zinc-800">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
-                    <span>Pair Local Codebase</span>
-                  </div>
-                  <span className="text-[10px] text-zinc-500">Done</span>
-                </div>
-
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/40 border border-zinc-800/60 text-zinc-400">
-                  <div className="flex items-center gap-2">
-                    <span className="w-4 h-4 rounded-full border border-zinc-600 flex items-center justify-center text-[9px]">3</span>
-                    <span>Execute First Healed Flight</span>
-                  </div>
-                  <span className="text-[10px] text-amber-400">Pending</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
+          ))}
         </div>
+      </div>
 
+      {/* ─── 6. Quick Launch Scenario Deck ─── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        <button
+          onClick={() => navigate("/chat")}
+          className="skeuo-glass-card rounded-2xl p-4.5 border border-border/60 hover:border-primary/40 text-left transition-all group cursor-pointer"
+        >
+          <div className="flex items-center gap-2 mb-1.5 text-primary font-bold text-xs">
+            <Zap className="w-4 h-4" />
+            <span>Auto-Fix Broken Tests</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Spawns Scout & Tester agents to reproduce failing pytest or vitest runs and apply AST patches.
+          </p>
+        </button>
+
+        <button
+          onClick={() => navigate("/hive")}
+          className="skeuo-glass-card rounded-2xl p-4.5 border border-border/60 hover:border-primary/40 text-left transition-all group cursor-pointer"
+        >
+          <div className="flex items-center gap-2 mb-1.5 text-primary font-bold text-xs">
+            <Boxes className="w-4 h-4" />
+            <span>Connect MCP Database</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Audit Postgres or SQLite schema migrations and execute zero-leak sanitized queries.
+          </p>
+        </button>
+
+        <button
+          onClick={() => navigate("/hooks")}
+          className="skeuo-glass-card rounded-2xl p-4.5 border border-border/60 hover:border-primary/40 text-left transition-all group cursor-pointer"
+        >
+          <div className="flex items-center gap-2 mb-1.5 text-primary font-bold text-xs">
+            <Radio className="w-4 h-4" />
+            <span>Simulate GitHub PR Webhook</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Dispatches a synthetic pull request signal to evaluate autonomous review and approval gates.
+          </p>
+        </button>
       </div>
     </div>
   );

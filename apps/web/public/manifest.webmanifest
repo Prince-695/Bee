@@ -1,0 +1,21 @@
+{
+  "name": "Bee Autonomous Co-Engineer",
+  "short_name": "Bee",
+  "description": "The autonomous AI co-engineer platform for production software codebases.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121316",
+  "theme_color": "#FFB22C",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

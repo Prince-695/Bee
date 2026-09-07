@@ -60,7 +60,15 @@ export function WebFooter() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-zinc-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
           <div>
-            © 2026 Bee Inc. All rights reserved. Designed for elite engineering teams.
+            © 2026 Bee Inc. All rights reserved. Zero-Retention Autonomous AI Co-Engineer.
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4 text-xs">
+            <Link to="/privacy" className="hover:text-amber-400 transition-colors">Privacy Policy</Link>
+            <span>•</span>
+            <Link to="/terms" className="hover:text-amber-400 transition-colors">Terms of Service</Link>
+            <span>•</span>
+            <Link to="/security" className="hover:text-amber-400 transition-colors">Security</Link>
           </div>
 
           <div className="flex items-center gap-6">

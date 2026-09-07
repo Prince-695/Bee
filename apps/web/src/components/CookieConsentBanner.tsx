@@ -38,37 +38,37 @@ export function CookieConsentBanner() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-50 animate-in slide-in-from-bottom-5 duration-300">
-      <div className="skeuo-glass-deck rounded-2xl p-5 border border-primary/40 shadow-2xl space-y-3.5">
+    <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:max-w-md z-50 animate-in slide-in-from-bottom-5 duration-200">
+      <div className="bg-card rounded-xl p-4 border border-border space-y-3">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2 text-primary font-bold text-xs">
-            <Shield className="w-4 h-4" />
-            <span>Zero-Retention Privacy & Cookie Governance</span>
+          <div className="flex items-center gap-2 text-foreground font-semibold text-xs">
+            <Shield className="w-3.5 h-3.5 text-primary" />
+            <span>Cookie & Privacy Preferences</span>
           </div>
           <button
             onClick={handleNecessaryOnly}
             className="text-muted-foreground hover:text-foreground"
             title="Dismiss"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
 
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Bee uses strictly functional session tokens and anonymous performance telemetry to power autonomous agent swarms. We never sell your data or profile codebases for ads. Read our{" "}
+          Bee uses strictly functional session tokens and anonymous performance telemetry to power autonomous agent swarms. Read our{" "}
           <Link to="/privacy" className="text-primary hover:underline font-medium">
             Privacy Policy
           </Link>.
         </p>
 
         {isCustomizing ? (
-          <div className="pt-2 border-t border-border/50 space-y-2 text-xs">
-            <label className="flex items-center justify-between text-muted-foreground">
-              <span>Essential Session Authentication</span>
+          <div className="space-y-2 pt-2 border-t border-border/60 text-xs">
+            <label className="flex items-center justify-between text-foreground">
+              <span>Strictly Essential (Sessions & Auth)</span>
               <input type="checkbox" checked disabled className="accent-primary" />
             </label>
             <label className="flex items-center justify-between text-foreground">
-              <span>Functional Theme & Layout Cache</span>
+              <span>FastMCP Sidecar Diagnostics</span>
               <input
                 type="checkbox"
                 checked={preferences.functional}
@@ -88,17 +88,17 @@ export function CookieConsentBanner() {
             <div className="pt-2 flex items-center justify-end gap-2">
               <button
                 onClick={handleSaveCustom}
-                className="skeuo-button-primary text-xs px-3.5 py-1.5 rounded-xl font-bold"
+                className="minimal-button-primary text-xs px-3 py-1.5 rounded-lg font-semibold"
               >
                 Save Preferences
               </button>
             </div>
           </div>
         ) : (
-          <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/40">
+          <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-border/60">
             <button
               onClick={() => setIsCustomizing(true)}
-              className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium"
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium cursor-pointer"
             >
               <Sliders className="w-3 h-3" />
               <span>Customize</span>
@@ -107,13 +107,13 @@ export function CookieConsentBanner() {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleNecessaryOnly}
-                className="skeuo-button-secondary text-xs px-3 py-1.5 rounded-xl font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
+                className="text-xs px-3 py-1.5 rounded-lg border border-border bg-secondary/50 hover:bg-secondary text-foreground font-medium cursor-pointer transition-colors"
               >
                 Essential Only
               </button>
               <button
                 onClick={handleAcceptAll}
-                className="skeuo-button-primary text-xs px-3.5 py-1.5 rounded-xl font-bold flex items-center gap-1 cursor-pointer"
+                className="minimal-button-primary text-xs px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1 cursor-pointer"
               >
                 <Check className="w-3 h-3" />
                 <span>Accept All</span>

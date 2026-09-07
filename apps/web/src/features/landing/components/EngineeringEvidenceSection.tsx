@@ -64,12 +64,12 @@ export function EngineeringEvidenceSection() {
   const [selectedCase, setSelectedCase] = useState<EvidenceItem>(EVIDENCE_ITEMS[0]);
 
   return (
-    <section className="py-24 px-6 max-w-7xl mx-auto space-y-12 relative z-10">
-      <div className="text-center space-y-4 max-w-2xl mx-auto">
-        <span className="text-xs font-mono font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/25 uppercase tracking-wider">
+    <section className="py-20 px-6 max-w-6xl mx-auto space-y-10 relative z-10">
+      <div className="text-center space-y-3 max-w-xl mx-auto">
+        <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-md bg-secondary text-foreground border border-border uppercase tracking-wider">
           Empirical Engineering Evidence
         </span>
-        <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-foreground">
+        <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-foreground">
           Autonomous Self-Healing in Action.
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground">
@@ -77,16 +77,16 @@ export function EngineeringEvidenceSection() {
         </p>
       </div>
 
-      {/* Case Selector Pills */}
-      <div className="flex flex-wrap items-center justify-center gap-2.5">
+      {/* Case Selector Tabs */}
+      <div className="flex flex-wrap items-center justify-center gap-2">
         {EVIDENCE_ITEMS.map((item) => (
           <button
             key={item.id}
             onClick={() => setSelectedCase(item)}
-            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer border ${
               selectedCase.id === item.id
-                ? "skeuo-button-primary text-primary-foreground shadow-md"
-                : "skeuo-button-secondary text-muted-foreground hover:text-foreground"
+                ? "bg-card border-primary text-primary font-semibold"
+                : "bg-card/40 border-border text-muted-foreground hover:text-foreground hover:border-border/80"
             }`}
           >
             {item.repo}
@@ -95,54 +95,54 @@ export function EngineeringEvidenceSection() {
       </div>
 
       {/* Interactive Remediated Case Deck */}
-      <div className="skeuo-glass-deck rounded-3xl p-6 sm:p-8 border border-border/70 space-y-6 shadow-2xl">
+      <div className="bg-card rounded-2xl p-6 sm:p-8 border border-border space-y-6">
         {/* Case Meta Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/60">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
+              <span className="text-[11px] font-mono font-semibold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
                 RESOLVED RUNTIME CRASH
               </span>
               <span className="text-xs font-mono text-muted-foreground">
                 Target: {selectedCase.file}
               </span>
             </div>
-            <h3 className="text-sm sm:text-base font-bold text-foreground font-mono">
+            <h3 className="text-xs sm:text-sm font-semibold text-foreground font-mono">
               {selectedCase.error}
             </h3>
           </div>
 
-          <div className="flex items-center gap-3 text-xs font-mono text-muted-foreground shrink-0">
+          <div className="flex items-center gap-2.5 text-xs font-mono text-muted-foreground shrink-0">
             <span className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5 text-primary" /> {selectedCase.duration}
             </span>
             <span>•</span>
-            <span className="text-primary font-semibold">{selectedCase.tokens}</span>
+            <span className="text-primary font-medium">{selectedCase.tokens}</span>
             <span>•</span>
-            <span className="text-emerald-500 font-bold flex items-center gap-1">
+            <span className="text-emerald-500 font-semibold flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" /> 100% Pass
             </span>
           </div>
         </div>
 
         {/* Diff & Terminal Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left: AST Diff Patch */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-foreground flex items-center gap-1.5 font-mono text-[11px]">
+              <span className="font-semibold text-foreground flex items-center gap-1.5 font-mono text-[11px]">
                 <FileCode2 className="w-3.5 h-3.5 text-primary" /> Synthesized AST Code Patch
               </span>
               <span className="text-[10px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                 Zero Regressions
               </span>
             </div>
-            <div className="skeuo-inset-terminal rounded-2xl p-4 overflow-x-auto text-xs font-mono leading-relaxed h-[200px]">
+            <div className="bg-[#0E0F12] border border-border rounded-xl p-3.5 overflow-x-auto text-xs font-mono leading-relaxed h-[200px]">
               {selectedCase.diff.split("\n").map((line, idx) => {
                 let color = "text-muted-foreground";
                 let bg = "transparent";
                 if (line.startsWith("+")) {
-                  color = "text-emerald-400 font-bold";
+                  color = "text-emerald-400 font-medium";
                   bg = "bg-emerald-500/10";
                 } else if (line.startsWith("-")) {
                   color = "text-red-400 font-medium line-through";
@@ -162,14 +162,14 @@ export function EngineeringEvidenceSection() {
           {/* Right: Pytest Execution Terminal */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-foreground flex items-center gap-1.5 font-mono text-[11px]">
+              <span className="font-semibold text-foreground flex items-center gap-1.5 font-mono text-[11px]">
                 <Terminal className="w-3.5 h-3.5 text-emerald-500" /> Isolated Sandbox Verification
               </span>
               <span className="text-[10px] font-mono text-primary flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3 text-emerald-500" /> FastMCP Sandbox
               </span>
             </div>
-            <div className="skeuo-inset-terminal rounded-2xl p-4 text-xs font-mono text-emerald-400 whitespace-pre-wrap leading-relaxed h-[200px] flex flex-col justify-between">
+            <div className="bg-[#0E0F12] border border-border rounded-xl p-3.5 text-xs font-mono text-emerald-400 whitespace-pre-wrap leading-relaxed h-[200px] flex flex-col justify-between">
               <div>
                 <span className="text-muted-foreground">$ pytest -v -q</span>
                 <div className="mt-2">{selectedCase.output}</div>

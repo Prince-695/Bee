@@ -137,3 +137,77 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #3f3f46;
 }
+
+/* Minimalist, Sleek Engineering Design System */
+.minimal-card,
+.skeuo-glass-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  transition: border-color 0.15s ease;
+}
+
+.minimal-card-hover:hover,
+.skeuo-glass-card:hover {
+  border-color: rgba(255, 178, 44, 0.35);
+}
+
+.minimal-deck,
+.skeuo-glass-deck {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: none;
+}
+
+.minimal-button-primary,
+.skeuo-button-primary {
+  background: #FFB22C;
+  color: #121316;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  box-shadow: none;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.minimal-button-primary:hover,
+.skeuo-button-primary:hover {
+  background: #FFA000;
+  box-shadow: none;
+  filter: none;
+}
+
+.minimal-button-primary:active,
+.skeuo-button-primary:active {
+  transform: none;
+  background: #E59000;
+  box-shadow: none;
+}
+
+.minimal-button-secondary,
+.skeuo-button-secondary {
+  background: var(--secondary);
+  color: var(--foreground);
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.minimal-button-secondary:hover,
+.skeuo-button-secondary:hover {
+  background: color-mix(in srgb, var(--secondary) 85%, var(--foreground));
+  border-color: rgba(255, 178, 44, 0.3);
+  box-shadow: none;
+}
+
+.minimal-terminal,
+.skeuo-inset-terminal {
+  background: #0E0F12;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: none;
+}

@@ -29,6 +29,7 @@ from bee_api.routers.v1.router_memory import router as v1_memory_router
 from bee_api.routers.v1.router_usage import router as v1_usage_router
 from bee_api.routers.v1.router_runtimes import router as v1_runtimes_router
 from bee_api.routers.v1.router_sync import router as v1_sync_router
+from bee_api.routers.v1.router_billing import router as v1_billing_router
 from bee_core.db.connection import get_db_engine
 from bee_core.executor.agent_runtime import pre_initialize_runtime, shutdown_runtime
 from bee_core.stores.chat_store import init_db
@@ -110,6 +111,7 @@ app.include_router(v1_memory_router)
 app.include_router(v1_usage_router)
 app.include_router(v1_runtimes_router)
 app.include_router(v1_sync_router)
+app.include_router(v1_billing_router)
 
 # ─── Backward-Compatible Legacy Routers ───
 app.include_router(auth_router)

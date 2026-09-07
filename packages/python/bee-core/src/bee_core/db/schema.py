@@ -157,6 +157,29 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    stripe_customer_id TEXT NOT NULL,
+    stripe_subscription_id TEXT NOT NULL,
+    plan TEXT NOT NULL,
+    status TEXT NOT NULL,
+    current_period_end TIMESTAMP WITH TIME ZONE,
+    cancel_at_period_end BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS invoices (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    stripe_invoice_id TEXT NOT NULL,
+    amount_cents INTEGER NOT NULL,
+    currency TEXT DEFAULT 'usd',
+    status TEXT NOT NULL,
+    invoice_pdf_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS sync_state (
     entity_type TEXT NOT NULL,
     entity_id TEXT NOT NULL,
@@ -321,6 +344,31 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     metadata_json TEXT DEFAULT '{}',
     ip_address TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    stripe_customer_id TEXT NOT NULL,
+    stripe_subscription_id TEXT NOT NULL,
+    plan TEXT NOT NULL,
+    status TEXT NOT NULL,
+    current_period_end TEXT,
+    cancel_at_period_end INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS invoices (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    stripe_invoice_id TEXT NOT NULL,
+    amount_cents INTEGER NOT NULL,
+    currency TEXT DEFAULT 'usd',
+    status TEXT NOT NULL,
+    invoice_pdf_url TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS sync_state (

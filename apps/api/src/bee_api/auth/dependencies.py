@@ -100,3 +100,17 @@ def require_role(min_role: str):
         return tenant
 
     return role_checker
+
+
+require_admin_role = require_role("admin")
+require_owner_role = require_role("owner")
+
+
+def verify_tenant_ownership(resource_tenant_id: str, active_tenant: Dict[str, Any]) -> None:
+    """Validate resource boundary to prevent Insecure Direct Object Reference (IDOR)."""
+    current_tenant_id = active_tenant.get("tenant_id")
+    if not current_tenant_id or resource_tenant_id != current_tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Resource does not belong to your active organization",
+        )

@@ -3,12 +3,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from bee_api.config import CORS_ALLOWED_ORIGINS, MCP_SERVERS
+from bee_api.config import CORS_ALLOWED_ORIGINS, MCP_SERVERS, DEBUG
 from bee_api.middleware import (
     add_auth_middleware,
     add_cors_middleware,
     add_global_exception_handler,
+    add_rate_limiting_middleware,
     add_request_logging_middleware,
+    add_security_headers_middleware,
 )
 from bee_api.routers.router_agent import router as agent_router
 from bee_api.routers.router_auth import router as auth_router
@@ -30,6 +32,7 @@ from bee_api.routers.v1.router_usage import router as v1_usage_router
 from bee_api.routers.v1.router_runtimes import router as v1_runtimes_router
 from bee_api.routers.v1.router_sync import router as v1_sync_router
 from bee_api.routers.v1.router_billing import router as v1_billing_router
+from bee_api.routers.v1.router_admin import router as v1_admin_router
 from bee_core.db.connection import get_db_engine
 from bee_core.executor.agent_runtime import pre_initialize_runtime, shutdown_runtime
 from bee_core.stores.chat_store import init_db
@@ -56,7 +59,10 @@ async def lifespan(_: FastAPI):
     try:
         yield
     finally:
-        await shutdown_runtime()
+        try:
+            await shutdown_runtime()
+        except Exception:
+            pass
         await write_log("INFO", "gateway", "application_shutdown")
         print("\nBee API stopped.")
 
@@ -64,6 +70,7 @@ async def lifespan(_: FastAPI):
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+from fastapi import HTTPException, status
 
 app = FastAPI(
     title="Bee API",
@@ -80,6 +87,8 @@ if static_dir.exists():
 
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():
+    if not DEBUG:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
     return get_swagger_ui_html(
         openapi_url=app.openapi_url or "/openapi.json",
         title="Bee API — Swagger Documentation",
@@ -90,12 +99,16 @@ async def custom_swagger_ui_html():
 
 @app.get("/redoc", include_in_schema=False)
 async def custom_redoc_html():
+    if not DEBUG:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
     return get_redoc_html(
         openapi_url=app.openapi_url or "/openapi.json",
         title="Bee API — ReDoc",
         redoc_favicon_url="/static/logo.png",
     )
 
+add_security_headers_middleware(app)
+add_rate_limiting_middleware(app)
 add_cors_middleware(app, CORS_ALLOWED_ORIGINS)
 add_auth_middleware(app)
 add_request_logging_middleware(app)
@@ -112,6 +125,7 @@ app.include_router(v1_usage_router)
 app.include_router(v1_runtimes_router)
 app.include_router(v1_sync_router)
 app.include_router(v1_billing_router)
+app.include_router(v1_admin_router)
 
 # ─── Backward-Compatible Legacy Routers ───
 app.include_router(auth_router)

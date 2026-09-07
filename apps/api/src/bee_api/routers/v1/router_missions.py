@@ -26,14 +26,19 @@ class CreateMissionRequest(BaseModel):
     trigger_type: str = Field(default="manual", description="'manual' | 'github_pr' | 'ci_heal' | 'sentry_issue'")
 
 
+from bee_api.security.sanitization import sanitize_html
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_new_mission(
     body: CreateMissionRequest,
     tenant: Dict[str, Any] = Depends(get_current_tenant),
 ):
-    """Create a new 5-Worker Autonomous Engineering Mission."""
+    """Create a new 5-Worker Autonomous Engineering Mission with sanitized inputs."""
+    clean_title = sanitize_html(body.title)
+    clean_description = sanitize_html(body.description) if body.description else None
+
     mission = Mission(
-        objective=body.title,
+        objective=clean_title,
         signal_id=None,
         status="created",
         stage=MissionStage.SCOUT,

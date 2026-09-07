@@ -5,6 +5,7 @@ import {
   Boxes,
   History,
   Webhook,
+  Settings,
   BookOpen,
   Rocket,
   HelpCircle,
@@ -20,6 +21,7 @@ export function DesktopSidebar() {
     { to: "/hive", icon: <Boxes className="w-5 h-5" />, label: "Hive MCP Registry" },
     { to: "/logs", icon: <History className="w-5 h-5" />, label: "Flight Logs & Spend" },
     { to: "/hooks", icon: <Webhook className="w-5 h-5" />, label: "Signals & Hooks" },
+    { to: "/settings", icon: <Settings className="w-5 h-5" />, label: "Settings & Billing" },
   ];
 
   const secondaryNavItems = [
@@ -97,9 +99,9 @@ export function DesktopSidebar() {
       {/* Bottom Pinned User Profile Avatar with Online Status Dot */}
       <div className="pt-4 flex flex-col items-center gap-3">
         <Link
-          to="/"
+          to="/settings/profile"
           className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors group"
-          title="Lead Engineer (Online)"
+          title="Lead Engineer Profile"
         >
           <img
             src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"

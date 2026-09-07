@@ -5,6 +5,7 @@ import ConversationPage from "./features/conversation/ConversationPage";
 import HivePage from "./features/hive-registry/HivePage";
 import HooksPage from "./features/signal-engine/HooksPage";
 import ChatHistoryPage from "./features/flight-logs/ChatHistoryPage";
+import SettingsPage from "./features/settings/SettingsPage";
 import LoginPage from "./features/auth/LoginPage";
 import RegisterPage from "./features/auth/RegisterPage";
 import ForgotPasswordPage from "./features/auth/ForgotPasswordPage";
@@ -45,6 +46,8 @@ export default function App() {
                   <Route path="/hive" element={<HivePage />} />
                   <Route path="/logs" element={<ChatHistoryPage />} />
                   <Route path="/hooks" element={<HooksPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/settings/:tab" element={<SettingsPage />} />
 
                   {/* Backwards compatible /app routes */}
                   <Route path="/app" element={<Navigate to="/" replace />} />
@@ -53,6 +56,8 @@ export default function App() {
                   <Route path="/app/hive" element={<Navigate to="/hive" replace />} />
                   <Route path="/app/history" element={<Navigate to="/logs" replace />} />
                   <Route path="/app/hooks" element={<Navigate to="/hooks" replace />} />
+                  <Route path="/app/settings" element={<Navigate to="/settings" replace />} />
+                  <Route path="/app/settings/:tab" element={<SettingsPage />} />
 
                   {/* Fallback route */}
                   <Route path="*" element={<Navigate to="/" replace />} />

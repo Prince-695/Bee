@@ -45,12 +45,22 @@ def init_user_db() -> None:
                     id TEXT PRIMARY KEY,
                     email TEXT NOT NULL UNIQUE,
                     name TEXT NOT NULL DEFAULT '',
+                    full_name TEXT DEFAULT '',
                     password_hash TEXT NOT NULL,
-                    password_salt TEXT NOT NULL,
+                    password_salt TEXT NOT NULL DEFAULT '',
                     created_at TEXT NOT NULL
                 )
                 """
             )
+            # Ensure backwards compatibility if table was created by V1 schema without name or password_salt
+            try:
+                connection.execute("ALTER TABLE users ADD COLUMN name TEXT NOT NULL DEFAULT ''")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                connection.execute("ALTER TABLE users ADD COLUMN password_salt TEXT NOT NULL DEFAULT ''")
+            except sqlite3.OperationalError:
+                pass
             connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS auth_sessions (

@@ -40,8 +40,18 @@ class DatabaseEngine:
 
     async def _init_sqlite(self) -> None:
         async with aiosqlite.connect(self.sqlite_path) as db:
+            await db.execute("PRAGMA foreign_keys = ON;")
+            await db.execute("PRAGMA journal_mode = WAL;")
+            await db.execute("PRAGMA synchronous = NORMAL;")
+            await db.execute("PRAGMA busy_timeout = 5000;")
             await db.executescript(SQLITE_SCHEMA)
             await db.commit()
+        # Enforce restrictive file permissions (read/write only for process owner)
+        try:
+            if os.path.exists(self.sqlite_path):
+                os.chmod(self.sqlite_path, 0o600)
+        except OSError:
+            pass
 
     async def execute(self, query: str, parameters: tuple = ()) -> None:
         """Execute a write/mutation query."""

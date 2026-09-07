@@ -6,6 +6,7 @@ import HivePage from "./features/hive-registry/HivePage";
 import HooksPage from "./features/signal-engine/HooksPage";
 import ChatHistoryPage from "./features/flight-logs/ChatHistoryPage";
 import SettingsPage from "./features/settings/SettingsPage";
+import ConsoleNotFoundPage from "./features/not-found/ConsoleNotFoundPage";
 import LoginPage from "./features/auth/LoginPage";
 import RegisterPage from "./features/auth/RegisterPage";
 import ForgotPasswordPage from "./features/auth/ForgotPasswordPage";
@@ -60,7 +61,7 @@ export default function App() {
                   <Route path="/app/settings/:tab" element={<SettingsPage />} />
 
                   {/* Fallback route */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
+                  <Route path="*" element={<ConsoleNotFoundPage />} />
                 </Routes>
               </DesktopLayout>
             }

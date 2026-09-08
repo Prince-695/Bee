@@ -7,7 +7,7 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends, status
 
 from bee_core.db.connection import get_db_engine
-from bee_api.auth.dependencies import get_current_user
+from bee_api.core.dependencies import get_current_user
 from bee_api.domains.tenants.schemas import CreateTenantRequest
 
 router = APIRouter(prefix="/v1/tenants", tags=["Tenants & Multi-Tenancy"])

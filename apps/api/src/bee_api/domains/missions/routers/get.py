@@ -5,12 +5,12 @@ from __future__ import annotations
 from typing import Any, Dict
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from bee_api.config import DB_PATH
+from bee_api.core.config import settings
 from bee_core.mission.mission_store import MissionStore
-from bee_api.auth.dependencies import get_current_tenant
+from bee_api.core.dependencies import get_current_tenant
 
 router = APIRouter(prefix="/v1/missions", tags=["Missions & DAG Orchestration"])
-_mission_store = MissionStore(DB_PATH)
+_mission_store = MissionStore(settings.DB_PATH)
 
 
 @router.get("/{mission_id}")

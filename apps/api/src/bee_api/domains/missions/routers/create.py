@@ -5,15 +5,15 @@ from __future__ import annotations
 from typing import Any, Dict
 from fastapi import APIRouter, Depends, status
 
-from bee_api.config import DB_PATH
+from bee_api.core.config import settings
 from bee_core.mission.mission_models import Mission, MissionStage
 from bee_core.mission.mission_store import MissionStore
-from bee_api.auth.dependencies import get_current_tenant
+from bee_api.core.dependencies import get_current_tenant
 from bee_api.security.sanitization import sanitize_html
 from bee_api.domains.missions.schemas import CreateMissionRequest
 
 router = APIRouter(prefix="/v1/missions", tags=["Missions & DAG Orchestration"])
-_mission_store = MissionStore(DB_PATH)
+_mission_store = MissionStore(settings.DB_PATH)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)

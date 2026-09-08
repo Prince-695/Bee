@@ -16,7 +16,7 @@ from bee_api.core.security import (
     generate_otp_code,
     hash_password,
 )
-from bee_api.auth.email_service import get_email_service
+from bee_api.core.email import get_email_service
 from bee_api.domains.auth.schemas import SignUpRequest, AuthResponse
 
 router = APIRouter(prefix="/v1/auth", tags=["Authentication & Identity"])

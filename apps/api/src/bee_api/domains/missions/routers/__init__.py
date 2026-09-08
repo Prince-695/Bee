@@ -11,6 +11,7 @@ from bee_api.domains.missions.routers import (
     stream,
     dag,
     cancel,
+    api_missions,
 )
 
 router = APIRouter()
@@ -20,3 +21,5 @@ router.include_router(get.router)
 router.include_router(stream.router)
 router.include_router(dag.router)
 router.include_router(cancel.router)
+router.include_router(api_missions.router)
+

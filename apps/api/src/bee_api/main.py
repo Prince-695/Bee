@@ -5,19 +5,34 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from bee_api.config import CORS_ALLOWED_ORIGINS, MCP_SERVERS
 from bee_api.core import (
     close_db_pool,
     init_db_pool,
     setup_protected_docs,
 )
-from bee_api.domains.credentials.routers import router as credentials_router
-from bee_api.domains.health.routers import router as health_probes_router
-from bee_api.domains.legal.routers import router as legal_router
-from bee_api.domains.workspaces.routers import router as workspaces_router
-from bee_api.domains.conversation.routers import router as conversation_domain_router
+from bee_api.core.config import settings
+from bee_api.domains.admin.routers import router as admin_router
+from bee_api.domains.agent.routers import router as agent_router
+from bee_api.domains.approvals.routers import router as approvals_router
+from bee_api.domains.auth.routers import router as auth_router
+from bee_api.domains.billing.routers import router as billing_router
 from bee_api.domains.channels.routers import router as channels_router
+from bee_api.domains.conversation.routers import router as conversation_router
+from bee_api.domains.credentials.routers import router as credentials_router
+from bee_api.domains.health.routers import router as health_router
+from bee_api.domains.legal.routers import router as legal_router
 from bee_api.domains.mcp.routers import router as mcp_router
+from bee_api.domains.memory.routers import router as memory_router
+from bee_api.domains.missions.routers import router as missions_router
+from bee_api.domains.oauth import oauth_connectors_router
+from bee_api.domains.runtimes.routers import router as runtimes_router
+from bee_api.domains.security.routers import router as security_router
+from bee_api.domains.sync.routers import router as sync_router
+from bee_api.domains.telemetry.routers import router as telemetry_router
+from bee_api.domains.tenants.routers import router as tenants_router
+from bee_api.domains.usage.routers import router as usage_router
+from bee_api.domains.users.routers import router as users_router
+from bee_api.domains.workspaces.routers import router as workspaces_router
 from bee_api.middleware import (
     add_auth_middleware,
     add_cors_middleware,
@@ -26,27 +41,6 @@ from bee_api.middleware import (
     add_request_logging_middleware,
     add_security_headers_middleware,
 )
-from bee_api.routers.router_agent import router as agent_router
-from bee_api.routers.router_auth import router as auth_router
-from bee_api.routers.router_conversation import router as conversation_router
-from bee_api.routers.router_health import router as legacy_health_router
-from bee_api.routers.router_logs import router as logs_router
-from bee_api.routers.router_missions import router as missions_router
-from bee_api.routers.router_oauth import router as oauth_router
-from bee_api.routers.router_security import router as security_router
-from bee_api.routers.router_webhooks import router as webhooks_router
-from bee_api.routers.router_whatsapp import router as whatsapp_router
-from bee_api.routers.v1.router_admin import router as v1_admin_router
-from bee_api.domains.approvals.routers import router as v1_approvals_router
-from bee_api.domains.auth.routers import router as v1_auth_router
-from bee_api.routers.v1.router_billing import router as v1_billing_router
-from bee_api.routers.v1.router_memory import router as v1_memory_router
-from bee_api.domains.missions.routers import router as v1_missions_router
-from bee_api.routers.v1.router_runtimes import router as v1_runtimes_router
-from bee_api.routers.v1.router_sync import router as v1_sync_router
-from bee_api.domains.tenants.routers import router as v1_tenants_router
-from bee_api.routers.v1.router_usage import router as v1_usage_router
-from bee_api.routers.v1.router_users import router as v1_users_router
 from bee_core.db.connection import get_db_engine
 from bee_core.executor.agent_runtime import pre_initialize_runtime, shutdown_runtime
 from bee_core.stores.chat_store import init_db
@@ -66,7 +60,6 @@ async def lifespan(_: FastAPI):
     init_user_db()
     init_flight_queue_db()
     print("\nBee API starting...")
-    print(f"  Hive servers configured: {len(MCP_SERVERS)}")
     print("  Loading Hive workers (this may take a moment)...\n")
 
     asyncio.create_task(pre_initialize_runtime())
@@ -100,41 +93,32 @@ setup_protected_docs(app)
 
 add_security_headers_middleware(app)
 add_rate_limiting_middleware(app)
-add_cors_middleware(app, CORS_ALLOWED_ORIGINS)
+add_cors_middleware(app, settings.CORS_ALLOWED_ORIGINS)
 add_auth_middleware(app)
 add_request_logging_middleware(app)
 add_global_exception_handler(app)
 
-# ─── New Modular Domain Routers ───
-app.include_router(health_probes_router)
+# ─── Pure Modular Domain Routers ───
+app.include_router(health_router)
 app.include_router(legal_router)
 app.include_router(credentials_router)
 app.include_router(workspaces_router)
-app.include_router(conversation_domain_router)
+app.include_router(conversation_router)
 app.include_router(channels_router)
 app.include_router(mcp_router)
-
-# ─── V1 Standardized Platform Routers ───
-app.include_router(v1_auth_router)
-app.include_router(v1_users_router)
-app.include_router(v1_tenants_router)
-app.include_router(v1_missions_router)
-app.include_router(v1_approvals_router)
-app.include_router(v1_memory_router)
-app.include_router(v1_usage_router)
-app.include_router(v1_runtimes_router)
-app.include_router(v1_sync_router)
-app.include_router(v1_billing_router)
-app.include_router(v1_admin_router)
-
-# ─── Backward-Compatible Legacy Routers ───
 app.include_router(auth_router)
-app.include_router(agent_router)
-app.include_router(conversation_router)
-app.include_router(legacy_health_router)
-app.include_router(logs_router)
+app.include_router(users_router)
+app.include_router(tenants_router)
 app.include_router(missions_router)
-app.include_router(oauth_router)
+app.include_router(approvals_router)
+app.include_router(memory_router)
+app.include_router(usage_router)
+app.include_router(runtimes_router)
+app.include_router(sync_router)
+app.include_router(billing_router)
+app.include_router(admin_router)
+app.include_router(agent_router)
+app.include_router(telemetry_router)
 app.include_router(security_router)
-app.include_router(webhooks_router)
-app.include_router(whatsapp_router)
+app.include_router(oauth_connectors_router)
+

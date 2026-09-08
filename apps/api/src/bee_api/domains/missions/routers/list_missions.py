@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends, Query
 
-from bee_api.config import DB_PATH
+from bee_api.core.config import settings
 from bee_core.mission.mission_store import MissionStore
-from bee_api.auth.dependencies import get_current_tenant
+from bee_api.core.dependencies import get_current_tenant
 from bee_api.domains.missions.schemas import MissionListResponse
 
 router = APIRouter(prefix="/v1/missions", tags=["Missions & DAG Orchestration"])
-_mission_store = MissionStore(DB_PATH)
+_mission_store = MissionStore(settings.DB_PATH)
 
 
 @router.get("", response_model=MissionListResponse)

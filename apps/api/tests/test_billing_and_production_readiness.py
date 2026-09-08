@@ -7,7 +7,7 @@ import json
 from fastapi.testclient import TestClient
 from bee_api.main import app
 from bee_api.security.webhook_verifier import WebhookVerifier
-from bee_api.services.email_service import EmailService
+from bee_api.core.email import EmailService
 
 
 @pytest.fixture

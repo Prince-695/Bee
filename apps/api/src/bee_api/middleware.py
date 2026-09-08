@@ -7,8 +7,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from bee_api.auth import is_public_path, resolve_request_user
-from bee_api.response_helpers import error_response
+from bee_api.core.dependencies import is_public_path, resolve_request_user
+from bee_api.core.responses import error_response
 from bee_logging import write_log
 
 # In-memory sliding window rate limiter stores: key -> list of timestamps (float)

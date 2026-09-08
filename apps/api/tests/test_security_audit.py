@@ -7,8 +7,8 @@ from fastapi import HTTPException
 from bee_api.main import app
 from bee_api.security.sanitization import sanitize_html, sanitize_user_input, is_safe_sql_identifier
 from bee_api.security.upload_security import validate_uploaded_file, sanitize_filename
-from bee_api.services.email_service import EmailService, MAX_EMAILS_PER_HOUR, _EMAIL_SEND_TIMESTAMPS
-from bee_api.auth.dependencies import verify_tenant_ownership
+from bee_api.core.email import EmailService, MAX_EMAILS_PER_HOUR, _EMAIL_SEND_TIMESTAMPS
+from bee_api.core.dependencies import verify_tenant_ownership
 from bee_core.config import mask_secret, validate_environment
 
 

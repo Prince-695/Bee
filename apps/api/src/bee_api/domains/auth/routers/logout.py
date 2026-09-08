@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Response
 
 from bee_core.db.connection import get_db_engine
 from bee_api.core.cookies import clear_auth_cookies
-from bee_api.auth.dependencies import get_current_user
+from bee_api.core.dependencies import get_current_user
 from bee_api.domains.auth.schemas import RefreshRequest
 
 router = APIRouter(prefix="/v1/auth", tags=["Authentication & Identity"])

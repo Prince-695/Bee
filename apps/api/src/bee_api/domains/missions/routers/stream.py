@@ -7,14 +7,15 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends, HTTPException, status
 from sse_starlette.sse import EventSourceResponse
 
-from bee_api.config import DB_PATH
+from bee_api.core.config import settings
+from bee_core.executor.sse_stream import create_stream, get_stream
 from bee_core.mission.mission_orchestrator import MissionOrchestrator
 from bee_core.mission.mission_store import MissionStore
-from bee_api.auth.dependencies import get_current_tenant
+from bee_api.core.dependencies import get_current_tenant
 
 router = APIRouter(prefix="/v1/missions", tags=["Missions & DAG Orchestration"])
-_mission_store = MissionStore(DB_PATH)
-_orchestrator = MissionOrchestrator(DB_PATH)
+_mission_store = MissionStore(settings.DB_PATH)
+_orchestrator = MissionOrchestrator(settings.DB_PATH)
 
 
 @router.get("/{mission_id}/stream")

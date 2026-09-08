@@ -13,8 +13,8 @@ from bee_api.core.security import (
     hash_password,
     verify_password,
 )
-from bee_api.auth.dependencies import get_current_user
-from bee_api.auth.email_service import get_email_service
+from bee_api.core.dependencies import get_current_user
+from bee_api.core.email import get_email_service
 from bee_api.domains.auth.schemas import (
     ChangePasswordRequest,
     ForgotPasswordRequest,

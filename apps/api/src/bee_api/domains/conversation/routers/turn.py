@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from bee_core.stores.conversation_store import get_conversation_session
 from bee_core.executor.conversation_runtime import handle_conversation_turn
-from bee_api.response_helpers import error_response, success_response
+from bee_api.core.responses import error_response, success_response
 
 router = APIRouter(prefix="/v1/conversation", tags=["General Chat & Conversation"])
 

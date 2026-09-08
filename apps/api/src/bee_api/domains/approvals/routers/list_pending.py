@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Depends
 
 from bee_core.stores.gate_store import list_gates
-from bee_api.auth.dependencies import get_current_tenant
+from bee_api.core.dependencies import get_current_tenant
 from bee_api.domains.approvals.schemas import ApprovalGateListResponse
 
 router = APIRouter(prefix="/v1/approvals", tags=["Approvals & Human Gates"])

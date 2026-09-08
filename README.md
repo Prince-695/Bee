@@ -1,4 +1,4 @@
-# 🐝 Bee — Autonomous AI Co-Engineer Platform
+# Bee — Autonomous AI Co-Engineer Platform
 
 > *"You write the code. Bee owns the aftermath."*
 

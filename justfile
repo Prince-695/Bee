@@ -6,7 +6,7 @@ set shell := ["bash", "-cu"]
 venv := ".venv/bin/activate"
 
 dev:
-  @echo "Start API and Console in two terminals — see run.md"
+  @echo "Start API and Console in two terminals — see README.md"
   @echo "  just api"
   @echo "  just console"
 

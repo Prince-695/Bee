@@ -26,49 +26,62 @@ _SERVICE = None
 mcp = FastMCP("gmail")
 
 
-def _credentials_path() -> Path:
+def _credentials_path() -> Optional[Path]:
     raw = os.getenv("GMAIL_CREDENTIALS_PATH", "").strip()
-    if raw:
-        return Path(raw)
-    return Path(__file__).resolve().parents[1] / "gmail_credentials.json"
+    return Path(raw) if raw else None
 
 
-def _token_path() -> Path:
+def _token_path() -> Optional[Path]:
     raw = os.getenv("GMAIL_TOKEN_PATH", "").strip()
-    if raw:
-        return Path(raw)
-    return Path(__file__).resolve().parents[1] / "token.json"
+    return Path(raw) if raw else None
 
 
-def _load_credentials() -> Credentials:
-    token_path = _token_path()
-    credentials_path = _credentials_path()
+def _load_credentials() -> Optional[Credentials]:
+    # 1. Primary: load from environment variables (Zero-disk secrets)
+    client_id = os.getenv("GMAIL_CLIENT_ID", "").strip()
+    client_secret = os.getenv("GMAIL_CLIENT_SECRET", "").strip()
+    refresh_token = os.getenv("GMAIL_REFRESH_TOKEN", "").strip()
+    token_uri = os.getenv("GMAIL_TOKEN_URI", "https://oauth2.googleapis.com/token").strip()
 
-    creds = None
-    if token_path.exists():
-        creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
-
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-
-    if not creds or not creds.valid:
-        if not credentials_path.exists():
-            raise FileNotFoundError(
-                f"Gmail credentials file not found at {credentials_path}. "
-                "Set GMAIL_CREDENTIALS_PATH in backend/.env."
+    if refresh_token and client_id and client_secret:
+        try:
+            creds = Credentials(
+                token=None,
+                refresh_token=refresh_token,
+                token_uri=token_uri,
+                client_id=client_id,
+                client_secret=client_secret,
+                scopes=SCOPES,
             )
-        flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
-        creds = flow.run_local_server(port=0)
-        token_path.parent.mkdir(parents=True, exist_ok=True)
-        token_path.write_text(creds.to_json(), encoding="utf-8")
+            creds.refresh(Request())
+            return creds
+        except Exception as err:
+            print(f"[GMAIL_MCP] Warning: Failed to refresh token from env: {err}")
 
-    return creds
+    # 2. Fallback: file path if explicitly configured
+    token_path = _token_path()
+    if token_path and token_path.exists():
+        try:
+            creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            if creds and creds.valid:
+                return creds
+        except Exception as err:
+            print(f"[GMAIL_MCP] Warning: Failed to load from token file: {err}")
+
+    return None
 
 
 def _service():
     global _SERVICE
     if _SERVICE is None:
         creds = _load_credentials()
+        if not creds:
+            raise RuntimeError(
+                "Gmail credentials not configured. Please set GMAIL_CLIENT_ID, "
+                "GMAIL_CLIENT_SECRET, and GMAIL_REFRESH_TOKEN in .env"
+            )
         _SERVICE = build("gmail", "v1", credentials=creds, cache_discovery=False)
     return _SERVICE
 

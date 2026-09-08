@@ -1,7 +1,15 @@
-FROM python:3.11-slim
+# ==========================================
+# Stage 1: Build & Dependency Compiler
+# ==========================================
+FROM python:3.11-slim AS builder
 
-WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    git \
+ && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml ./
 COPY packages/python ./packages/python
@@ -9,15 +17,48 @@ COPY apps/api ./apps/api
 COPY tools/hive-local ./tools/hive-local
 
 RUN python -m venv /opt/venv \
- && /opt/venv/bin/pip install --upgrade pip \
- && /opt/venv/bin/pip install -e packages/python/bee-logging \
- && /opt/venv/bin/pip install -e packages/python/bee-hive \
- && /opt/venv/bin/pip install -e packages/python/bee-core \
- && /opt/venv/bin/pip install -e apps/api
+ && /opt/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel \
+ && /opt/venv/bin/pip install --no-cache-dir -e packages/python/bee-logging \
+ && /opt/venv/bin/pip install --no-cache-dir -e packages/python/bee-hive \
+ && /opt/venv/bin/pip install --no-cache-dir -e packages/python/bee-core \
+ && /opt/venv/bin/pip install --no-cache-dir -e apps/api
 
-ENV PATH="/opt/venv/bin:$PATH"
-ENV PYTHONUNBUFFERED=1
+# ==========================================
+# Stage 2: Hardened Enterprise Runtime
+# ==========================================
+FROM python:3.11-slim AS runner
 
+# Create dedicated unprivileged system user
+RUN groupadd -g 10001 bee \
+ && useradd -u 10001 -g bee -s /bin/bash -m bee
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    libpq5 \
+    ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy compiled virtualenv and codebase from builder
+COPY --from=builder /opt/venv /opt/venv
+COPY --chown=bee:bee pyproject.toml ./
+COPY --chown=bee:bee packages/python ./packages/python
+COPY --chown=bee:bee apps/api ./apps/api
+COPY --chown=bee:bee tools/hive-local ./tools/hive-local
+
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PORT=8000 \
+    ENVIRONMENT=production
+
+USER bee
 WORKDIR /app/apps/api
+
 EXPOSE 8000
-CMD ["uvicorn", "bee_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/health/live || exit 1
+
+CMD ["uvicorn", "bee_api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

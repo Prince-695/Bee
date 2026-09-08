@@ -1,9 +1,23 @@
 import asyncio
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
-from bee_api.config import CORS_ALLOWED_ORIGINS, MCP_SERVERS, DEBUG
+from bee_api.config import CORS_ALLOWED_ORIGINS, MCP_SERVERS
+from bee_api.core import (
+    close_db_pool,
+    init_db_pool,
+    setup_protected_docs,
+)
+from bee_api.domains.credentials.routers import router as credentials_router
+from bee_api.domains.health.routers import router as health_probes_router
+from bee_api.domains.legal.routers import router as legal_router
+from bee_api.domains.workspaces.routers import router as workspaces_router
+from bee_api.domains.conversation.routers import router as conversation_domain_router
+from bee_api.domains.channels.routers import router as channels_router
+from bee_api.domains.mcp.routers import router as mcp_router
 from bee_api.middleware import (
     add_auth_middleware,
     add_cors_middleware,
@@ -15,24 +29,24 @@ from bee_api.middleware import (
 from bee_api.routers.router_agent import router as agent_router
 from bee_api.routers.router_auth import router as auth_router
 from bee_api.routers.router_conversation import router as conversation_router
-from bee_api.routers.router_health import router as health_router
+from bee_api.routers.router_health import router as legacy_health_router
 from bee_api.routers.router_logs import router as logs_router
 from bee_api.routers.router_missions import router as missions_router
 from bee_api.routers.router_oauth import router as oauth_router
 from bee_api.routers.router_security import router as security_router
 from bee_api.routers.router_webhooks import router as webhooks_router
 from bee_api.routers.router_whatsapp import router as whatsapp_router
-from bee_api.routers.v1.router_auth import router as v1_auth_router
-from bee_api.routers.v1.router_users import router as v1_users_router
-from bee_api.routers.v1.router_tenants import router as v1_tenants_router
-from bee_api.routers.v1.router_missions import router as v1_missions_router
-from bee_api.routers.v1.router_approvals import router as v1_approvals_router
+from bee_api.routers.v1.router_admin import router as v1_admin_router
+from bee_api.domains.approvals.routers import router as v1_approvals_router
+from bee_api.domains.auth.routers import router as v1_auth_router
+from bee_api.routers.v1.router_billing import router as v1_billing_router
 from bee_api.routers.v1.router_memory import router as v1_memory_router
-from bee_api.routers.v1.router_usage import router as v1_usage_router
+from bee_api.domains.missions.routers import router as v1_missions_router
 from bee_api.routers.v1.router_runtimes import router as v1_runtimes_router
 from bee_api.routers.v1.router_sync import router as v1_sync_router
-from bee_api.routers.v1.router_billing import router as v1_billing_router
-from bee_api.routers.v1.router_admin import router as v1_admin_router
+from bee_api.domains.tenants.routers import router as v1_tenants_router
+from bee_api.routers.v1.router_usage import router as v1_usage_router
+from bee_api.routers.v1.router_users import router as v1_users_router
 from bee_core.db.connection import get_db_engine
 from bee_core.executor.agent_runtime import pre_initialize_runtime, shutdown_runtime
 from bee_core.stores.chat_store import init_db
@@ -45,6 +59,7 @@ from bee_logging import write_log
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await write_log("INFO", "gateway", "application_startup")
+    await init_db_pool()
     await get_db_engine().init_db()
     init_db()
     init_conversation_db()
@@ -63,14 +78,10 @@ async def lifespan(_: FastAPI):
             await shutdown_runtime()
         except Exception:
             pass
+        await close_db_pool()
         await write_log("INFO", "gateway", "application_shutdown")
         print("\nBee API stopped.")
 
-
-from pathlib import Path
-from fastapi.staticfiles import StaticFiles
-from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
-from fastapi import HTTPException, status
 
 app = FastAPI(
     title="Bee API",
@@ -78,34 +89,14 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
+    openapi_url=None,
 )
 
 static_dir = Path(__file__).parent / "static"
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
-
-@app.get("/docs", include_in_schema=False)
-async def custom_swagger_ui_html():
-    if not DEBUG:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
-    return get_swagger_ui_html(
-        openapi_url=app.openapi_url or "/openapi.json",
-        title="Bee API — Swagger Documentation",
-        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
-        swagger_favicon_url="/static/logo.png",
-    )
-
-
-@app.get("/redoc", include_in_schema=False)
-async def custom_redoc_html():
-    if not DEBUG:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
-    return get_redoc_html(
-        openapi_url=app.openapi_url or "/openapi.json",
-        title="Bee API — ReDoc",
-        redoc_favicon_url="/static/logo.png",
-    )
+setup_protected_docs(app)
 
 add_security_headers_middleware(app)
 add_rate_limiting_middleware(app)
@@ -113,6 +104,15 @@ add_cors_middleware(app, CORS_ALLOWED_ORIGINS)
 add_auth_middleware(app)
 add_request_logging_middleware(app)
 add_global_exception_handler(app)
+
+# ─── New Modular Domain Routers ───
+app.include_router(health_probes_router)
+app.include_router(legal_router)
+app.include_router(credentials_router)
+app.include_router(workspaces_router)
+app.include_router(conversation_domain_router)
+app.include_router(channels_router)
+app.include_router(mcp_router)
 
 # ─── V1 Standardized Platform Routers ───
 app.include_router(v1_auth_router)
@@ -131,7 +131,7 @@ app.include_router(v1_admin_router)
 app.include_router(auth_router)
 app.include_router(agent_router)
 app.include_router(conversation_router)
-app.include_router(health_router)
+app.include_router(legacy_health_router)
 app.include_router(logs_router)
 app.include_router(missions_router)
 app.include_router(oauth_router)

@@ -15,6 +15,7 @@ from bee_api.core.dependencies import (
 )
 from bee_api.core.encryption import decrypt_secret, encrypt_secret, mask_secret
 from bee_api.core.openapi import custom_openapi, setup_protected_docs, validate_swagger_credentials
+from bee_api.core.responses import error_response, success_response
 
 __all__ = [
     "settings",
@@ -35,4 +36,6 @@ __all__ = [
     "validate_swagger_credentials",
     "setup_protected_docs",
     "custom_openapi",
+    "success_response",
+    "error_response",
 ]

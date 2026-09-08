@@ -21,11 +21,18 @@ class DatabaseEngine:
             self.database_url = os.getenv("DATABASE_URL") or os.getenv("NEON_DATABASE_URL")
         self.sqlite_path = sqlite_path
         self.is_postgres = bool(self.database_url and ("postgres" in self.database_url or "postgresql" in self.database_url))
+        self._initialized = False
+
+    async def _ensure_initialized(self) -> None:
+        if not self._initialized:
+            await self._init_sqlite()
+            self._initialized = True
 
     async def init_db(self) -> None:
         """Initialize database schema tables."""
         # Always ensure local SQLite tables exist for offline and test resilience
         await self._init_sqlite()
+        self._initialized = True
         if self.is_postgres:
             try:
                 import asyncpg
@@ -46,6 +53,7 @@ class DatabaseEngine:
             await db.execute("PRAGMA busy_timeout = 5000;")
             await db.executescript(SQLITE_SCHEMA)
             await db.commit()
+        self._initialized = True
         # Enforce restrictive file permissions (read/write only for process owner)
         try:
             if os.path.exists(self.sqlite_path):
@@ -55,6 +63,7 @@ class DatabaseEngine:
 
     async def execute(self, query: str, parameters: tuple = ()) -> None:
         """Execute a write/mutation query."""
+        await self._ensure_initialized()
         if self.is_postgres:
             try:
                 import asyncpg
@@ -74,6 +83,7 @@ class DatabaseEngine:
 
     async def fetch_one(self, query: str, parameters: tuple = ()) -> Optional[Dict[str, Any]]:
         """Fetch a single record as a dict."""
+        await self._ensure_initialized()
         if self.is_postgres:
             try:
                 import asyncpg
@@ -95,6 +105,7 @@ class DatabaseEngine:
 
     async def fetch_all(self, query: str, parameters: tuple = ()) -> List[Dict[str, Any]]:
         """Fetch multiple records as a list of dicts."""
+        await self._ensure_initialized()
         if self.is_postgres:
             try:
                 import asyncpg

@@ -77,9 +77,19 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: Optional[str] = Field(default=None, validation_alias="SMTP_PASSWORD")
     SMTP_FROM: str = Field(default="Bee Security <security@bee.dev>", validation_alias="SMTP_FROM")
 
+    # ─── 7. Stripe Billing & Subscriptions ──────────────────────────────────
+    STRIPE_SECRET_KEY: Optional[str] = Field(default="", validation_alias="STRIPE_SECRET_KEY")
+    STRIPE_WEBHOOK_SECRET: Optional[str] = Field(default="", validation_alias="STRIPE_WEBHOOK_SECRET")
+
+
     @property
     def cors_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.CORS_ALLOWED_ORIGINS.split(",") if origin.strip()]
 
 
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    return settings
+

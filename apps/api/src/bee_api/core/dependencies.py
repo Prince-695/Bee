@@ -78,12 +78,12 @@ async def _fetch_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
     """Fetches user record from database."""
     db = get_db_engine()
     rows = await db.fetch_all(
-        "SELECT id, email, full_name, is_verified, created_at FROM users WHERE id = ?",
+        "SELECT id, email, password_hash, full_name, is_verified, created_at FROM users WHERE id = ?",
         (user_id,),
     )
     if not rows:
         # Check backwards compatible schema where full_name was name
-        rows = await db.fetch_all("SELECT id, email, name, created_at FROM users WHERE id = ?", (user_id,))
+        rows = await db.fetch_all("SELECT id, email, password_hash, name, created_at FROM users WHERE id = ?", (user_id,))
         if rows:
             r = dict(rows[0])
             r["full_name"] = r.get("name", "")
@@ -137,7 +137,9 @@ async def get_current_tenant(
             detail=f"Tenant organization '{tenant_id}' not found.",
         )
     tenant = dict(rows[0])
+    tenant["tenant_id"] = tenant["id"]
     tenant["current_role"] = current_user.get("role", "member")
+    tenant["role"] = tenant["current_role"]
     return tenant
 
 
@@ -150,13 +152,79 @@ def require_role(allowed_roles: List[str]):
     async def role_checker(
         current_user: CurrentUserDep,
         tenant: CurrentTenantDep,
-    ) -> bool:
-        role = tenant.get("current_role") or current_user.get("role") or "member"
+    ) -> Dict[str, Any]:
+        role = tenant.get("current_role") or tenant.get("role") or current_user.get("role") or "member"
         if role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Operation requires one of roles {allowed_roles}. Your current role is '{role}'.",
             )
-        return True
+        return tenant
 
-    return Depends(role_checker)
+    return role_checker
+
+
+require_admin_role = require_role(["admin", "owner"])
+require_owner_role = require_role(["owner"])
+
+
+def verify_tenant_ownership(resource_tenant_id: str, active_tenant: Dict[str, Any]) -> None:
+    """Validate resource boundary to prevent Insecure Direct Object Reference (IDOR)."""
+    current_tenant_id = active_tenant.get("tenant_id") or active_tenant.get("id")
+    if not current_tenant_id or resource_tenant_id != current_tenant_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Resource does not belong to your active organization",
+        )
+
+
+PUBLIC_PATH_PREFIXES = (
+    "/health",
+    "/api/health",
+    "/api/auth/login",
+    "/api/auth/signup",
+    "/api/agent",
+    "/api/conversations",
+    "/api/chats",
+    "/api/hive",
+    "/api/logs",
+    "/api/channels",
+    "/api/missions",
+    "/api/oauth",
+    "/api/security",
+    "/api/signals",
+    "/docs",
+    "/openapi.json",
+    "/redoc",
+    "/webhooks/",
+    "/v1/",
+    "/static/",
+)
+
+
+def extract_bearer_token(request: Request) -> str | None:
+    auth = request.headers.get("Authorization") or ""
+    if auth.lower().startswith("bearer "):
+        return auth[7:].strip()
+    token = request.query_params.get("access_token")
+    if token:
+        return token.strip()
+    return None
+
+
+def is_public_path(path: str) -> bool:
+    if path == "/":
+        return True
+    for prefix in PUBLIC_PATH_PREFIXES:
+        if path == prefix or path.startswith(prefix):
+            return True
+    return False
+
+
+def resolve_request_user(request: Request) -> dict | None:
+    token = extract_bearer_token(request)
+    if not token:
+        return None
+    from bee_core.stores.user_store import get_user_for_token
+    return get_user_for_token(token)
+

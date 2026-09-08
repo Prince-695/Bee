@@ -4,6 +4,7 @@ from fastapi import Request
 from bee_core.stores.user_store import get_user_for_token
 
 PUBLIC_PATH_PREFIXES = (
+    "/health",
     "/api/health",
     "/api/auth/login",
     "/api/auth/signup",
@@ -22,6 +23,7 @@ PUBLIC_PATH_PREFIXES = (
     "/redoc",
     "/webhooks/",
     "/v1/",
+    "/static/",
 )
 
 

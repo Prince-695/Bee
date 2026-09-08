@@ -3,44 +3,67 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
-from fastapi import Depends, HTTPException, Header, status
+from fastapi import Depends, HTTPException, Header, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from bee_core.db.connection import get_db_engine
-from bee_api.auth.security import decode_token
+from bee_api.core.cookies import extract_tokens_from_request, set_auth_cookies
+from bee_api.core.security import create_access_token, create_refresh_token, decode_token
 
 security_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
+    request: Request,
+    response: Response,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme),
 ) -> Dict[str, Any]:
-    """Extract and validate the authenticated user from the Bearer token."""
-    if not credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing Bearer authentication token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    """Extract and validate the authenticated user from Bearer header or HttpOnly cookies.
+    
+    Transparently auto-refreshes 30-minute access tokens if an active 7-day refresh token cookie exists.
+    """
+    token = credentials.credentials if credentials else None
+    cookie_access, cookie_refresh = extract_tokens_from_request(request)
+    
+    if not token:
+        token = cookie_access
 
-    token = credentials.credentials
-    payload = decode_token(token)
-    if not payload or payload.get("type") != "access":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired access token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    if token:
+        payload = decode_token(token)
+        if payload and payload.get("type") == "access":
+            user_id = payload.get("sub")
+            if user_id:
+                db = get_db_engine()
+                user = await db.fetch_one("SELECT * FROM users WHERE id = ?", (user_id,))
+                if user:
+                    return dict(user)
 
-    user_id = payload.get("sub")
-    db = get_db_engine()
-    user = await db.fetch_one("SELECT * FROM users WHERE id = ?", (user_id,))
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or account deactivated",
-        )
+    # Auto-refresh via 7-day refresh token
+    if cookie_refresh:
+        refresh_payload = decode_token(cookie_refresh)
+        if refresh_payload and refresh_payload.get("type") == "refresh":
+            user_id = refresh_payload.get("sub")
+            if user_id:
+                db = get_db_engine()
+                user = await db.fetch_one("SELECT * FROM users WHERE id = ?", (user_id,))
+                if user:
+                    membership = await db.fetch_one(
+                        "SELECT tenant_id FROM tenant_memberships WHERE user_id = ? ORDER BY created_at ASC LIMIT 1",
+                        (user_id,),
+                    )
+                    tenant_id = membership["tenant_id"] if membership else None
+                    new_access = create_access_token(user_id=user_id, tenant_id=tenant_id)
+                    new_refresh = create_refresh_token(user_id=user_id)
+                    request.state.new_tokens = (new_access, new_refresh)
+                    if response:
+                        set_auth_cookies(response, new_access, new_refresh)
+                        response.headers["X-Access-Token"] = new_access
+                    return dict(user)
 
-    return user
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Missing or expired authentication token",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 async def get_current_tenant(

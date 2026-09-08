@@ -64,6 +64,13 @@ def add_security_headers_middleware(app: FastAPI) -> None:
         if "x-powered-by" in response.headers:
             del response.headers["x-powered-by"]
 
+        # Transparently inject auto-refreshed tokens and cookies if session was refreshed
+        if hasattr(request.state, "new_tokens"):
+            from bee_api.core.cookies import set_auth_cookies
+            new_access, new_refresh = request.state.new_tokens
+            set_auth_cookies(response, new_access, new_refresh)
+            response.headers["X-Access-Token"] = new_access
+
         return response
 
 

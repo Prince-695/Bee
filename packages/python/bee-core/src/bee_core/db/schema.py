@@ -69,6 +69,19 @@ CREATE TABLE IF NOT EXISTS oauth_accounts (
     UNIQUE(provider, provider_user_id)
 );
 
+CREATE TABLE IF NOT EXISTS tenant_credentials (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    platform TEXT NOT NULL,          -- 'github' | 'slack' | 'jira' | 'discord' | 'gemini' | 'openai'
+    credential_key TEXT NOT NULL,    -- 'PERSONAL_ACCESS_TOKEN' | 'BOT_TOKEN' | 'API_KEY'
+    encrypted_value TEXT NOT NULL,   -- AES-256-GCM encrypted base64 payload
+    masked_preview TEXT NOT NULL,    -- 'ghp_...3a9f'
+    label TEXT DEFAULT '',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(tenant_id, platform, credential_key)
+);
+
 CREATE TABLE IF NOT EXISTS projects (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -254,6 +267,20 @@ CREATE TABLE IF NOT EXISTS oauth_accounts (
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(provider, provider_user_id),
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tenant_credentials (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    platform TEXT NOT NULL,
+    credential_key TEXT NOT NULL,
+    encrypted_value TEXT NOT NULL,
+    masked_preview TEXT NOT NULL,
+    label TEXT DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(tenant_id, platform, credential_key),
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS projects (

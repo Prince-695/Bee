@@ -103,10 +103,13 @@ export function InlineFlightPlayer({
             err instanceof Error ? err.message : "Failed to load route."
           );
         });
-    } else if (liveSteps.length === 0 && route.steps) {
-      setLiveSteps(
-        route.steps.map((s) => ({ ...s, status: "pending" as StepStatus }))
-      );
+    } else if (route?.steps) {
+      setLiveSteps((current) => {
+        if (current.length === 0) {
+          return (route.steps || []).map((s) => ({ ...s, status: "pending" as StepStatus }));
+        }
+        return current;
+      });
     }
     return () => {
       mounted = false;
@@ -263,10 +266,11 @@ export function InlineFlightPlayer({
 
       // Trigger server-side execution pipeline
       await executeFlight(routeId);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Execution failed to initialize.";
       setIsExecuting(false);
-      setExecutionError(err?.message || "Execution failed to initialize.");
-      addTerminalLog(`Error launching flight: ${err?.message}`, "error");
+      setExecutionError(msg);
+      addTerminalLog(`Error launching flight: ${msg}`, "error");
     }
   }, [routeId, isExecuting, executionDone, onCompleted]);
 
@@ -287,8 +291,9 @@ export function InlineFlightPlayer({
         await rejectGate(pendingGate.gate_id);
       }
       setPendingGate(null);
-    } catch (err: any) {
-      addTerminalLog(`Failed to resolve approval gate: ${err?.message}`, "error");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to resolve approval gate.";
+      addTerminalLog(`Failed to resolve approval gate: ${msg}`, "error");
     }
   };
 

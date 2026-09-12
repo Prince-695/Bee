@@ -44,8 +44,8 @@ export default function RegisterPage() {
       await signup(email.trim(), password, name.trim());
       // Direct newly registered users into the onboarding wizard!
       navigate("/onboarding", { replace: true });
-    } catch (err: any) {
-      setError(err?.message || "Failed to create account. Please try again.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create account. Please try again.");
     } finally {
       setLoading(false);
     }

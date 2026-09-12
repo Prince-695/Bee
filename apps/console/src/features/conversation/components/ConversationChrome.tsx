@@ -66,7 +66,7 @@ export function ConversationMessageRow({
   );
   const routeId =
     (message.metadata as { route_id?: string })?.route_id ||
-    (message as any).route_id;
+    (message as unknown as { route_id?: string }).route_id;
 
   return (
     <div

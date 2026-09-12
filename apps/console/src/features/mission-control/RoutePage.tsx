@@ -132,7 +132,7 @@ export default function RoutePage() {
             },
           ]);
         }
-      } catch (_err) {
+      } catch {
         if (isMounted) {
           setLoadError(null);
           // Resilient fallback for previewing DAG canvas & inspector offline
@@ -322,8 +322,8 @@ export default function RoutePage() {
 
     try {
       await executeFlight(routeId);
-    } catch (err: any) {
-      setExecutionError(err?.message || "Execution failed");
+    } catch (err: unknown) {
+      setExecutionError(err instanceof Error ? err.message : "Execution failed");
       setIsExecuting(false);
     }
   };
@@ -339,8 +339,8 @@ export default function RoutePage() {
         addLog(`[GUARD] Gate #${pendingGate.gate_id} Rejected. Terminating step.`, "warn");
       }
       setPendingGate(null);
-    } catch (err: any) {
-      addLog(`Failed to resolve approval gate: ${err?.message}`, "error");
+    } catch (err: unknown) {
+      addLog(`Failed to resolve approval gate: ${err instanceof Error ? err.message : "Error"}`, "error");
     }
   };
 

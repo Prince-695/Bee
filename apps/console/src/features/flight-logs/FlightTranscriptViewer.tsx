@@ -111,7 +111,7 @@ export const FlightTranscriptViewer: React.FC<FlightTranscriptViewerProps> = ({
   const mockDiff = `--- a/apps/api/src/bee_api/routers/router_security.py
 +++ b/apps/api/src/bee_api/routers/router_security.py
 @@ -32,7 +32,9 @@ async def test_redact_text(req: RedactTextRequest) -> Dict[str, Any]:
-     \"\"\"Test and verify secret redaction on sensitive strings.\"\"\"
+     """Test and verify secret redaction on sensitive strings."""
 -    redacted_text, detected = SecretRedactor.redact_text(req.text)
 +    # Enforce strict zero-leak enterprise redaction
 +    redacted_text, detected = SecretRedactor.redact_text(req.text, strict_mode=True)

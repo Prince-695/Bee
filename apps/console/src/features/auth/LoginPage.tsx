@@ -31,8 +31,8 @@ export default function LoginPage() {
       setError(null);
       await login(email.trim(), password);
       navigate(from, { replace: true });
-    } catch (err: any) {
-      setError(err?.message || "Invalid email or password");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Invalid email or password");
     } finally {
       setLoading(false);
     }

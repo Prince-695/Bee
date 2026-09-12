@@ -28,12 +28,27 @@ interface FlightHistoryListProps {
 
 type FilterStatus = "all" | "completed" | "flying" | "failed" | "high_spend";
 
+function formatRelativeTime(isoString: string, now: number): string {
+  try {
+    const diff = now - new Date(isoString).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
+  } catch {
+    return "recently";
+  }
+}
+
 export const FlightHistoryList: React.FC<FlightHistoryListProps> = ({
   flights,
   selectedFlightId,
   onSelectFlight,
   isLoading,
 }) => {
+  const [currentTime] = useState(() => Date.now());
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTab, setFilterTab] = useState<FilterStatus>("all");
 
@@ -84,20 +99,6 @@ export const FlightHistoryList: React.FC<FlightHistoryListProps> = ({
             {status}
           </span>
         );
-    }
-  };
-
-  const formatRelativeTime = (isoString: string) => {
-    try {
-      const diff = Date.now() - new Date(isoString).getTime();
-      const mins = Math.floor(diff / 60000);
-      if (mins < 1) return "just now";
-      if (mins < 60) return `${mins}m ago`;
-      const hours = Math.floor(mins / 60);
-      if (hours < 24) return `${hours}h ago`;
-      return `${Math.floor(hours / 24)}d ago`;
-    } catch {
-      return "recently";
     }
   };
 
@@ -239,7 +240,7 @@ export const FlightHistoryList: React.FC<FlightHistoryListProps> = ({
                 <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono pt-2 border-t border-border/40">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3 text-muted-foreground/70" />
-                    {flight.duration || "18.4s"} • {formatRelativeTime(flight.created_at)}
+                    {flight.duration || "18.4s"} • {formatRelativeTime(flight.created_at, currentTime)}
                   </span>
                   <div className="flex items-center gap-2">
                     <span className="flex items-center gap-1 text-primary/90 font-semibold">

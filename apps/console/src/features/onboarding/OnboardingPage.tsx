@@ -79,11 +79,13 @@ export default function OnboardingPage() {
 
     void getConnectors()
       .then((items: ConnectorInfo[]) => {
-        const map: Record<string, boolean> = { ...connectors };
-        items.forEach((c) => {
-          map[c.provider.toLowerCase()] = true;
+        setConnectors((prev) => {
+          const map: Record<string, boolean> = { ...prev };
+          items.forEach((c) => {
+            map[c.provider.toLowerCase()] = true;
+          });
+          return map;
         });
-        setConnectors(map);
       })
       .catch(() => {
         // Fallback for mock/local mode
@@ -98,7 +100,7 @@ export default function OnboardingPage() {
         await disconnectConnector(provider);
         setConnectors((prev) => ({ ...prev, [provider]: false }));
       } else {
-        await connectConnector(provider, `mock_token_${provider}_${Date.now()}`, {
+        await connectConnector(provider, `mock_token_${provider}_vault`, {
           connected_via: "onboarding_wizard",
         });
         setConnectors((prev) => ({ ...prev, [provider]: true }));

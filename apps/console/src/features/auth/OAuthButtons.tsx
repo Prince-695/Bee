@@ -23,8 +23,8 @@ export function OAuthButtons({ mode = "login" }: OAuthButtonsProps) {
       } else {
         throw new Error("Missing authorization URL from server");
       }
-    } catch (err: any) {
-      setError(err?.message || `Failed to initiate ${provider} authentication`);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : `Failed to initiate ${provider} authentication`);
       setLoadingProvider(null);
     }
   };

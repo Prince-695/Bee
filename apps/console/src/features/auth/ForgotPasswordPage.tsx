@@ -30,8 +30,8 @@ export default function ForgotPasswordPage() {
       const res = await forgotPassword(email.trim());
       setInfoMessage(res?.message || "Password reset code sent to your email.");
       setStep("reset");
-    } catch (err: any) {
-      setError(err?.message || "Failed to send reset code. Please check your email.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to send reset code. Please check your email.");
     } finally {
       setLoading(false);
     }
@@ -53,8 +53,8 @@ export default function ForgotPasswordPage() {
       setError(null);
       await resetPassword(email.trim(), otpCode.trim(), newPassword);
       setStep("success");
-    } catch (err: any) {
-      setError(err?.message || "Invalid or expired reset code.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Invalid or expired reset code.");
     } finally {
       setLoading(false);
     }

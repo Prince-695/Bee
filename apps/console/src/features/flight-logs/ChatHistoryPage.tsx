@@ -91,6 +91,50 @@ export default function ChatHistoryPage() {
     }
   }, []);
 
+  const handleSelectFlight = useCallback(async (flightId: string) => {
+    setSelectedFlightId(flightId);
+    setIsLoadingDetail(true);
+
+    try {
+      const record = await getChat(flightId);
+      if (record) {
+        setSelectedFlightRecord(record);
+      } else {
+        setFlights((currentFlights) => {
+          const found = currentFlights.find((f) => f.id === flightId);
+          if (found) {
+            setSelectedFlightRecord({
+              ...found,
+              route_json: { test_coverage: "100%", files_touched: 2 },
+              result_json: {
+                summary: "Flight execution completed. Patches applied cleanly.",
+                status: found.status,
+              },
+            });
+          }
+          return currentFlights;
+        });
+      }
+    } catch {
+      setFlights((currentFlights) => {
+        const found = currentFlights.find((f) => f.id === flightId);
+        if (found) {
+          setSelectedFlightRecord({
+            ...found,
+            route_json: { test_coverage: "100%", files_touched: 2 },
+            result_json: {
+              summary: "Flight execution completed. Patches applied cleanly.",
+              status: found.status,
+            },
+          });
+        }
+        return currentFlights;
+      });
+    } finally {
+      setIsLoadingDetail(false);
+    }
+  }, []);
+
   const loadChats = useCallback(async (showSpinner = true) => {
     if (showSpinner) setIsLoadingChats(true);
     try {
@@ -104,15 +148,35 @@ export default function ChatHistoryPage() {
           model: idx % 3 === 0 ? "gemini-2.5-flash" : "gpt-4o",
         }));
         setFlights(enriched);
-        if (!selectedFlightId) {
-          setSelectedFlightId(enriched[0].id);
-          void handleSelectFlight(enriched[0].id);
-        }
+        setSelectedFlightId((current) => {
+          if (!current) {
+            void handleSelectFlight(enriched[0].id);
+            return enriched[0].id;
+          }
+          return current;
+        });
       } else {
         // Hydrate with high-fidelity realistic seed flights
         setFlights(SEED_FLIGHTS);
-        if (!selectedFlightId) {
-          setSelectedFlightId(SEED_FLIGHTS[0].id);
+        setSelectedFlightId((current) => {
+          if (!current) {
+            setSelectedFlightRecord({
+              ...SEED_FLIGHTS[0],
+              route_json: { test_coverage: "100%", files_touched: 2 },
+              result_json: {
+                summary: "AST patches successfully applied. Tests passing.",
+                verification_hash: "sha256:d82f3a9e145b80cc89df9012a67bc4e90",
+              },
+            });
+            return SEED_FLIGHTS[0].id;
+          }
+          return current;
+        });
+      }
+    } catch {
+      setFlights(SEED_FLIGHTS);
+      setSelectedFlightId((current) => {
+        if (!current) {
           setSelectedFlightRecord({
             ...SEED_FLIGHTS[0],
             route_json: { test_coverage: "100%", files_touched: 2 },
@@ -121,68 +185,19 @@ export default function ChatHistoryPage() {
               verification_hash: "sha256:d82f3a9e145b80cc89df9012a67bc4e90",
             },
           });
+          return SEED_FLIGHTS[0].id;
         }
-      }
-    } catch {
-      setFlights(SEED_FLIGHTS);
-      if (!selectedFlightId) {
-        setSelectedFlightId(SEED_FLIGHTS[0].id);
-        setSelectedFlightRecord({
-          ...SEED_FLIGHTS[0],
-          route_json: { test_coverage: "100%", files_touched: 2 },
-          result_json: {
-            summary: "AST patches successfully applied. Tests passing.",
-            verification_hash: "sha256:d82f3a9e145b80cc89df9012a67bc4e90",
-          },
-        });
-      }
+        return current;
+      });
     } finally {
       setIsLoadingChats(false);
     }
-  }, [selectedFlightId]);
+  }, [handleSelectFlight]);
 
   useEffect(() => {
     void loadChats();
     void loadSpend();
   }, [loadChats, loadSpend]);
-
-  const handleSelectFlight = async (flightId: string) => {
-    setSelectedFlightId(flightId);
-    setIsLoadingDetail(true);
-
-    try {
-      const record = await getChat(flightId);
-      if (record) {
-        setSelectedFlightRecord(record);
-      } else {
-        const found = flights.find((f) => f.id === flightId);
-        if (found) {
-          setSelectedFlightRecord({
-            ...found,
-            route_json: { test_coverage: "100%", files_touched: 2 },
-            result_json: {
-              summary: "Flight execution completed. Patches applied cleanly.",
-              status: found.status,
-            },
-          });
-        }
-      }
-    } catch {
-      const found = flights.find((f) => f.id === flightId);
-      if (found) {
-        setSelectedFlightRecord({
-          ...found,
-          route_json: { test_coverage: "100%", files_touched: 2 },
-          result_json: {
-            summary: "Flight execution completed. Patches applied cleanly.",
-            status: found.status,
-          },
-        });
-      }
-    } finally {
-      setIsLoadingDetail(false);
-    }
-  };
 
   const handleRefresh = async () => {
     await loadChats(true);

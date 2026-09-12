@@ -60,3 +60,21 @@ async def test_sqlite_db_engine_lifecycle():
     finally:
         if os.path.exists(db_path):
             os.remove(db_path)
+
+
+def test_services_data_repositories():
+    from services.data import UserRepository, ChatRepository, ConversationRepository, MissionRepository, GateRepository, OAuthRepository
+
+    user_repo = UserRepository()
+    chat_repo = ChatRepository()
+    conv_repo = ConversationRepository()
+    mission_repo = MissionRepository()
+    gate_repo = GateRepository()
+    oauth_repo = OAuthRepository()
+
+    assert user_repo is not None
+    assert chat_repo is not None
+    assert conv_repo is not None
+    assert mission_repo is not None
+    assert gate_repo is not None
+    assert oauth_repo is not None

@@ -8,7 +8,7 @@ from typing import Final
 
 from dotenv import load_dotenv
 
-_REPO_ROOT = Path(__file__).resolve().parents[5]
+_REPO_ROOT = Path(__file__).resolve().parents[4]
 _API_ROOT = _REPO_ROOT / "apps" / "api"
 _HIVE_LOCAL = _REPO_ROOT / "tools" / "hive-local"
 

@@ -6,8 +6,8 @@ from typing import Final
 
 from dotenv import load_dotenv
 
-# Repo root: packages/python/bee-core/src/bee_core/config.py -> parents[5]
-_REPO_ROOT = Path(__file__).resolve().parents[5]
+# Repo root: packages/python/bee-core/bee_core/config.py -> parents[4]
+_REPO_ROOT = Path(__file__).resolve().parents[4]
 _API_ROOT = _REPO_ROOT / "apps" / "api"
 _HIVE_LOCAL = _REPO_ROOT / "tools" / "hive-local"
 

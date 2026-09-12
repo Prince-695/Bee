@@ -37,8 +37,8 @@ dependencies = [
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.packages.find]
-where = ["."]
+[tool.setuptools.package-dir]
+bee_api = "src"
 
 [tool.pytest.ini_options]
 pythonpath = [".", "../.."]

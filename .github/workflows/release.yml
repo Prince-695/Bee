@@ -47,38 +47,38 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Web Bundle
-        run: pnpm --filter @bee/console build
+        run: pnpm --filter @bee/desktop build
 
       - name: Package Linux Desktop Binary
         if: runner.os == 'Linux'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm --filter @bee/console exec electron-builder --linux --publish never
+        run: pnpm --filter @bee/desktop exec electron-builder --linux --publish never
 
       - name: Package Windows Desktop Binary
         if: runner.os == 'Windows'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm --filter @bee/console exec electron-builder --win --publish never
+        run: pnpm --filter @bee/desktop exec electron-builder --win --publish never
 
       - name: Package macOS Desktop Binary
         if: runner.os == 'macOS'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm --filter @bee/console exec electron-builder --mac --publish never
+        run: pnpm --filter @bee/desktop exec electron-builder --mac --publish never
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}
           path: |
-            apps/console/release/*.exe
-            apps/console/release/*.AppImage
-            apps/console/release/*.deb
-            apps/console/release/*.dmg
-            apps/console/release/*.zip
-            apps/console/release/*.blockmap
-            apps/console/release/latest*.yml
+            apps/desktop/release/*.exe
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.deb
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.zip
+            apps/desktop/release/*.blockmap
+            apps/desktop/release/latest*.yml
           if-no-files-found: warn
 
   publish-release:

@@ -1,5 +1,5 @@
 packages:
-  - "apps/console"
+  - "apps/desktop"
   - "apps/web"
   - "packages/ui"
   - "packages/api-client"

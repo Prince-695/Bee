@@ -68,3 +68,7 @@ htmlcov/
 # keep generated client; ignore temp exports
 /tmp-openapi.json
 openapi.snapshot.json
+
+
+## docs
+Master_plan.md

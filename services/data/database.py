@@ -159,8 +159,14 @@ class DatabaseEngine:
 
 
 def get_db_engine() -> DatabaseEngine:
-    """Get or create singleton DatabaseEngine."""
+    """Get or create singleton DatabaseEngine, respecting test fixture overrides."""
     global _global_db_engine
+    try:
+        import bee_core.db.connection as _legacy_conn
+        if getattr(_legacy_conn, "_db_engine", None) is not None:
+            return _legacy_conn._db_engine
+    except Exception:
+        pass
     if _global_db_engine is None:
         _global_db_engine = DatabaseEngine()
     return _global_db_engine

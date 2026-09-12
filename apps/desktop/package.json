@@ -1,8 +1,8 @@
 {
-  "name": "@bee/console",
+  "name": "@bee/desktop",
   "private": true,
   "version": "0.1.0",
-  "description": "Bee — Autonomous AI Co-Engineer for Production Codebases",
+  "description": "Bee — Autonomous Multi-Agent Co-Engineering Platform",
   "author": {
     "name": "Prince Rathod",
     "email": "princerathod695@gmail.com"

@@ -1,0 +1,8 @@
+{
+  "template_id": "template-custom-worker",
+  "name": "Custom Worker Agent",
+  "role": "worker",
+  "description": "Configurable agent template connected to MCP tools and custom prompts.",
+  "prompt_template": "You are a specialized worker assisting in automated execution.",
+  "required_integrations": []
+}

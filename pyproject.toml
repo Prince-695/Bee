@@ -12,4 +12,5 @@ members = [
   "packages/python/bee-core",
   "packages/python/bee-hive",
   "packages/python/bee-logging",
+  "services",
 ]

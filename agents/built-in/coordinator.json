@@ -1,0 +1,13 @@
+{
+  "id": "agent-system-coordinator",
+  "name": "Bee Coordinator",
+  "role": "orchestrator",
+  "description": "Primary orchestrator agent managing user interactions, agent routing, and task decomposition.",
+  "avatar": "Bot",
+  "capabilities": [
+    "mission_planning",
+    "agent_dispatch",
+    "status_reporting"
+  ],
+  "is_builtin": true
+}

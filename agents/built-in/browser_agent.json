@@ -1,0 +1,13 @@
+{
+  "id": "agent-system-browser",
+  "name": "Browser Agent",
+  "role": "browser_assistant",
+  "description": "Inspects web pages, user browser context, and summarizes where work was left off.",
+  "avatar": "Globe",
+  "capabilities": [
+    "browser_navigation",
+    "history_inspection",
+    "context_resumption"
+  ],
+  "is_builtin": true
+}

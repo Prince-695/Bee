@@ -65,16 +65,16 @@ LOG_TERMINAL_ENABLED: Final[bool] = _read_bool("LOG_TERMINAL_ENABLED", True)
 LOG_TERMINAL_FORMAT: Final[str] = _read_env("LOG_TERMINAL_FORMAT", "message").lower()
 LOG_TERMINAL_MIN_LEVEL: Final[str] = _read_env("LOG_TERMINAL_MIN_LEVEL", "INFO").upper()
 
-LLM_API_KEY: Final[str] = _read_env_any("LLM_API_KEY", "NVIDIA_API_KEY")
+LLM_API_KEY: Final[str] = _read_env_any("GEMINI_API_KEY", "LLM_API_KEY", "OPENAI_API_KEY")
 LLM_BASE_URL: Final[str] = _read_env(
-    "LLM_BASE_URL", "https://integrate.api.nvidia.com/v1"
+    "LLM_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/"
 )
-LLM_MODEL: Final[str] = _read_env("LLM_MODEL", "nvidia/nemotron-3-super-120b-a12b")
-LLM_TEMPERATURE: Final[float] = _read_float("LLM_TEMPERATURE", 1.0)
+LLM_MODEL: Final[str] = _read_env("LLM_MODEL", "gemini-2.5-flash")
+LLM_TEMPERATURE: Final[float] = _read_float("LLM_TEMPERATURE", 0.7)
 LLM_TOP_P: Final[float] = _read_float("LLM_TOP_P", 0.95)
-LLM_MAX_TOKENS: Final[int] = _read_int("LLM_MAX_TOKENS", 16384)
-LLM_REASONING_BUDGET: Final[int] = _read_int("LLM_REASONING_BUDGET", 16384)
-LLM_ENABLE_THINKING: Final[bool] = _read_bool("LLM_ENABLE_THINKING", True)
+LLM_MAX_TOKENS: Final[int] = _read_int("LLM_MAX_TOKENS", 8192)
+LLM_REASONING_BUDGET: Final[int] = _read_int("LLM_REASONING_BUDGET", 8192)
+LLM_ENABLE_THINKING: Final[bool] = _read_bool("LLM_ENABLE_THINKING", False)
 
 def mask_secret(value: str) -> str:
     """Safely mask sensitive secrets and API keys for logs and diagnostics."""

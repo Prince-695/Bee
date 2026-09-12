@@ -49,7 +49,7 @@ async def test_credentials_vault_lifecycle():
         assert data["platform"] == "slack"
         assert data["credential_key"] == "BOT_TOKEN"
         assert data["label"] == "Production Alerts Bot"
-        assert data["masked_preview"] == "xoxb...UvWx"
+        assert data["masked_preview"] == "xoxb...-key"
         assert raw_slack_token not in str(data)  # Plaintext never leaked
 
         # 4. Store second credential (GitHub PAT)

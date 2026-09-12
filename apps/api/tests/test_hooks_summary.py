@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from unittest import IsolatedAsyncioTestCase
 
-from bee_api.routers import router_agent
+from bee_api.domains.agent.routers import run as router_agent
 from bee_core.webhook_queue import DeferredTask, TaskStatus, task_queue
 
 

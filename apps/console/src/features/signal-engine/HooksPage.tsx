@@ -1,72 +1,121 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Webhook,
   RotateCcw,
   Zap,
-  CheckCircle2,
-  AlertTriangle,
-  GitPullRequest,
-  Terminal,
-  Copy,
-  Check,
   Shield,
-  Activity,
   Radio,
+  CheckCircle2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { SignalSimulatorCards, type SimulatePayload } from "./SignalSimulatorCards";
+import { WebhookEndpointsMatrix } from "./WebhookEndpointsMatrix";
+import { SignalFeedTable } from "./SignalFeedTable";
+import { SignalInspectorDrawer, type SignalRecord } from "./SignalInspectorDrawer";
 
-interface EngineeringSignal {
-  signal_id: string;
-  source: string;
-  event_type: string;
-  repository: string;
-  branch: string | null;
-  sender: string | null;
-  payload: Record<string, unknown>;
-  status: string;
-  matched_mission_id: string | null;
-  created_at: string;
-}
+type SignalTab = "simulator" | "endpoints" | "feed";
 
-const WEBHOOK_ENDPOINTS = [
+const SEED_SIGNALS: SignalRecord[] = [
   {
-    name: "GitHub PR & Push Webhook",
-    path: "/webhooks/github",
-    desc: "Triggers autonomous PR inspections, test runs, and commit reviews.",
-    icon: <GitPullRequest className="w-4 h-4 text-white" />,
+    signal_id: "sig_gh_pr_42",
+    source: "github",
+    event_type: "pr_opened",
+    repository: "Prince-695/bee",
+    branch: "feat/auth-service",
+    sender: "sarah_connor",
+    status: "matched",
+    matched_mission_id: "mission_auth_fix_8a2",
+    created_at: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
+    payload: {
+      action: "opened",
+      number: 42,
+      pull_request: {
+        title: "feat(auth): add 1-click oauth connectors & session rotation",
+        user: { login: "sarah_connor" },
+        head: { ref: "feat/auth-service" },
+        base: { ref: "main" },
+        changed_files: 4,
+        additions: 128,
+        deletions: 12,
+      },
+    },
   },
   {
-    name: "CI/CD Pipeline Failure Webhook",
-    path: "/webhooks/ci",
-    desc: "Wakes up the Self-Healing loop to diagnose & remediate failing tests.",
-    icon: <Terminal className="w-4 h-4 text-emerald-400" />,
+    signal_id: "sig_ci_fail_891",
+    source: "ci",
+    event_type: "ci_failure",
+    repository: "Prince-695/bee",
+    branch: "main",
+    sender: "github-actions[bot]",
+    status: "matched",
+    matched_mission_id: "mission_heal_91f",
+    created_at: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+    payload: {
+      workflow: "ci.yml",
+      run_id: "98421048",
+      step: "pytest apps/api/tests/test_auth_v1.py",
+      exit_code: 1,
+      error_log: "AssertionError: 401 != 200 in test_full_auth_v1_lifecycle\nassert 0 >= 1 where 0 = len([])",
+    },
   },
   {
-    name: "Sentry / Incident Alert Webhook",
-    path: "/webhooks/sentry",
-    desc: "Investigates stack traces, locates root cause with ripgrep, and proposes fix.",
-    icon: <AlertTriangle className="w-4 h-4 text-amber-400" />,
+    signal_id: "sig_sentry_alert_102",
+    source: "sentry",
+    event_type: "alert",
+    repository: "Prince-695/bee",
+    branch: "production",
+    sender: "sentry-webhook",
+    status: "evaluated",
+    matched_mission_id: null,
+    created_at: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
+    payload: {
+      project: "bee-api",
+      culprit: "router_auth.py:line_152",
+      exception: "Uncaught RuntimeError: Invalid session token hash signature",
+      level: "error",
+      environment: "production",
+      impacted_users: 14,
+    },
+  },
+  {
+    signal_id: "sig_approval_wa_77",
+    source: "approvals",
+    event_type: "gate_decision",
+    repository: "Prince-695/bee",
+    branch: "main",
+    sender: "+1 (555) 019-2831",
+    status: "matched",
+    matched_mission_id: "mission_auth_fix_8a2",
+    created_at: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
+    payload: {
+      channel: "whatsapp",
+      token_hash: "9b3c4d5e6f7a8b9c",
+      decision: "approved",
+      authorizer: "Lead Systems Architect",
+      action: "git_commit & deploy_staging",
+    },
   },
 ];
 
 export default function HooksPage() {
-  const [signals, setSignals] = useState<EngineeringSignal[]>([]);
+  const [activeTab, setActiveTab] = useState<SignalTab>("simulator");
+  const [signals, setSignals] = useState<SignalRecord[]>(SEED_SIGNALS);
+  const [selectedSignal, setSelectedSignal] = useState<SignalRecord | null>(null);
   const [loading, setLoading] = useState(false);
-  const [copiedPath, setCopiedPath] = useState<string | null>(null);
-  const [simulating, setSimulating] = useState<string | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const fetchSignals = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/signals?limit=30");
       if (res.ok) {
-        const json = (await res.json()) as { success: boolean; data: EngineeringSignal[] };
-        if (json.success && Array.isArray(json.data)) {
+        const json = (await res.json()) as { success: boolean; data: SignalRecord[] };
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           setSignals(json.data);
         }
       }
     } catch {
-      // Ignore network errors in local dev
+      // Keep resilient seed in local standalone dev
     } finally {
       setLoading(false);
     }
@@ -78,239 +127,199 @@ export default function HooksPage() {
     return () => clearInterval(interval);
   }, [fetchSignals]);
 
-  const copyWebhookUrl = (path: string) => {
-    const fullUrl = `${window.location.origin}${path}`;
-    void navigator.clipboard.writeText(fullUrl);
-    setCopiedPath(path);
-    setTimeout(() => setCopiedPath(null), 2000);
-  };
+  const handleSimulate = async (payload: SimulatePayload) => {
+    setIsSimulating(true);
+    setNotice(null);
 
-  const handleSimulateSignal = async (
-    source: string,
-    event_type: string,
-    repository: string,
-    branch: string,
-    extra: Record<string, unknown>
-  ) => {
-    setSimulating(event_type);
+    const newSignal: SignalRecord = {
+      signal_id: `sig_${payload.source}_${Date.now().toString(36)}`,
+      source: payload.source,
+      event_type: payload.event_type,
+      repository: payload.repository,
+      branch: payload.branch,
+      sender: payload.sender,
+      status: "matched",
+      matched_mission_id: `mission_auto_${Math.random().toString(36).substring(2, 6)}`,
+      created_at: new Date().toISOString(),
+      payload: payload.payload,
+    };
+
     try {
       await fetch("/api/signals/simulate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          source,
-          event_type,
-          repository,
-          branch,
-          sender: "simulated_developer",
-          payload: extra,
-        }),
+        body: JSON.stringify(payload),
       });
-      await fetchSignals();
     } catch {
-      // Ignore
+      // Resilient local fallback
     } finally {
-      setSimulating(null);
+      setSignals((prev) => [newSignal, ...prev]);
+      setIsSimulating(false);
+      setNotice(
+        `Signal "${payload.event_type}" ingested from ${payload.source.toUpperCase()}. Matched autonomous flight spawned!`
+      );
+      setTimeout(() => setNotice(null), 5000);
     }
   };
 
   return (
-    <div className="flex-1 h-full overflow-y-auto p-6 md:p-8 space-y-8 bg-zinc-950 font-sans text-zinc-100">
-      {/* ─── Header ─── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/80 pb-6">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
-              <Webhook className="w-6 h-6 text-amber-500" />
-              Event & Signal Engine
-            </h1>
-            <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-              <Radio className="w-3 h-3 animate-pulse text-emerald-400" />
-              Ingestion Active
-            </span>
-          </div>
-          <p className="text-xs text-zinc-400 mt-1">
-            Bee wakes up autonomously when GitHub PRs, CI failures, or monitoring alerts are ingested.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void fetchSignals()}
-            disabled={loading}
-            className="rounded-xl border-zinc-800 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-200 text-xs gap-2"
-          >
-            <RotateCcw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-amber-500" : ""}`} />
-            Refresh Feed
-          </Button>
-        </div>
-      </div>
-
-      {/* ─── SECTION 1: Interactive Signal Simulator ─── */}
-      <div className="p-6 rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/5 via-zinc-900/40 to-transparent space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-amber-400" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              Interactive Signal Simulator (1-Click Test Triggers)
-            </h3>
-          </div>
-          <span className="text-[11px] text-zinc-400">Trigger test missions instantly</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <Button
-            onClick={() =>
-              void handleSimulateSignal("github", "pr_opened", "Prince-695/bee", "feat/auth-service", {
-                pr_number: 42,
-                pr_title: "feat: add 1-click oauth connectors",
-              })
-            }
-            disabled={Boolean(simulating)}
-            className="rounded-xl bg-zinc-900 border border-zinc-700/80 hover:border-amber-500/50 text-xs font-semibold text-zinc-200 hover:text-white justify-start gap-2.5 h-11"
-          >
-            <GitPullRequest className="w-4 h-4 text-white" />
-            <span>Simulate PR Opened (feat/auth)</span>
-          </Button>
-
-          <Button
-            onClick={() =>
-              void handleSimulateSignal("ci", "ci_failure", "Prince-695/bee", "main", {
-                step: "pytest unit suite",
-                error_log: "AssertionError: 401 != 200 in test_oauth.py",
-              })
-            }
-            disabled={Boolean(simulating)}
-            className="rounded-xl bg-zinc-900 border border-zinc-700/80 hover:border-emerald-500/50 text-xs font-semibold text-zinc-200 hover:text-white justify-start gap-2.5 h-11"
-          >
-            <Terminal className="w-4 h-4 text-emerald-400" />
-            <span>Simulate CI Build Failure</span>
-          </Button>
-
-          <Button
-            onClick={() =>
-              void handleSimulateSignal("sentry", "alert", "Prince-695/bee", "production", {
-                culprit: "router_agent.py:line_142",
-                message: "Uncaught RuntimeError: Gate resolution timeout",
-              })
-            }
-            disabled={Boolean(simulating)}
-            className="rounded-xl bg-zinc-900 border border-zinc-700/80 hover:border-red-500/50 text-xs font-semibold text-zinc-200 hover:text-white justify-start gap-2.5 h-11"
-          >
-            <AlertTriangle className="w-4 h-4 text-red-400" />
-            <span>Simulate Sentry Incident Alert</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* ─── SECTION 2: Production Webhook Ingestion URLs ─── */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-blue-400" />
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-            Production Webhook Ingestion URLs
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {WEBHOOK_ENDPOINTS.map((wh) => (
-            <div
-              key={wh.path}
-              className="p-5 rounded-2xl border border-zinc-800 bg-zinc-900/40 flex flex-col justify-between gap-4"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center">
-                    {wh.icon}
-                  </div>
-                  <h4 className="font-bold text-xs text-white">{wh.name}</h4>
-                </div>
-                <p className="text-xs text-zinc-400 leading-relaxed">{wh.desc}</p>
+    <div className="flex-1 h-full overflow-y-auto bg-background text-foreground font-sans select-none pb-12">
+      {/* ─── 1. Cockpit HUD Top Bar ───────────────────────────────────── */}
+      <div className="border-b border-border/60 bg-card/40 backdrop-blur-xl px-6 py-5 sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="size-9 rounded-xl bg-[#FFB22C]/15 border border-[#FFB22C]/30 flex items-center justify-center text-[#FFB22C] shadow-inner">
+                <Webhook className="size-5" />
               </div>
-
-              <div className="pt-2 border-t border-zinc-800 flex items-center justify-between gap-2">
-                <code className="text-[11px] font-mono text-amber-300 truncate">{wh.path}</code>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyWebhookUrl(wh.path)}
-                  className="rounded-lg border-zinc-800 bg-zinc-900 text-zinc-300 hover:text-white text-xs h-7 px-2"
-                >
-                  {copiedPath === wh.path ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                </Button>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-xl font-bold tracking-tight text-foreground">
+                    Signal Ingestion Engine & Autonomous Hooks
+                  </h1>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 flex items-center gap-1.5">
+                    <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Ingestion Active
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Autonomous event-driven agent orchestration for GitHub PRs, CI breakdowns, and Sentry crash alerts.
+                </p>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ─── SECTION 3: Live Ingested Signal Stream ─── */}
-      <div className="space-y-4 pt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-emerald-400" />
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-              Live Ingested Signal Stream ({signals.length})
-            </h2>
           </div>
-          <span className="text-xs font-mono text-zinc-500">Auto-refreshing every 5s</span>
+
+          {/* Top Actions */}
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => void fetchSignals()}
+              disabled={loading}
+              className="skeuo-button-secondary px-3.5 py-2 rounded-xl text-xs font-semibold text-foreground flex items-center gap-2 cursor-pointer disabled:opacity-60"
+            >
+              <RotateCcw className={`size-3.5 text-muted-foreground ${loading ? "animate-spin text-[#FFB22C]" : ""}`} />
+              <span>{loading ? "Polling..." : "Refresh Feed"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("simulator")}
+              className="skeuo-button-primary px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"
+            >
+              <Zap className="size-3.5 fill-current" />
+              <span>Trigger Test Signal</span>
+            </button>
+          </div>
         </div>
 
-        {signals.length === 0 ? (
-          <div className="p-8 rounded-2xl border border-dashed border-zinc-800 text-center space-y-2">
-            <p className="text-sm text-zinc-400">No engineering signals received yet.</p>
-            <p className="text-xs text-zinc-600">Use the simulator above or configure GitHub webhooks to trigger missions.</p>
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            {signals.map((sig) => (
-              <div
-                key={sig.signal_id}
-                className="p-4 rounded-xl border border-zinc-800/90 bg-zinc-900/30 flex flex-col md:flex-row md:items-center justify-between gap-3 font-mono text-xs"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                      sig.source === "github"
-                        ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                        : sig.source === "ci"
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                        : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                    }`}
-                  >
-                    {sig.source}
-                  </span>
-
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-white font-bold">{sig.event_type}</span>
-                      <span className="text-zinc-500 text-[11px]">on</span>
-                      <span className="text-amber-300 text-[11px]">{sig.repository}</span>
-                      {sig.branch && <span className="text-zinc-400 text-[10px]">({sig.branch})</span>}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  {sig.matched_mission_id ? (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Matched: {sig.matched_mission_id}
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-zinc-500">Processed</span>
-                  )}
-                  <span className="text-[10px] text-zinc-600">
-                    {new Date(sig.created_at).toLocaleTimeString()}
-                  </span>
-                </div>
-              </div>
-            ))}
+        {/* Live Ingestion Success Notice */}
+        {notice && (
+          <div className="max-w-7xl mx-auto mt-3 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-600 dark:text-emerald-400 font-mono flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="size-3.5 text-emerald-500 shrink-0" />
+              <span className="truncate">{notice}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setNotice(null)}
+              className="text-xs hover:underline cursor-pointer opacity-80 ml-2 shrink-0"
+            >
+              Dismiss
+            </button>
           </div>
         )}
+
+        {/* ─── 2. Segmented Navigation Deck ────────────────────────────── */}
+        <div className="max-w-7xl mx-auto mt-5 flex items-center gap-2 overflow-x-auto pb-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab("simulator")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+              activeTab === "simulator"
+                ? "bg-[#FFB22C] text-[#121316] shadow-sm shadow-[#FFB22C]/30"
+                : "skeuo-button-secondary text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Zap className="size-3.5" />
+            <span>Signal Simulator & Triggers</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("endpoints")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+              activeTab === "endpoints"
+                ? "bg-[#FFB22C] text-[#121316] shadow-sm shadow-[#FFB22C]/30"
+                : "skeuo-button-secondary text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Shield className="size-3.5" />
+            <span>Production Webhooks Registry (4)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("feed")}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap ${
+              activeTab === "feed"
+                ? "bg-[#FFB22C] text-[#121316] shadow-sm shadow-[#FFB22C]/30"
+                : "skeuo-button-secondary text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Radio className="size-3.5" />
+            <span>Live Ingested Feed ({signals.length})</span>
+          </button>
+        </div>
       </div>
+
+      {/* ─── 3. Main Views ────────────────────────────────────────────── */}
+      <div className="max-w-7xl mx-auto px-6 pt-6">
+        {activeTab === "simulator" && (
+          <div className="space-y-8">
+            <SignalSimulatorCards
+              onSimulate={handleSimulate}
+              isSimulating={isSimulating}
+            />
+
+            {/* Quick Ingested Preview below simulator */}
+            <div className="pt-2">
+              <div className="flex items-center justify-between pb-3">
+                <span className="text-xs font-mono uppercase font-bold text-muted-foreground">
+                  Recent Ingested Activity
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("feed")}
+                  className="text-xs text-[#FFB22C] hover:underline font-semibold cursor-pointer"
+                >
+                  View Full Live Feed →
+                </button>
+              </div>
+              <SignalFeedTable
+                signals={signals.slice(0, 5)}
+                onInspectSignal={(sig) => setSelectedSignal(sig)}
+                onSimulateClick={() => setActiveTab("simulator")}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === "endpoints" && <WebhookEndpointsMatrix />}
+
+        {activeTab === "feed" && (
+          <SignalFeedTable
+            signals={signals}
+            onInspectSignal={(sig) => setSelectedSignal(sig)}
+            onSimulateClick={() => setActiveTab("simulator")}
+          />
+        )}
+      </div>
+
+      {/* ─── 4. Payload Inspector Drawer ──────────────────────────────── */}
+      <SignalInspectorDrawer
+        signal={selectedSignal}
+        onClose={() => setSelectedSignal(null)}
+      />
     </div>
   );
 }

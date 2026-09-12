@@ -1,6 +1,6 @@
 # Bee monorepo plan — built & next
 
-Living plan for the Bee polyglot monorepo. Product language: [terminology.md](terminology.md). Architecture: [architecture/README.md](architecture/README.md). Local run: [../run.md](../run.md).
+Living plan for the Bee polyglot monorepo. Product language: [terminology.md](terminology.md). Architecture: [architecture/README.md](architecture/README.md). Local run: [../README.md](../README.md).
 
 **Bee** (stylized **BEE**) is an Autonomous AI Co-Engineer — a self-healing, agentic teammate delivered as a native desktop application. It receives engineering tasks, plans multi-step execution Routes, and uses Hive workers to autonomously resolve them.
 

@@ -1,19 +1,72 @@
+name: bee-platform
+
 services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: bee-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bee}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-beepassword}
+      POSTGRES_DB: ${POSTGRES_DB:-bee_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - bee_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bee} -d ${POSTGRES_DB:-bee_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: bee-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - bee_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.api
+    container_name: bee-api
+    restart: unless-stopped
+    environment:
+      PORT: 8000
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bee}:${POSTGRES_PASSWORD:-beepassword}@postgres:5432/${POSTGRES_DB:-bee_db}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${JWT_SECRET:-5b275b987b4c1853a824dbe2e04d0b00be4154629af2faca0ad8c36f0882c4da}
+      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:-bee_aes256_gcm_production_vault_encryption_key_2026}
+      SWAGGER_USERNAME: ${SWAGGER_USERNAME:-admin}
+      SWAGGER_PASSWORD: ${SWAGGER_PASSWORD:-admin123}
     ports:
       - "8000:8000"
-    env_file:
-      - ../../apps/api/.env
-    volumes:
-      - ../../apps/api:/app/apps/api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   console:
     build:
       context: ../..
       dockerfile: infra/docker/Dockerfile.console
+    container_name: bee-console
+    restart: unless-stopped
     ports:
       - "5173:80"
     depends_on:
       - api
+
+volumes:
+  bee_pgdata:
+  bee_redisdata:

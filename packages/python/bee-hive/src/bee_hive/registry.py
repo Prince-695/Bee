@@ -107,12 +107,12 @@ MCP_SERVERS: Final[dict[str, dict[str, object]]] = {
         "command": MCP_PYTHON_BIN,
         "args": [str(_HIVE_LOCAL / "gmail_mcp_server.py")],
         "env": {
-            "GMAIL_CREDENTIALS_PATH": _read_env(
-                "GMAIL_CREDENTIALS_PATH", str(_API_ROOT / "gmail_credentials.json")
-            ),
-            "GMAIL_TOKEN_PATH": _read_env(
-                "GMAIL_TOKEN_PATH", str(_API_ROOT / "token.json")
-            ),
+            "GMAIL_CLIENT_ID": _read_env("GMAIL_CLIENT_ID"),
+            "GMAIL_CLIENT_SECRET": _read_env("GMAIL_CLIENT_SECRET"),
+            "GMAIL_REFRESH_TOKEN": _read_env("GMAIL_REFRESH_TOKEN"),
+            "GMAIL_TOKEN_URI": _read_env("GMAIL_TOKEN_URI", "https://oauth2.googleapis.com/token"),
+            "GMAIL_CREDENTIALS_PATH": _read_env("GMAIL_CREDENTIALS_PATH"),
+            "GMAIL_TOKEN_PATH": _read_env("GMAIL_TOKEN_PATH"),
             "PATH": _read_env("PATH"),
         },
     },

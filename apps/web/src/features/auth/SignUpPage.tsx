@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles, ArrowRight, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 
 export default function SignUpPage() {
   const [name, setName] = useState("");
@@ -26,9 +26,11 @@ export default function SignUpPage() {
     <div className="min-h-screen bg-zinc-950 flex flex-col justify-center py-12 px-6 lg:px-8 text-zinc-100 font-sans selection:bg-amber-500/30 selection:text-white">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-3">
         <Link to="/" className="inline-flex items-center gap-2 group">
-          <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center text-black font-black shadow-lg shadow-amber-500/20">
-            <Sparkles className="w-5 h-5 text-black" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Bee Logo"
+            className="w-10 h-10 rounded-2xl object-contain shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform"
+          />
           <span className="font-bold text-2xl tracking-tight text-white">BEE</span>
         </Link>
         <h2 className="text-2xl font-black tracking-tight text-white">Create your account</h2>

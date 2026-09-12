@@ -1,8 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, CheckCircle2, Loader2, RotateCcw, Send, Sparkles, Terminal, ArrowRight } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  Loader2,
+  PanelRightClose,
+  PanelRightOpen,
+  RotateCcw,
+  Send,
+  Sparkles,
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
   getConversation,
@@ -17,19 +25,23 @@ import {
   conversationSuggestions,
   conversationStatusLabel,
   conversationStatusTone,
-} from "@/components/conversation/ConversationChrome";
+} from "./components/ConversationChrome";
 
 const CONVERSATION_KEY = "bee.activeConversationId";
 
 export default function ConversationPage() {
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const [conversation, setConversation] = useState<ConversationSession | null>(null);
   const [pendingMessage, setPendingMessage] = useState<ConversationMessage | null>(null);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [hydrating, setHydrating] = useState(true);
+  const [showSideRail, setShowSideRail] = useState(true);
+  const [activeRouteId, setActiveRouteId] = useState<string | null>(null);
 
   useEffect(() => {
     const savedConversationId = window.localStorage.getItem(CONVERSATION_KEY);
@@ -44,6 +56,14 @@ export default function ConversationPage() {
         const session = await getConversation(savedConversationId);
         if (!isMounted) return;
         setConversation(session);
+        // Find if any message already has a route_id
+        for (const msg of session.messages) {
+          const rId = (msg.metadata as { route_id?: string })?.route_id;
+          if (rId) {
+            setActiveRouteId(rId);
+            break;
+          }
+        }
       } catch {
         if (!isMounted) return;
         window.localStorage.removeItem(CONVERSATION_KEY);
@@ -64,16 +84,18 @@ export default function ConversationPage() {
       ? [pendingMessage]
       : [];
 
-  const activeConversationState = conversation?.state ?? (pendingMessage ? "gathering" : undefined);
+  const activeConversationState =
+    conversation?.state ?? (pendingMessage ? "gathering" : undefined);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [visibleMessages.length, activeConversationState]);
+  }, [visibleMessages.length, activeConversationState, activeRouteId]);
 
   const handleReset = () => {
     window.localStorage.removeItem(CONVERSATION_KEY);
     setConversation(null);
     setPendingMessage(null);
+    setActiveRouteId(null);
     setDraft("");
     setLoadError(null);
   };
@@ -102,187 +124,264 @@ export default function ConversationPage() {
         ? await sendConversationMessage(conversation.id, text)
         : await startConversation(text);
 
-      setConversation(result.conversation);
+      let updatedConversation = result.conversation;
+
+      // If a route was planned, attach route_id to the assistant's response so InlineFlightPlayer renders!
+      if (result.route_id) {
+        setActiveRouteId(result.route_id);
+        const lastMsgIdx = updatedConversation.messages.length - 1;
+        if (lastMsgIdx >= 0 && updatedConversation.messages[lastMsgIdx].role === "assistant") {
+          updatedConversation = {
+            ...updatedConversation,
+            messages: updatedConversation.messages.map((m, idx) =>
+              idx === lastMsgIdx
+                ? {
+                    ...m,
+                    metadata: {
+                      ...m.metadata,
+                      route_id: result.route_id,
+                    },
+                  }
+                : m
+            ),
+          };
+        }
+      }
+
+      setConversation(updatedConversation);
       setPendingMessage(null);
       window.localStorage.setItem(CONVERSATION_KEY, result.conversation.id);
-
-      if (result.route_id) {
-        navigate(`/app/route/${result.route_id}`);
-      }
     } catch (error) {
       setPendingMessage(null);
       setDraft(text);
-      const message = error instanceof Error ? error.message : "Failed to send message.";
+      const message =
+        error instanceof Error ? error.message : "Failed to send message.";
       setLoadError(message);
     } finally {
       setIsSending(false);
     }
   };
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      void handleSubmit();
+    }
+  };
+
   if (hydrating) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+      <div className="w-full h-full flex flex-col items-center justify-center space-y-3">
+        <Loader2 className="size-8 animate-spin text-primary" />
+        <span className="font-mono text-xs text-muted-foreground">
+          Restoring Co-Engineer Session...
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full overflow-hidden p-4 md:p-6">
-      <div className="mx-auto grid h-full max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        {/* Main Conversation Window */}
-        <section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/40 backdrop-blur-xl">
-          {/* Header */}
-          <div className="flex items-center justify-between gap-4 border-b border-zinc-800 px-5 py-4 bg-zinc-900/60">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-                <Sparkles className="h-4 w-4" />
-              </div>
-              <div>
-                <h1 className="text-base font-bold text-white tracking-tight">AI Co-Engineer Workspace</h1>
-                <p className="text-xs text-zinc-400">Collaborative planning, code review, and execution stream.</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className={`px-2.5 py-1 rounded-full text-[10.5px] font-bold uppercase tracking-wider ${conversationStatusTone(activeConversationState)}`}>
-                {conversationStatusLabel(activeConversationState)}
+    <div className="w-full h-[calc(100vh-3.5rem)] flex flex-col overflow-hidden bg-background">
+      {/* ─── 1. Cockpit Top Bar ─────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-border/50 bg-card/30 backdrop-blur-md z-10 select-none">
+        <div className="flex items-center gap-3">
+          <div className="size-8 rounded-lg bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-primary-foreground font-black shadow-[0_2px_10px_rgba(255,178,44,0.3)]">
+            🐝
+          </div>
+          <div>
+            <h1 className="text-sm font-bold text-foreground tracking-tight flex items-center gap-2">
+              <span>Co-Engineer Flight Console</span>
+              <span className="text-[10px] font-mono uppercase px-1.5 py-0.2 rounded bg-primary/15 text-primary border border-primary/20 font-semibold">
+                Autonomous
               </span>
-              <Button
-                variant="outline"
-                className="rounded-xl border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs"
-                onClick={handleReset}
-              >
-                <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                New Thread
-              </Button>
-            </div>
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          {/* Status Capsule */}
+          <div
+            className={`px-2.5 py-1 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider border flex items-center gap-1.5 transition-all ${conversationStatusTone(
+              activeConversationState
+            )}`}
+          >
+            <span
+              className={`size-2 rounded-full ${
+                activeConversationState === "planning" ||
+                activeConversationState === "gathering"
+                  ? "bg-primary honey-led-active"
+                  : activeConversationState === "planned"
+                  ? "bg-emerald-500 shadow-[0_0_8px_#10B981]"
+                  : "bg-muted-foreground/40"
+              }`}
+            />
+            <span>{conversationStatusLabel(activeConversationState)}</span>
           </div>
 
+          {/* New Thread Tactile Button */}
+          <button
+            type="button"
+            onClick={handleReset}
+            className="skeuo-button-secondary px-2.5 py-1 rounded-lg text-xs font-semibold text-foreground flex items-center gap-1.5 cursor-pointer"
+            title="Start fresh conversation thread"
+          >
+            <RotateCcw className="size-3 text-muted-foreground" />
+            <span className="hidden sm:inline">New Thread</span>
+          </button>
+
+          {/* Toggle Blueprint Side Rail */}
+          <button
+            type="button"
+            onClick={() => setShowSideRail(!showSideRail)}
+            className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+              showSideRail
+                ? "border-primary/40 bg-primary/10 text-primary"
+                : "border-border/60 text-muted-foreground hover:text-foreground"
+            }`}
+            title={showSideRail ? "Collapse Blueprint Rail" : "Expand Blueprint Rail"}
+          >
+            {showSideRail ? (
+              <PanelRightClose className="size-4" />
+            ) : (
+              <PanelRightOpen className="size-4" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* ─── 2. Main Workspace Body ──────────────────────────────────── */}
+      <div className="flex-1 flex min-h-0 overflow-hidden">
+        {/* Chat Stream Centerpiece */}
+        <section className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Messages Feed */}
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 space-y-4">
+          <div className="flex-1 overflow-y-auto px-4 md:px-8 py-6 space-y-6">
             {!visibleMessages.length ? (
-              <div className="flex h-full min-h-[300px] flex-col justify-center gap-6 p-4 max-w-2xl mx-auto">
+              <div className="flex h-full min-h-[420px] flex-col justify-center items-center max-w-2xl mx-auto space-y-8 text-center">
+                {/* Hero Greeting */}
                 <div className="space-y-3">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-400">
-                    <Terminal className="h-3 w-3" /> Autonomous Task Planner
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary">
+                    <Sparkles className="size-3.5" />
+                    <span>Autonomous AI Co-Engineer</span>
                   </div>
-                  <h2 className="text-xl font-bold text-white tracking-tight">
-                    What are we building or fixing today?
+                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                    What are we building or testing today?
                   </h2>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
-                    Provide your engineering task or issue description. Bee will analyze the requirements, inspect the codebase, and build a self-healing Route.
+                  <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                    Issue a high-level goal. Bee will inspect codebases, synthesize a
+                    DAG route, and execute flights with compiler feedback.
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Suggested tasks</span>
-                  <div className="grid gap-2">
+                {/* Quick Directive Chips */}
+                <div className="w-full space-y-2.5 text-left">
+                  <div className="flex items-center justify-between text-[11px] font-mono uppercase text-muted-foreground px-1">
+                    <span>Recommended Autonomous Missions</span>
+                    <span>1-Click Launch</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {conversationSuggestions.map((prompt) => (
                       <button
                         key={prompt}
+                        type="button"
                         onClick={() => {
                           setDraft(prompt);
+                          textareaRef.current?.focus();
                         }}
-                        className="p-3 rounded-xl border border-zinc-800 bg-zinc-950/60 hover:border-amber-500/40 hover:bg-zinc-900/80 text-left text-xs text-zinc-300 transition-all flex items-center justify-between group cursor-pointer"
+                        className="skeuo-glass-card p-3 rounded-xl text-left text-xs font-medium text-foreground hover:border-primary/50 transition-all flex items-center justify-between group cursor-pointer"
                       >
-                        <span>{prompt}</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+                        <span className="line-clamp-2 leading-snug">{prompt}</span>
+                        <ArrowRight className="size-3.5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0 ml-2" />
                       </button>
                     ))}
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6 max-w-4xl mx-auto">
                 {visibleMessages.map((msg) => (
-                  <ConversationMessageRow key={msg.id} message={msg} />
+                  <ConversationMessageRow
+                    key={msg.id}
+                    message={msg}
+                    onNavigateToRoute={(rId) => navigate(`/route/${rId}`)}
+                  />
                 ))}
-
-                {isSending && (
-                  <div className="flex justify-start">
-                    <div className="flex items-center gap-2.5 rounded-2xl border border-zinc-800 bg-zinc-900/80 px-4 py-3 text-xs text-zinc-300">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-400" />
-                      <span>Bee is analyzing requirements & creating execution Route...</span>
-                    </div>
-                  </div>
-                )}
                 <div ref={messagesEndRef} />
               </div>
             )}
           </div>
 
-          {/* Input Box */}
-          <div className="border-t border-zinc-800 bg-zinc-900/60 p-4">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                void handleSubmit();
-              }}
-              className="space-y-3"
-            >
-              <Textarea
-                className="min-h-24 resize-none rounded-xl border border-zinc-800 bg-black/50 p-3.5 text-xs text-zinc-200 placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-amber-500"
-                placeholder="Describe your engineering goal (e.g., 'Run test suite and fix failing auth assertions')..."
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void handleSubmit();
-                  }
-                }}
-              />
-
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                  {activeConversationState === "planned"
-                    ? "Route generated. Ready for Flight execution."
-                    : "Press Enter to submit, Shift+Enter for new line."}
+          {/* ─── 3. Inset Frosted Input Console ──────────────────────── */}
+          <div className="p-4 border-t border-border/50 bg-card/20 backdrop-blur-md">
+            <div className="max-w-4xl mx-auto">
+              {loadError && (
+                <div className="mb-2 p-2.5 rounded-lg text-xs bg-destructive/10 text-destructive border border-destructive/20 flex items-center gap-2">
+                  <AlertCircle className="size-4 shrink-0" />
+                  <span>{loadError}</span>
                 </div>
+              )}
 
-                <Button
-                  type="submit"
-                  className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold text-xs shadow-lg shadow-amber-500/20 px-4"
-                  disabled={isSending || !draft.trim()}
-                >
-                  {isSending ? (
-                    <>
-                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                      Planning
-                    </>
-                  ) : (
-                    <>
-                      <Send className="mr-1.5 h-3.5 w-3.5" />
-                      Send Goal
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
+              {/* Inset hardware bay */}
+              <div className="rounded-2xl p-2 skeuo-glass-deck flex flex-col gap-2">
+                <Textarea
+                  ref={textareaRef}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Describe your engineering goal (e.g., 'Analyze test failures, repair broken imports, and run coverage')..."
+                  rows={2}
+                  className="min-h-[56px] max-h-36 resize-none border-0 bg-transparent text-sm text-foreground focus-visible:ring-0 placeholder:text-muted-foreground/60 shadow-none font-sans"
+                />
 
-            {loadError && (
-              <div className="mt-3 flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
-                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                {loadError}
+                <div className="flex items-center justify-between pt-1 px-1 border-t border-border/30">
+                  <div className="flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
+                    <span className="hidden sm:inline">Press</span>
+                    <kbd className="px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground text-[10px] font-semibold border border-border/40">
+                      Enter ↵
+                    </kbd>
+                    <span className="hidden sm:inline">to engage • Shift + Enter for newline</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={!draft.trim() || isSending}
+                    onClick={() => void handleSubmit()}
+                    className={`skeuo-button-primary px-4 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer transition-all ${
+                      !draft.trim() || isSending ? "opacity-50 pointer-events-none" : ""
+                    }`}
+                  >
+                    {isSending ? (
+                      <>
+                        <Loader2 className="size-3.5 animate-spin" />
+                        <span>Planning...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Engage Bee</span>
+                        <Send className="size-3" />
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         </section>
 
-        {/* Side Rail */}
-        <ConversationSideRail
-          missingInfo={conversation?.missing_info ?? []}
-          stateLabel={conversationStatusLabel(activeConversationState)}
-          messageCount={visibleMessages.length}
-          routeId={conversation?.route_id ?? null}
-          onOpenPlan={() => {
-            if (conversation?.route_id) {
-              navigate(`/app/route/${conversation.route_id}`);
-            }
-          }}
-        />
+        {/* ─── 4. Collapsible Blueprint Side Rail ──────────────────────── */}
+        {showSideRail && (
+          <div className="hidden lg:block border-l border-border/50 bg-card/20 backdrop-blur-md p-4 animate-in slide-in-from-right duration-200">
+            <ConversationSideRail
+              missingInfo={conversation?.missing_info || []}
+              stateLabel={conversationStatusLabel(activeConversationState)}
+              messageCount={visibleMessages.length}
+              routeId={activeRouteId}
+              onOpenPlan={() => {
+                if (activeRouteId) navigate(`/route/${activeRouteId}`);
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

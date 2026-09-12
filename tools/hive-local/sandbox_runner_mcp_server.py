@@ -34,6 +34,11 @@ def _execute_subprocess(
         }
 
     env = os.environ.copy()
+    repo_root = Path(__file__).resolve().parents[2]
+    venv_bin = repo_root / ".venv" / "bin"
+    node_bin = repo_root / "node_modules" / ".bin"
+    env["PATH"] = f"{venv_bin}:{node_bin}:{env.get('PATH', '')}"
+
     if custom_env:
         env.update(custom_env)
 

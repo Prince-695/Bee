@@ -29,6 +29,14 @@ apps/*/pnpm-lock.yaml
 **/gmail_credentials.json
 **/*credentials*.json
 !.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*id_rsa*
+*.kdbx
+*.secret
 
 # Runtime data
 *.db

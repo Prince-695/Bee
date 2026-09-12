@@ -11,9 +11,8 @@ _REPO_ROOT = Path(__file__).resolve().parents[5]
 _API_ROOT = _REPO_ROOT / "apps" / "api"
 _HIVE_LOCAL = _REPO_ROOT / "tools" / "hive-local"
 
-# Prefer apps/api/.env, then repo .env
-load_dotenv(_API_ROOT / ".env", override=True)
-load_dotenv(_REPO_ROOT / ".env", override=False)
+# Single source of truth: root .env
+load_dotenv(_REPO_ROOT / ".env", override=True)
 
 
 def _read_env(name: str, default: str = "") -> str:
@@ -76,6 +75,43 @@ LLM_TOP_P: Final[float] = _read_float("LLM_TOP_P", 0.95)
 LLM_MAX_TOKENS: Final[int] = _read_int("LLM_MAX_TOKENS", 16384)
 LLM_REASONING_BUDGET: Final[int] = _read_int("LLM_REASONING_BUDGET", 16384)
 LLM_ENABLE_THINKING: Final[bool] = _read_bool("LLM_ENABLE_THINKING", True)
+
+def mask_secret(value: str) -> str:
+    """Safely mask sensitive secrets and API keys for logs and diagnostics."""
+    if not value:
+        return ""
+    val_str = str(value).strip()
+    if len(val_str) <= 8:
+        return "********"
+    return f"{val_str[:3]}...{val_str[-4:]}"
+
+
+def validate_environment() -> dict:
+    """Validate environment configuration and detect security weaknesses."""
+    issues: list[str] = []
+    jwt_secret = os.getenv("JWT_SECRET", "")
+    is_insecure_jwt = False
+
+    if not jwt_secret or "change_me" in jwt_secret or len(jwt_secret) < 32:
+        is_insecure_jwt = True
+        if not DEBUG:
+            issues.append("CRITICAL: JWT_SECRET is weak, default, or under 32 characters in production.")
+
+    if not LLM_API_KEY:
+        issues.append("WARNING: LLM_API_KEY is not configured; AI agent inference will be disabled.")
+
+    if "*" in CORS_ALLOWED_ORIGINS:
+        issues.append("SECURITY: Wildcard '*' found in CORS_ALLOWED_ORIGINS with credentials enabled.")
+
+    return {
+        "debug_mode": DEBUG,
+        "database_path": DB_PATH,
+        "is_insecure_jwt": is_insecure_jwt,
+        "cors_origins": CORS_ALLOWED_ORIGINS,
+        "issues": issues,
+        "healthy": len([i for i in issues if i.startswith("CRITICAL")]) == 0,
+    }
+
 
 REPO_ROOT: Final[Path] = _REPO_ROOT
 API_ROOT: Final[Path] = _API_ROOT

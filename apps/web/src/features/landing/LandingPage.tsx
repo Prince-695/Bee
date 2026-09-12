@@ -1,37 +1,56 @@
 import { WebNavbar } from "@/layout/WebNavbar";
 import { WebFooter } from "@/layout/WebFooter";
-import { HeroSection } from "./components/HeroSection";
-import { InteractiveFlightDemo } from "./components/InteractiveFlightDemo";
-import { WorkerArchitecture } from "./components/WorkerArchitecture";
+import { HeroSection } from "./HeroSection";
+import { MetricsTicker } from "./MetricsTicker";
+import { WorkerAccordion } from "./WorkerAccordion";
+import { CaseStudiesGrid } from "./CaseStudiesGrid";
+import { LiveAgentWidget } from "./LiveAgentWidget";
 import { RoiCalculator } from "./components/RoiCalculator";
-import { PricingSection } from "./components/PricingSection";
 import { FaqSection } from "./components/FaqSection";
+import { EngineeringEvidenceSection } from "./components/EngineeringEvidenceSection";
+import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans relative overflow-x-hidden selection:bg-amber-500/30 selection:text-white">
-      {/* Ambient Glows */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-amber-500/10 via-amber-600/5 to-transparent blur-[140px] rounded-full" />
-        <div className="absolute top-[800px] -left-40 w-[600px] h-[600px] bg-purple-500/5 blur-[160px] rounded-full" />
-        <div className="absolute top-[1400px] -right-40 w-[600px] h-[600px] bg-blue-500/5 blur-[160px] rounded-full" />
-      </div>
-
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-foreground font-sans relative overflow-x-hidden">
       <WebNavbar />
 
-      <main className="relative z-10">
+      <main className="space-y-6">
         <HeroSection />
-
-        <div className="max-w-4xl mx-auto px-6 pb-20">
-          <InteractiveFlightDemo />
-        </div>
-
-        <WorkerArchitecture />
+        <MetricsTicker />
+        <WorkerAccordion />
+        <CaseStudiesGrid />
         <RoiCalculator />
-        <PricingSection />
+
+        {/* Empirical Engineering Evidence & AST Diffs */}
+        <EngineeringEvidenceSection />
+
         <FaqSection />
+
+        {/* Bottom Call to Action */}
+        <section className="py-16 px-6 max-w-4xl mx-auto relative z-10">
+          <div className="bg-card p-8 sm:p-12 rounded-2xl border border-border text-center space-y-4">
+            <h2 className="text-2xl sm:text-4xl font-bold text-foreground tracking-tight">
+              Start Your First Autonomous Flight.
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
+              50 free monthly flights, full 5-worker DAG pipeline, Zero-Leak credential protection, and local FastMCP sidecar execution.
+            </p>
+            <div className="pt-2">
+              <Link
+                to="/signup"
+                className="minimal-button-primary inline-flex items-center gap-2 px-6 py-3 rounded-lg text-primary-foreground font-semibold text-sm transition-colors cursor-pointer"
+              >
+                <span>Launch Autonomous Flight Free</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
       </main>
 
+      <LiveAgentWidget />
       <WebFooter />
     </div>
   );

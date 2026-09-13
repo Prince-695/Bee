@@ -1,0 +1,23 @@
+{
+  "id": "worker-system-browser",
+  "name": "Browser Worker",
+  "role": "browser_assistant",
+  "description": "Synthesizes last 48-hour browser history (with user permission), open project tabs, ongoing missions, and workspace state for morning briefings.",
+  "avatar": "Globe",
+  "capabilities": [
+    "browser_inspection",
+    "48h_history_synthesis",
+    "morning_briefing",
+    "context_resumption"
+  ],
+  "allowed_tools": [
+    "inspect_browser_history",
+    "list_open_tabs",
+    "get_workspace_summary",
+    "get_pending_missions"
+  ],
+  "model": "gemini-3.5-flash",
+  "temperature": 0.4,
+  "is_system": true,
+  "can_delete": false
+}

@@ -1,13 +1,23 @@
 {
-  "id": "agent-system-coordinator",
+  "id": "worker-system-coordinator",
   "name": "Bee Coordinator",
-  "role": "orchestrator",
-  "description": "Primary orchestrator agent managing user interactions, agent routing, and task decomposition.",
+  "role": "coordinator",
+  "description": "Primary orchestrator that decomposes user goals into dynamic DAG task nodes and dispatches work.",
   "avatar": "Bot",
   "capabilities": [
     "mission_planning",
-    "agent_dispatch",
+    "dag_decomposition",
+    "worker_dispatch",
     "status_reporting"
   ],
-  "is_builtin": true
+  "allowed_tools": [
+    "create_dag_plan",
+    "assign_task",
+    "route_task",
+    "query_blackboard"
+  ],
+  "model": "gemini-3.5-flash",
+  "temperature": 0.5,
+  "is_system": true,
+  "can_delete": false
 }

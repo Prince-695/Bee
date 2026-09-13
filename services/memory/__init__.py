@@ -21,6 +21,7 @@ from services.memory.episodic_memory import (
     EpisodicMemoryEngine,
     normalize_error_signature,
 )
+from services.memory.context_graph import ContextGraph
 
 __all__ = [
     "MemoryType",
@@ -37,4 +38,5 @@ __all__ = [
     "SemanticMemoryEngine",
     "EpisodicMemoryEngine",
     "normalize_error_signature",
+    "ContextGraph",
 ]

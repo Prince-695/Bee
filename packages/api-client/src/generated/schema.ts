@@ -2200,6 +2200,122 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/chat/threads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Threads
+         * @description Lists recent conversation threads for the user.
+         */
+        get: operations["list_threads_v1_chat_threads_get"];
+        put?: never;
+        /**
+         * Create Thread
+         * @description Creates a new Universal or 1:1 Worker chat thread.
+         */
+        post: operations["create_thread_v1_chat_threads_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/threads/{thread_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Thread
+         * @description Retrieves metadata for a specific chat thread.
+         */
+        get: operations["get_thread_v1_chat_threads__thread_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Thread
+         * @description Deletes a chat thread and all associated messages.
+         */
+        delete: operations["delete_thread_v1_chat_threads__thread_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/threads/{thread_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Messages
+         * @description Retrieves chronologically ordered messages in a chat thread.
+         */
+        get: operations["get_messages_v1_chat_threads__thread_id__messages_get"];
+        put?: never;
+        /**
+         * Send Message
+         * @description Sends a user message into a chat thread and triggers a contextual worker turn.
+         */
+        post: operations["send_message_v1_chat_threads__thread_id__messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/threads/{thread_id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Ephemeral Tool
+         * @description Spawns an ephemeral single-worker tool run from chat with FileGuard and GateManager checks.
+         */
+        post: operations["run_ephemeral_tool_v1_chat_threads__thread_id__runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/threads/{thread_id}/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stream Chat Turn Get
+         * @description Streams assistant tokens, memory citations, and tool progress using standard GET EventSource.
+         */
+        get: operations["stream_chat_turn_get_v1_chat_threads__thread_id__stream_get"];
+        put?: never;
+        /**
+         * Stream Chat Turn Post
+         * @description Streams assistant tokens, memory citations, and tool progress using POST payload.
+         */
+        post: operations["stream_chat_turn_post_v1_chat_threads__thread_id__stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/logs/stream": {
         parameters: {
             query?: never;
@@ -2497,10 +2613,75 @@ export interface components {
             /** Primary Channel */
             primary_channel?: string | null;
         };
+        /**
+         * ChatEphemeralRunRequest
+         * @description Payload to request an ephemeral single-worker execution run from chat.
+         */
+        ChatEphemeralRunRequest: {
+            /**
+             * Worker Id
+             * @description Target worker ID to execute the action
+             */
+            worker_id: string;
+            /**
+             * Tool
+             * @description Tool name, e.g. read_file, list_dir, web_search
+             */
+            tool: string;
+            /**
+             * Args
+             * @description Tool arguments
+             */
+            args?: {
+                [key: string]: unknown;
+            };
+        };
         /** ChatMessageRequest */
         ChatMessageRequest: {
             /** Message */
             message: string;
+        };
+        /**
+         * ChatMessageSendRequest
+         * @description Payload for user sending a message into a chat thread.
+         */
+        ChatMessageSendRequest: {
+            /**
+             * Content
+             * @description Message text or command prompt
+             */
+            content: string;
+            /**
+             * Stream
+             * @description Whether to request SSE token streaming
+             * @default false
+             */
+            stream: boolean;
+        };
+        /**
+         * ChatThreadCreateRequest
+         * @description Payload to create a new Universal or 1:1 Worker chat thread.
+         */
+        ChatThreadCreateRequest: {
+            /**
+             * Worker Id
+             * @description Worker UUID for 1:1 chat, or null for Universal Orchestrator
+             */
+            worker_id?: string | null;
+            /**
+             * Project Id
+             * @description Optional associated project UUID
+             */
+            project_id?: string | null;
+            /**
+             * Title
+             * @description Optional custom title for the chat thread
+             */
+            title?: string | null;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
         };
         /** CheckoutResponse */
         CheckoutResponse: {
@@ -7413,6 +7594,310 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkerDefinition"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_threads_v1_chat_threads_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by worker ID or 'universal' */
+                worker_id?: string | null;
+                /** @description Filter by project ID */
+                project_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_thread_v1_chat_threads_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatThreadCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_thread_v1_chat_threads__thread_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_thread_v1_chat_threads__thread_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_messages_v1_chat_threads__thread_id__messages_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_message_v1_chat_threads__thread_id__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatMessageSendRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_ephemeral_tool_v1_chat_threads__thread_id__runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatEphemeralRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stream_chat_turn_get_v1_chat_threads__thread_id__stream_get: {
+        parameters: {
+            query: {
+                /** @description User prompt to stream */
+                prompt: string;
+            };
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stream_chat_turn_post_v1_chat_threads__thread_id__stream_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatMessageSendRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

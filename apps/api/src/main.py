@@ -17,6 +17,11 @@ from bee_api.domains.approvals.routers import router as approvals_router
 from bee_api.domains.auth.routers import router as auth_router
 from bee_api.domains.billing.routers import router as billing_router
 from bee_api.domains.channels.routers import router as channels_router
+from bee_api.domains.chat.routers import (
+    messages_router as chat_messages_router,
+    stream_router as chat_stream_router,
+    threads_router as chat_threads_router,
+)
 from bee_api.domains.conversation.routers import router as conversation_router
 from bee_api.domains.credentials.routers import router as credentials_router
 from bee_api.domains.health.routers import router as health_router
@@ -120,6 +125,9 @@ app.include_router(billing_router)
 app.include_router(admin_router)
 app.include_router(agent_router)
 app.include_router(worker_router)
+app.include_router(chat_threads_router)
+app.include_router(chat_messages_router)
+app.include_router(chat_stream_router)
 app.include_router(telemetry_router)
 app.include_router(security_router)
 app.include_router(oauth_connectors_router)

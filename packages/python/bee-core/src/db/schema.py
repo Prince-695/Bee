@@ -246,6 +246,32 @@ CREATE TABLE IF NOT EXISTS remediations (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS chat_threads (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+    worker_id TEXT,
+    title TEXT NOT NULL,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    thread_id TEXT NOT NULL REFERENCES chat_threads(id) ON DELETE CASCADE,
+    sender_type TEXT NOT NULL,
+    sender_id TEXT NOT NULL,
+    content TEXT NOT NULL,
+    recalled_memory_ids_json TEXT DEFAULT '[]',
+    tool_invocations_json TEXT DEFAULT '[]',
+    gate_id TEXT REFERENCES approval_gates(id) ON DELETE SET NULL,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 # SQLite DDL for zero-config local desktop execution
@@ -498,5 +524,35 @@ CREATE TABLE IF NOT EXISTS remediations (
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS chat_threads (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    project_id TEXT,
+    worker_id TEXT,
+    title TEXT NOT NULL,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    thread_id TEXT NOT NULL,
+    sender_type TEXT NOT NULL,
+    sender_id TEXT NOT NULL,
+    content TEXT NOT NULL,
+    recalled_memory_ids_json TEXT DEFAULT '[]',
+    tool_invocations_json TEXT DEFAULT '[]',
+    gate_id TEXT,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY(thread_id) REFERENCES chat_threads(id) ON DELETE CASCADE
 );
 """

@@ -32,6 +32,7 @@ from bee_api.domains.telemetry.routers import router as telemetry_router
 from bee_api.domains.tenants.routers import router as tenants_router
 from bee_api.domains.usage.routers import router as usage_router
 from bee_api.domains.users.routers import router as users_router
+from bee_api.domains.worker.routers import router as worker_router
 from bee_api.domains.workspaces.routers import router as workspaces_router
 from bee_api.middleware import (
     add_auth_middleware,
@@ -118,6 +119,7 @@ app.include_router(sync_router)
 app.include_router(billing_router)
 app.include_router(admin_router)
 app.include_router(agent_router)
+app.include_router(worker_router)
 app.include_router(telemetry_router)
 app.include_router(security_router)
 app.include_router(oauth_connectors_router)

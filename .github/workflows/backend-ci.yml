@@ -2,7 +2,7 @@ name: Backend CI
 
 on:
   push:
-    branches: [main, master, V1, revamp]
+    branches: [main]
     paths:
       - "apps/api/**"
       - "apps/worker/**"
@@ -14,7 +14,7 @@ on:
       - "pnpm-lock.yaml"
       - ".github/workflows/backend-ci.yml"
   pull_request:
-    branches: [main, master, V1, revamp]
+    branches: [main]
     paths:
       - "apps/api/**"
       - "apps/worker/**"

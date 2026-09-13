@@ -16,6 +16,7 @@ from services.memory.retriever import (
     compute_embedding,
     cosine_similarity,
 )
+from services.memory.semantic_memory import SemanticMemoryEngine
 
 __all__ = [
     "MemoryType",
@@ -29,4 +30,5 @@ __all__ = [
     "HybridRetriever",
     "compute_embedding",
     "cosine_similarity",
+    "SemanticMemoryEngine",
 ]

@@ -43,8 +43,9 @@ class GateRepository(BaseRepository):
     def list_gates(self, route_id: Optional[str] = None, status: Optional[str] = None) -> List[Dict[str, Any]]:
         return list_gates(route_id=route_id, status=status)
 
-    def resolve_gate(self, gate_id: str, approved: bool) -> Optional[Dict[str, Any]]:
-        return resolve_gate(gate_id=gate_id, approved=approved)
+    def resolve_gate(self, gate_id: str, approved: Any) -> Optional[Dict[str, Any]]:
+        status = approved if isinstance(approved, str) else ("approved" if approved else "rejected")
+        return resolve_gate(gate_id=gate_id, status=status)
 
 
 __all__ = [

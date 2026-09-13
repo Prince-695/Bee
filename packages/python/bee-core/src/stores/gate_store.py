@@ -105,6 +105,7 @@ def get_gate(gate_id: str) -> dict[str, Any] | None:
         return None
 
     record = dict(row)
+    record["gate_id"] = record.get("id")
     args_raw = record.get("args_json", "{}")
     try:
         record["args"] = json.loads(args_raw)
@@ -166,6 +167,7 @@ def list_gates(
     results: list[dict[str, Any]] = []
     for row in rows:
         record = dict(row)
+        record["gate_id"] = record.get("id")
         try:
             record["args"] = json.loads(record.get("args_json", "{}"))
         except Exception:

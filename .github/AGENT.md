@@ -4,7 +4,8 @@ Bee is an intelligent worker that receives a task, builds a **Route**, and flies
 
 ## Monorepo layout
 
-- `apps/console` — BEE Console (React + Vite)
+- `apps/desktop` — BEE Desktop Console (React + Electron + Vite)
+- `apps/web` — BEE Web Client (React + Vite)
 - `apps/api` — Bee HTTP gateway (`bee_api`)
 - `packages/python/bee-core` — Bee brain
 - `packages/python/bee-hive` — Hive Registry + MCP client

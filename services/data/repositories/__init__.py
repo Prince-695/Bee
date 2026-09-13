@@ -6,6 +6,7 @@ from services.data.repositories.conversation_repo import ConversationRepository
 from services.data.repositories.mission_repo import MissionRepository
 from services.data.repositories.gate_repo import GateRepository
 from services.data.repositories.oauth_repo import OAuthRepository
+from services.data.repositories.worker_repo import WorkerRepository
 
 __all__ = [
     "UserRepository",
@@ -14,4 +15,5 @@ __all__ = [
     "MissionRepository",
     "GateRepository",
     "OAuthRepository",
+    "WorkerRepository",
 ]

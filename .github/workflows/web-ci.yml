@@ -2,7 +2,7 @@ name: Web CI
 
 on:
   push:
-    branches: [main, master, V1, revamp]
+    branches: [main]
     paths:
       - "apps/web/**"
       - "packages/ui/**"
@@ -12,7 +12,7 @@ on:
       - "pnpm-lock.yaml"
       - ".github/workflows/web-ci.yml"
   pull_request:
-    branches: [main, master, V1, revamp]
+    branches: [main]
     paths:
       - "apps/web/**"
       - "packages/ui/**"

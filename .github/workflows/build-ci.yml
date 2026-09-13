@@ -2,9 +2,7 @@ name: Build CI (Master Orchestrator)
 
 on:
   push:
-    branches: [main, master, V1, revamp]
-  pull_request:
-    branches: [main, master, V1, revamp]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:

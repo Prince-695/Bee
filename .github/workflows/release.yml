@@ -2,6 +2,14 @@ name: Release Desktop Binaries
 
 on:
   push:
+    branches:
+      - main
+    paths:
+      - "apps/desktop/**"
+      - "packages/ui/**"
+      - "packages/api-client/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/release.yml"
     tags:
       - "v*"
   workflow_dispatch:
@@ -10,6 +18,10 @@ on:
         description: "Release Tag (e.g. v0.1.0)"
         required: false
         default: "v0.1.0"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -97,11 +109,28 @@ jobs:
         with:
           path: dist-release
 
+      - name: Resolve Release Tag & Name
+        id: release_info
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${{ github.ref_name }}"
+            NAME="${{ github.ref_name }}"
+          elif [ -n "${{ inputs.tag_name }}" ]; then
+            TAG="${{ inputs.tag_name }}"
+            NAME="${{ inputs.tag_name }}"
+          else
+            VERSION=$(node -p "require('./apps/desktop/package.json').version")
+            TAG="v${VERSION}"
+            NAME="Desktop v${VERSION}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name || inputs.tag_name || 'v0.1.0' }}
-          name: ${{ github.ref_name || inputs.tag_name || 'v0.1.0' }}
+          tag_name: ${{ steps.release_info.outputs.tag }}
+          name: ${{ steps.release_info.outputs.name }}
           generate_release_notes: true
           draft: false
           prerelease: false

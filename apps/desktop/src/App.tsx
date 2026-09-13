@@ -1,73 +1,121 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import StatusPage from "./features/status/StatusPage";
-import RoutePage from "./features/mission-control/RoutePage";
-import ConversationPage from "./features/conversation/ConversationPage";
-import HivePage from "./features/hive-registry/HivePage";
-import HooksPage from "./features/signal-engine/HooksPage";
-import ChatHistoryPage from "./features/flight-logs/ChatHistoryPage";
-import SettingsPage from "./features/settings/SettingsPage";
-import ConsoleNotFoundPage from "./features/not-found/ConsoleNotFoundPage";
-import LoginPage from "./features/auth/LoginPage";
-import RegisterPage from "./features/auth/RegisterPage";
-import ForgotPasswordPage from "./features/auth/ForgotPasswordPage";
-import OAuthCallbackPage from "./features/auth/OAuthCallbackPage";
-import OnboardingPage from "./features/onboarding/OnboardingPage";
-import { DesktopLayout } from "./layout/DesktopLayout";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { useState } from 'react'
+import heroImg from './assets/hero.png'
+import reactLogo from './assets/react.svg'
+import viteLogo from './assets/vite.svg'
 
-export default function App() {
+function App() {
+  const [count, setCount] = useState(0)
+
   return (
-    <TooltipProvider>
-      <Router>
-        <Routes>
-          {/* Dedicated Auth Suite Routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/auth/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/auth/register" element={<RegisterPage />} />
-          <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/auth/reset-password" element={<ForgotPasswordPage />} />
-          <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+    <>
+      <section id="center">
+        <div className="hero">
+          <img src={heroImg} className="base" width="170" height="179" alt="" />
+          <img src={reactLogo} className="framework" alt="React logo" />
+          <img src={viteLogo} className="vite" alt="Vite logo" />
+        </div>
+        <div>
+          <h1>Get started</h1>
+          <p>
+            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+          </p>
+        </div>
+        <button
+          type="button"
+          className="counter"
+          onClick={() => setCount((count) => count + 1)}
+        >
+          Count is {count}
+        </button>
+      </section>
 
-          {/* 3-Step Onboarding Wizard */}
-          <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/onboarding/:step" element={<OnboardingPage />} />
+      <div className="ticks"></div>
 
-          {/* Core Desktop App routes inside DesktopLayout */}
-          <Route
-            path="/*"
-            element={
-              <DesktopLayout>
-                <Routes>
-                  {/* Desktop root boots directly to Teammate Board */}
-                  <Route path="/" element={<StatusPage />} />
-                  <Route path="/status" element={<StatusPage />} />
-                  <Route path="/route/:routeId" element={<RoutePage />} />
-                  <Route path="/chat" element={<ConversationPage />} />
-                  <Route path="/hive" element={<HivePage />} />
-                  <Route path="/logs" element={<ChatHistoryPage />} />
-                  <Route path="/hooks" element={<HooksPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="/settings/:tab" element={<SettingsPage />} />
+      <section id="next-steps">
+        <div id="docs">
+          <svg className="icon" role="presentation" aria-hidden="true">
+            <use href="/icons.svg#documentation-icon"></use>
+          </svg>
+          <h2>Documentation</h2>
+          <p>Your questions, answered</p>
+          <ul>
+            <li>
+              <a href="https://vite.dev/" target="_blank">
+                <img className="logo" src={viteLogo} alt="" />
+                Explore Vite
+              </a>
+            </li>
+            <li>
+              <a href="https://react.dev/" target="_blank">
+                <img className="button-icon" src={reactLogo} alt="" />
+                Learn more
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div id="social">
+          <svg className="icon" role="presentation" aria-hidden="true">
+            <use href="/icons.svg#social-icon"></use>
+          </svg>
+          <h2>Connect with us</h2>
+          <p>Join the Vite community</p>
+          <ul>
+            <li>
+              <a href="https://github.com/vitejs/vite" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#github-icon"></use>
+                </svg>
+                GitHub
+              </a>
+            </li>
+            <li>
+              <a href="https://chat.vite.dev/" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#discord-icon"></use>
+                </svg>
+                Discord
+              </a>
+            </li>
+            <li>
+              <a href="https://x.com/vite_js" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#x-icon"></use>
+                </svg>
+                X.com
+              </a>
+            </li>
+            <li>
+              <a href="https://bsky.app/profile/vite.dev" target="_blank">
+                <svg
+                  className="button-icon"
+                  role="presentation"
+                  aria-hidden="true"
+                >
+                  <use href="/icons.svg#bluesky-icon"></use>
+                </svg>
+                Bluesky
+              </a>
+            </li>
+          </ul>
+        </div>
+      </section>
 
-                  {/* Backwards compatible /app routes */}
-                  <Route path="/app" element={<Navigate to="/" replace />} />
-                  <Route path="/app/status" element={<Navigate to="/" replace />} />
-                  <Route path="/app/route/:routeId" element={<RoutePage />} />
-                  <Route path="/app/hive" element={<Navigate to="/hive" replace />} />
-                  <Route path="/app/history" element={<Navigate to="/logs" replace />} />
-                  <Route path="/app/hooks" element={<Navigate to="/hooks" replace />} />
-                  <Route path="/app/settings" element={<Navigate to="/settings" replace />} />
-                  <Route path="/app/settings/:tab" element={<SettingsPage />} />
-
-                  {/* Fallback route */}
-                  <Route path="*" element={<ConsoleNotFoundPage />} />
-                </Routes>
-              </DesktopLayout>
-            }
-          />
-        </Routes>
-      </Router>
-    </TooltipProvider>
-  );
+      <div className="ticks"></div>
+      <section id="spacer"></section>
+    </>
+  )
 }
+
+export default App

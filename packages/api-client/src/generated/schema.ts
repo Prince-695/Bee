@@ -1956,6 +1956,98 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/workers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Workers
+         * @description Lists all available workers (both built-in system workers and custom workers).
+         */
+        get: operations["list_workers_v1_workers_get"];
+        put?: never;
+        /**
+         * Create Worker
+         * @description Creates a new custom worker using the unified Worker Creator.
+         */
+        post: operations["create_worker_v1_workers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/workers/provision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Provision Workers
+         * @description Provisions the 6 core system workers (Manager, Coordinator, Browser, Researcher, Developer, Reviewer).
+         */
+        post: operations["provision_workers_v1_workers_provision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/workers/{worker_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Worker
+         * @description Retrieves a worker definition by ID.
+         */
+        get: operations["get_worker_v1_workers__worker_id__get"];
+        /**
+         * Update Worker
+         * @description Updates a worker's configuration. System workers cannot lose their system status.
+         */
+        put: operations["update_worker_v1_workers__worker_id__put"];
+        post?: never;
+        /**
+         * Delete Worker
+         * @description Deletes a custom worker. Returns 403 Forbidden if the worker is an undestroyable system worker.
+         */
+        delete: operations["delete_worker_v1_workers__worker_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/workers/{worker_id}/clone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clone Worker
+         * @description Clones an existing worker (even a system worker) into a new, editable custom worker.
+         */
+        post: operations["clone_worker_v1_workers__worker_id__clone_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/logs/stream": {
         parameters: {
             query?: never;
@@ -2268,6 +2360,11 @@ export interface components {
             plan: string;
             /** Amount Cents */
             amount_cents: number;
+        };
+        /** CloneWorkerRequest */
+        CloneWorkerRequest: {
+            /** New Name */
+            new_name: string;
         };
         /** ComponentItem */
         ComponentItem: {
@@ -2965,6 +3062,127 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /**
+         * WorkerCreateRequest
+         * @description Payload for creating a new custom worker via the Worker Creator.
+         */
+        WorkerCreateRequest: {
+            /** Name */
+            name: string;
+            /** Role */
+            role: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Avatar
+             * @default Bot
+             */
+            avatar: string;
+            /**
+             * Persona Prompt
+             * @default
+             */
+            persona_prompt: string;
+            /** Capabilities */
+            capabilities?: string[];
+            /** Allowed Tools */
+            allowed_tools?: string[];
+            /**
+             * Model
+             * @default gemini-3.5-flash
+             */
+            model: string;
+            /**
+             * Temperature
+             * @default 0.7
+             */
+            temperature: number;
+        };
+        /**
+         * WorkerDefinition
+         * @description Unified definition for all platform workers (both system-provisioned and user-created).
+         */
+        WorkerDefinition: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Role */
+            role: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Avatar
+             * @default Bot
+             */
+            avatar: string;
+            /**
+             * Persona Prompt
+             * @default
+             */
+            persona_prompt: string;
+            /** Capabilities */
+            capabilities?: string[];
+            /** Allowed Tools */
+            allowed_tools?: string[];
+            /**
+             * Model
+             * @default gemini-3.5-flash
+             */
+            model: string;
+            /**
+             * Temperature
+             * @default 0.7
+             */
+            temperature: number;
+            /**
+             * Is System
+             * @default false
+             */
+            is_system: boolean;
+            /**
+             * Can Delete
+             * @default true
+             */
+            can_delete: boolean;
+            /**
+             * Workspace Id
+             * @default default
+             */
+            workspace_id: string;
+            /** Created At */
+            created_at?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /**
+         * WorkerUpdateRequest
+         * @description Payload for updating an existing worker.
+         */
+        WorkerUpdateRequest: {
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Avatar */
+            avatar?: string | null;
+            /** Persona Prompt */
+            persona_prompt?: string | null;
+            /** Capabilities */
+            capabilities?: string[] | null;
+            /** Allowed Tools */
+            allowed_tools?: string[] | null;
+            /** Model */
+            model?: string | null;
+            /** Temperature */
+            temperature?: number | null;
         };
         /** WorkspaceBranchesResponse */
         WorkspaceBranchesResponse: {
@@ -6210,6 +6428,246 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    list_workers_v1_workers_get: {
+        parameters: {
+            query?: {
+                /** @description Target workspace ID */
+                workspace_id?: string;
+                /** @description Optional role filter */
+                role?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerDefinition"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_worker_v1_workers_post: {
+        parameters: {
+            query?: {
+                /** @description Target workspace ID */
+                workspace_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkerCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerDefinition"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    provision_workers_v1_workers_provision_post: {
+        parameters: {
+            query?: {
+                /** @description Workspace to provision system workers for */
+                workspace_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerDefinition"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_worker_v1_workers__worker_id__get: {
+        parameters: {
+            query?: {
+                workspace_id?: string;
+            };
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerDefinition"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_worker_v1_workers__worker_id__put: {
+        parameters: {
+            query?: {
+                workspace_id?: string;
+            };
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkerUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerDefinition"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_worker_v1_workers__worker_id__delete: {
+        parameters: {
+            query?: {
+                workspace_id?: string;
+            };
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clone_worker_v1_workers__worker_id__clone_post: {
+        parameters: {
+            query?: {
+                workspace_id?: string;
+            };
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloneWorkerRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerDefinition"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

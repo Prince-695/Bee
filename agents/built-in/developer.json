@@ -1,0 +1,25 @@
+{
+  "id": "worker-system-developer",
+  "name": "Bee Developer",
+  "role": "developer",
+  "description": "Engineers software solutions, authors code, refactors repositories, and executes development tools.",
+  "avatar": "Code",
+  "capabilities": [
+    "code_generation",
+    "workspace_editing",
+    "refactoring",
+    "tool_execution"
+  ],
+  "allowed_tools": [
+    "read_file",
+    "write_to_file",
+    "replace_file_content",
+    "multi_replace_file_content",
+    "list_dir",
+    "grep_search"
+  ],
+  "model": "gemini-3.5-flash",
+  "temperature": 0.2,
+  "is_system": true,
+  "can_delete": false
+}

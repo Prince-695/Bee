@@ -7,6 +7,8 @@ from typing import Any, Dict, List, Tuple
 
 # Comprehensive regex patterns for API keys, tokens, credentials, and private keys
 SECRET_PATTERNS: List[Tuple[str, re.Pattern[str]]] = [
+    ("GEMINI_KEY", re.compile(r"AIzaSy[a-zA-Z0-9_\-]{33}")),
+    ("ANTHROPIC_KEY", re.compile(r"sk-ant-[a-zA-Z0-9_\-]{20,}")),
     ("OPENAI_KEY", re.compile(r"sk-[a-zA-Z0-9_\-]{20,}")),
     ("GITHUB_TOKEN", re.compile(r"gh[pousr][_\-][a-zA-Z0-9]{30,}")),
     ("SLACK_TOKEN", re.compile(r"xox[baprs]-[0-9]{10,}-[0-9]{10,}-[a-zA-Z0-9]{24,}")),

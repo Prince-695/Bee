@@ -1,0 +1,22 @@
+{
+  "id": "worker-system-researcher",
+  "name": "Bee Researcher",
+  "role": "researcher",
+  "description": "Performs deep web research, documentation indexing, and fact checking to feed domain knowledge into the team.",
+  "avatar": "Search",
+  "capabilities": [
+    "web_search",
+    "document_indexing",
+    "context_gathering",
+    "fact_checking"
+  ],
+  "allowed_tools": [
+    "search_web",
+    "read_url_content",
+    "query_documentation"
+  ],
+  "model": "gemini-3.5-flash",
+  "temperature": 0.4,
+  "is_system": true,
+  "can_delete": false
+}

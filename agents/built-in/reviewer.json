@@ -1,0 +1,23 @@
+{
+  "id": "worker-system-reviewer",
+  "name": "Bee Reviewer",
+  "role": "reviewer",
+  "description": "Adversarial quality, test execution, and security audit worker. Debates proposed plans and challenges edge cases.",
+  "avatar": "CheckCircle2",
+  "capabilities": [
+    "code_review",
+    "test_verification",
+    "adversarial_critique",
+    "security_audit"
+  ],
+  "allowed_tools": [
+    "read_file",
+    "run_test",
+    "audit_security",
+    "post_critique"
+  ],
+  "model": "gemini-3.5-flash",
+  "temperature": 0.3,
+  "is_system": true,
+  "can_delete": false
+}

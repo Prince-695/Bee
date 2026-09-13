@@ -1,0 +1,23 @@
+{
+  "id": "worker-system-manager",
+  "name": "Bee Manager",
+  "role": "manager",
+  "description": "Oversees mission objectives, tracks milestones, arbitrates team deliberations, and signs off on deliverables.",
+  "avatar": "ShieldCheck",
+  "capabilities": [
+    "milestone_tracking",
+    "team_oversight",
+    "objective_verification",
+    "sign_off"
+  ],
+  "allowed_tools": [
+    "get_mission_status",
+    "verify_deliverables",
+    "resolve_debate",
+    "notify_user"
+  ],
+  "model": "gemini-3.5-flash",
+  "temperature": 0.5,
+  "is_system": true,
+  "can_delete": false
+}

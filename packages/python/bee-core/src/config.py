@@ -69,7 +69,7 @@ LLM_API_KEY: Final[str] = _read_env_any("GEMINI_API_KEY", "LLM_API_KEY", "OPENAI
 LLM_BASE_URL: Final[str] = _read_env(
     "LLM_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/"
 )
-LLM_MODEL: Final[str] = _read_env("LLM_MODEL", "gemini-2.5-flash")
+LLM_MODEL: Final[str] = _read_env("LLM_MODEL", "gemini-3.5-flash")
 LLM_TEMPERATURE: Final[float] = _read_float("LLM_TEMPERATURE", 0.7)
 LLM_TOP_P: Final[float] = _read_float("LLM_TOP_P", 0.95)
 LLM_MAX_TOKENS: Final[int] = _read_int("LLM_MAX_TOKENS", 8192)

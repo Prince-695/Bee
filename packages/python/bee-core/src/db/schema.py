@@ -201,6 +201,51 @@ CREATE TABLE IF NOT EXISTS sync_state (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (entity_type, entity_id)
 );
+
+CREATE TABLE IF NOT EXISTS memories (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+    worker_id TEXT,
+    type TEXT NOT NULL, -- 'episodic' | 'semantic' | 'working'
+    scope TEXT NOT NULL, -- 'user' | 'project' | 'organization' | 'worker'
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    tags_json TEXT DEFAULT '[]',
+    metadata_json TEXT DEFAULT '{}',
+    confidence REAL DEFAULT 1.0,
+    embedding vector(768),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS memory_links (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    source_id TEXT NOT NULL,
+    source_type TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    target_type TEXT NOT NULL,
+    relation TEXT NOT NULL, -- 'EXECUTED' | 'PRODUCED' | 'RESOLVED' | 'DEPENDS_ON' | 'PREFERS' | 'MENTIONS'
+    weight REAL DEFAULT 1.0,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS remediations (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    problem_signature TEXT NOT NULL,
+    error_log TEXT,
+    patch_diff TEXT NOT NULL,
+    verified_by_worker_id TEXT,
+    success_count INTEGER DEFAULT 1,
+    tags_json TEXT DEFAULT '[]',
+    embedding vector(768),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 # SQLite DDL for zero-config local desktop execution
@@ -405,5 +450,53 @@ CREATE TABLE IF NOT EXISTS sync_state (
     last_synced_at TEXT,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (entity_type, entity_id)
+);
+
+CREATE TABLE IF NOT EXISTS memories (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    user_id TEXT,
+    project_id TEXT,
+    worker_id TEXT,
+    type TEXT NOT NULL, -- 'episodic' | 'semantic' | 'working'
+    scope TEXT NOT NULL, -- 'user' | 'project' | 'organization' | 'worker'
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    tags_json TEXT DEFAULT '[]',
+    metadata_json TEXT DEFAULT '{}',
+    confidence REAL DEFAULT 1.0,
+    embedding_json TEXT DEFAULT '[]',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS memory_links (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    source_type TEXT NOT NULL,
+    target_id TEXT NOT NULL,
+    target_type TEXT NOT NULL,
+    relation TEXT NOT NULL, -- 'EXECUTED' | 'PRODUCED' | 'RESOLVED' | 'DEPENDS_ON' | 'PREFERS' | 'MENTIONS'
+    weight REAL DEFAULT 1.0,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS remediations (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    problem_signature TEXT NOT NULL,
+    error_log TEXT,
+    patch_diff TEXT NOT NULL,
+    verified_by_worker_id TEXT,
+    success_count INTEGER DEFAULT 1,
+    tags_json TEXT DEFAULT '[]',
+    embedding_json TEXT DEFAULT '[]',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
 """

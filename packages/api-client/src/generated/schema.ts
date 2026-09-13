@@ -1264,6 +1264,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/memory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Memories
+         * @description Lists memories for the current tenant with optional filters.
+         */
+        get: operations["list_memories_v1_memory_get"];
+        put?: never;
+        /**
+         * Create Memory
+         * @description Creates a new memory record in the specified tier and scope.
+         */
+        post: operations["create_memory_v1_memory_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/memory/{memory_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Memory With Graph
+         * @description Retrieves a memory item and its adjacent context graph edges.
+         */
+        get: operations["get_memory_with_graph_v1_memory__memory_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Memory
+         * @description Purges a memory item and cascades deletion of context graph links (Forget guarantee).
+         */
+        delete: operations["delete_memory_v1_memory__memory_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Memory
+         * @description Updates an existing memory item.
+         */
+        patch: operations["update_memory_v1_memory__memory_id__patch"];
+        trace?: never;
+    };
+    "/v1/memory/links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Graph Link
+         * @description Creates a directed relationship edge in the Context Graph.
+         */
+        post: operations["create_graph_link_v1_memory_links_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/memory/links/{node_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Node Links
+         * @description Retrieves all Context Graph edges attached to a specific entity node.
+         */
+        get: operations["get_node_links_v1_memory_links__node_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/memory/links/{link_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Graph Link
+         * @description Deletes a relationship edge from the Context Graph.
+         */
+        delete: operations["delete_graph_link_v1_memory_links__link_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/memory/remediations": {
         parameters: {
             query?: never;
@@ -1314,10 +1426,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Search Code
-         * @description Search repository AST symbols and code chunks by natural language meaning.
+         * Search Memory
+         * @description Performs hybrid vector + keyword search over tenant memories across all tiers.
          */
-        post: operations["search_code_v1_memory_search_post"];
+        post: operations["search_memory_v1_memory_search_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1378,6 +1490,46 @@ export interface paths {
          * @description Index an AST symbol or file chunk into project codebase embeddings.
          */
         post: operations["index_code_chunk_v1_memory_index_chunk_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Active Context
+         * @description Retrieves current synthesized context for the workspace.
+         */
+        get: operations["get_active_context_v1_context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/context/synthesize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Synthesize Context
+         * @description Synthesizes holistic context and generates morning executive briefing.
+         */
+        post: operations["synthesize_context_v1_context_synthesize_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2361,6 +2513,22 @@ export interface components {
             /** Amount Cents */
             amount_cents: number;
         };
+        /** CitationSchema */
+        CitationSchema: {
+            /** Source Id */
+            source_id: string;
+            /**
+             * Source Type
+             * @default mission
+             */
+            source_type: string;
+            /** Location */
+            location?: string | null;
+            /** Snippet */
+            snippet?: string | null;
+            /** Timestamp */
+            timestamp?: string | null;
+        };
         /** CloneWorkerRequest */
         CloneWorkerRequest: {
             /** New Name */
@@ -2425,6 +2593,37 @@ export interface components {
             metadata?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /**
+         * ContextSynthesisResult
+         * @description Complete synthesized multi-source context bundle.
+         */
+        ContextSynthesisResult: {
+            /** Workspace Id */
+            workspace_id: string;
+            /** User Id */
+            user_id?: string | null;
+            /** Git Summary */
+            git_summary?: string | null;
+            /** Active Missions */
+            active_missions?: {
+                [key: string]: unknown;
+            }[];
+            /** Pending Approvals */
+            pending_approvals?: {
+                [key: string]: unknown;
+            }[];
+            /** Recent Memories */
+            recent_memories?: {
+                [key: string]: unknown;
+            }[];
+            /** Recent Remediations */
+            recent_remediations?: {
+                [key: string]: unknown;
+            }[];
+            morning_briefing?: components["schemas"]["MorningBriefing"] | null;
+            /** Synthesized At */
+            synthesized_at?: string;
         };
         /** CookieConsentRequest */
         CookieConsentRequest: {
@@ -2492,6 +2691,73 @@ export interface components {
             success_url?: string | null;
             /** Cancel Url */
             cancel_url?: string | null;
+        };
+        /** CreateLinkRequest */
+        CreateLinkRequest: {
+            /** Source Id */
+            source_id: string;
+            /** Source Type */
+            source_type: string;
+            /** Target Id */
+            target_id: string;
+            /** Target Type */
+            target_type: string;
+            /**
+             * Relation
+             * @default PRODUCED
+             */
+            relation: string;
+            /**
+             * Weight
+             * @default 1
+             */
+            weight: number;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
+        };
+        /** CreateMemoryRequest */
+        CreateMemoryRequest: {
+            /**
+             * Title
+             * @description Short descriptive title of the memory
+             */
+            title: string;
+            /**
+             * Content
+             * @description Full text or structured explanation of the memory
+             */
+            content: string;
+            /**
+             * Type
+             * @description 'episodic' | 'semantic' | 'working'
+             * @default semantic
+             */
+            type: string;
+            /**
+             * Scope
+             * @description 'user' | 'project' | 'organization' | 'worker'
+             * @default project
+             */
+            scope: string;
+            /** Project Id */
+            project_id?: string | null;
+            /** Worker Id */
+            worker_id?: string | null;
+            /** Tags */
+            tags?: string[];
+            /**
+             * Confidence
+             * @default 1
+             */
+            confidence: number;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
+            /** Citations */
+            citations?: components["schemas"]["CitationSchema"][];
         };
         /** CreateMissionRequest */
         CreateMissionRequest: {
@@ -2670,6 +2936,31 @@ export interface components {
             /** Symbol Name */
             symbol_name?: string | null;
         };
+        /** LinkResponse */
+        LinkResponse: {
+            /** Id */
+            id: string;
+            /** Tenant Id */
+            tenant_id: string;
+            /** Source Id */
+            source_id: string;
+            /** Source Type */
+            source_type: string;
+            /** Target Id */
+            target_id: string;
+            /** Target Type */
+            target_type: string;
+            /** Relation */
+            relation: string;
+            /** Weight */
+            weight: number;
+            /** Metadata */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** Created At */
+            created_at: string;
+        };
         /** LoginRequest */
         LoginRequest: {
             /** Email */
@@ -2788,6 +3079,41 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /** MemoryResponse */
+        MemoryResponse: {
+            /** Id */
+            id: string;
+            /** Tenant Id */
+            tenant_id: string;
+            /** User Id */
+            user_id?: string | null;
+            /** Project Id */
+            project_id?: string | null;
+            /** Worker Id */
+            worker_id?: string | null;
+            /** Type */
+            type: string;
+            /** Scope */
+            scope: string;
+            /** Title */
+            title: string;
+            /** Content */
+            content: string;
+            /** Tags */
+            tags: string[];
+            /** Metadata */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** Confidence */
+            confidence: number;
+            /** Citations */
+            citations?: components["schemas"]["CitationSchema"][];
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+        };
         /** MissionDagNode */
         MissionDagNode: {
             /** Id */
@@ -2820,6 +3146,30 @@ export interface components {
             }[];
             /** Count */
             count: number;
+        };
+        /**
+         * MorningBriefing
+         * @description Executive briefing presented to user when launching Bee.
+         */
+        MorningBriefing: {
+            /** Executive Summary */
+            executive_summary: string;
+            /** Browser Research Summary */
+            browser_research_summary: string;
+            /** Active Missions Summary */
+            active_missions_summary: string;
+            /** Pending Approvals Count */
+            pending_approvals_count: number;
+            /** Pending Approvals */
+            pending_approvals?: {
+                [key: string]: unknown;
+            }[];
+            /** Workspace Summary */
+            workspace_summary: string;
+            /** Recommended Next Steps */
+            recommended_next_steps?: string[];
+            /** Generated At */
+            generated_at?: string;
         };
         /** OtpSendRequest */
         OtpSendRequest: {
@@ -2925,6 +3275,23 @@ export interface components {
             /** Tags */
             tags?: string[];
         };
+        /** ScoredMemoryResponse */
+        ScoredMemoryResponse: {
+            memory: components["schemas"]["MemoryResponse"];
+            /** Score */
+            score: number;
+            /**
+             * Vector Score
+             * @default 0
+             */
+            vector_score: number;
+            /**
+             * Keyword Score
+             * @default 0
+             */
+            keyword_score: number;
+            citation?: components["schemas"]["CitationSchema"] | null;
+        };
         /** SearchCodeRequest */
         SearchCodeRequest: {
             /** Project Id */
@@ -2939,6 +3306,32 @@ export interface components {
              * @default 5
              */
             top_k: number;
+        };
+        /** SearchMemoryRequest */
+        SearchMemoryRequest: {
+            /**
+             * Query
+             * @description Search query string
+             */
+            query: string;
+            /** Scope */
+            scope?: string | null;
+            /** Type */
+            type?: string | null;
+            /** Project Id */
+            project_id?: string | null;
+            /** Worker Id */
+            worker_id?: string | null;
+            /**
+             * Top K
+             * @default 5
+             */
+            top_k: number;
+            /**
+             * Threshold
+             * @default 0.1
+             */
+            threshold: number;
         };
         /** SignUpRequest */
         SignUpRequest: {
@@ -3025,6 +3418,24 @@ export interface components {
             /** Dispatched At */
             dispatched_at: string;
         };
+        /** SynthesizeContextRequest */
+        SynthesizeContextRequest: {
+            /** Project Id */
+            project_id?: string | null;
+            /** Git Summary */
+            git_summary?: string | null;
+            /**
+             * Browser Permission Granted
+             * @default false
+             */
+            browser_permission_granted: boolean;
+            /** Signed In Account */
+            signed_in_account?: string | null;
+            /** Browser History */
+            browser_history?: {
+                [key: string]: unknown;
+            }[];
+        };
         /** TenantListResponse */
         TenantListResponse: {
             /** Tenants */
@@ -3046,6 +3457,21 @@ export interface components {
              * @default Critical Sev-1 gate pending human authorization
              */
             urgency_reason: string;
+        };
+        /** UpdateMemoryRequest */
+        UpdateMemoryRequest: {
+            /** Title */
+            title?: string | null;
+            /** Content */
+            content?: string | null;
+            /** Confidence */
+            confidence?: number | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** UpdateProfileRequest */
         UpdateProfileRequest: {
@@ -5368,6 +5794,272 @@ export interface operations {
             };
         };
     };
+    list_memories_v1_memory_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by scope (user, project, organization, worker) */
+                scope?: string | null;
+                /** @description Filter by type (episodic, semantic, working) */
+                type?: string | null;
+                /** @description Filter by project ID */
+                project_id?: string | null;
+                /** @description Filter by worker ID */
+                worker_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_memory_v1_memory_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMemoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_memory_with_graph_v1_memory__memory_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                memory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_memory_v1_memory__memory_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                memory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_memory_v1_memory__memory_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                memory_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMemoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_graph_link_v1_memory_links_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLinkRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_node_links_v1_memory_links__node_id__get: {
+        parameters: {
+            query?: {
+                /** @description 'in', 'out', or 'both' */
+                direction?: string;
+            };
+            header?: never;
+            path: {
+                node_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_graph_link_v1_memory_links__link_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     save_remediation_v1_memory_remediations_post: {
         parameters: {
             query?: never;
@@ -5433,7 +6125,7 @@ export interface operations {
             };
         };
     };
-    search_code_v1_memory_search_post: {
+    search_memory_v1_memory_search_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -5442,7 +6134,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SearchCodeRequest"];
+                "application/json": components["schemas"]["SearchMemoryRequest"];
             };
         };
         responses: {
@@ -5452,9 +6144,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["ScoredMemoryResponse"][];
                 };
             };
             /** @description Validation Error */
@@ -5560,6 +6250,70 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_active_context_v1_context_get: {
+        parameters: {
+            query?: {
+                project_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContextSynthesisResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    synthesize_context_v1_context_synthesize_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SynthesizeContextRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContextSynthesisResult"];
                 };
             };
             /** @description Validation Error */

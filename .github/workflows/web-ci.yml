@@ -1,0 +1,55 @@
+name: Web CI
+
+on:
+  push:
+    branches: [main, master, V1, revamp]
+    paths:
+      - "apps/web/**"
+      - "packages/ui/**"
+      - "packages/api-client/**"
+      - "packages/eslint-config/**"
+      - "packages/typescript-config/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/web-ci.yml"
+  pull_request:
+    branches: [main, master, V1, revamp]
+    paths:
+      - "apps/web/**"
+      - "packages/ui/**"
+      - "packages/api-client/**"
+      - "packages/eslint-config/**"
+      - "packages/typescript-config/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/web-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web-verify:
+    name: Web Lint, Typecheck & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Lint & Typecheck Web App
+        run: |
+          pnpm --filter @bee/web lint
+          pnpm --filter @bee/web typecheck
+
+      - name: Build Web Application
+        run: pnpm --filter @bee/web build

@@ -1,0 +1,58 @@
+name: Desktop CI
+
+on:
+  push:
+    branches: [main, master, V1, revamp]
+    paths:
+      - "apps/desktop/**"
+      - "packages/ui/**"
+      - "packages/api-client/**"
+      - "packages/eslint-config/**"
+      - "packages/typescript-config/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/desktop-ci.yml"
+  pull_request:
+    branches: [main, master, V1, revamp]
+    paths:
+      - "apps/desktop/**"
+      - "packages/ui/**"
+      - "packages/api-client/**"
+      - "packages/eslint-config/**"
+      - "packages/typescript-config/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/desktop-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop-verify:
+    name: Desktop Lint, Typecheck & Bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Lint & Typecheck Desktop App
+        run: |
+          pnpm --filter @bee/desktop lint
+          pnpm --filter @bee/desktop typecheck
+
+      - name: Build Desktop Web Bundle
+        run: pnpm --filter @bee/desktop build
+
+      - name: Package Smoke Test (Linux AppDir)
+        run: pnpm --filter @bee/desktop exec electron-builder --linux --dir

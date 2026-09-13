@@ -1,0 +1,83 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, master, V1, revamp]
+    paths:
+      - "apps/api/**"
+      - "apps/worker/**"
+      - "services/**"
+      - "agents/**"
+      - "packages/python/**"
+      - "tools/**"
+      - "pyproject.toml"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main, master, V1, revamp]
+    paths:
+      - "apps/api/**"
+      - "apps/worker/**"
+      - "services/**"
+      - "agents/**"
+      - "packages/python/**"
+      - "tools/**"
+      - "pyproject.toml"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/backend-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-verify:
+    name: Backend Pytest, OpenAPI & Codegen
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install JS Monorepo Dependencies
+        run: pnpm install
+
+      - name: Create Python Virtual Environment & Install Editable Packages
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install --upgrade pip
+          pip install -e packages/python/bee-logging
+          pip install -e packages/python/bee-hive
+          pip install -e packages/python/bee-core
+          pip install -e services
+          pip install -e apps/api
+          pip install -e apps/worker
+
+      - name: Run Full Pytest Suite (113+ Tests)
+        run: |
+          . .venv/bin/activate
+          pytest apps/api/tests
+
+      - name: OpenAPI Export Smoke Test
+        run: |
+          . .venv/bin/activate
+          python -c "from bee_api.main import app; assert app.openapi()"
+
+      - name: Codegen Drift Check
+        run: |
+          . .venv/bin/activate
+          pnpm codegen:check

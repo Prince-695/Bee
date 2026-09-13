@@ -1,0 +1,205 @@
+name: Build CI (Master Orchestrator)
+
+on:
+  push:
+    branches: [main, master, V1, revamp]
+  pull_request:
+    branches: [main, master, V1, revamp]
+  workflow_dispatch:
+
+concurrency:
+  group: build-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    name: Detect Changed Subsystems
+    runs-on: ubuntu-latest
+    outputs:
+      desktop: ${{ steps.filter.outputs.desktop }}
+      web: ${{ steps.filter.outputs.web }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Path Filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            desktop:
+              - 'apps/desktop/**'
+              - 'packages/ui/**'
+              - 'packages/api-client/**'
+              - 'packages/eslint-config/**'
+              - 'packages/typescript-config/**'
+              - 'pnpm-lock.yaml'
+            web:
+              - 'apps/web/**'
+              - 'packages/ui/**'
+              - 'packages/api-client/**'
+              - 'packages/eslint-config/**'
+              - 'packages/typescript-config/**'
+              - 'pnpm-lock.yaml'
+            backend:
+              - 'apps/api/**'
+              - 'apps/worker/**'
+              - 'services/**'
+              - 'agents/**'
+              - 'packages/python/**'
+              - 'tools/**'
+              - 'pyproject.toml'
+              - 'pnpm-lock.yaml'
+
+  build-desktop:
+    name: Build Desktop Client
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.desktop == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install
+
+      - name: Desktop Lint & Typecheck
+        run: |
+          pnpm --filter @bee/desktop lint
+          pnpm --filter @bee/desktop typecheck
+
+      - name: Build Desktop Web Bundle
+        run: pnpm --filter @bee/desktop build
+
+  build-web:
+    name: Build Web Client
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install
+
+      - name: Web Lint & Typecheck
+        run: |
+          pnpm --filter @bee/web lint
+          pnpm --filter @bee/web typecheck
+
+      - name: Build Web Application
+        run: pnpm --filter @bee/web build
+
+  test-backend:
+    name: Test Backend & Services
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install JS Monorepo Dependencies
+        run: pnpm install
+
+      - name: Setup Python Virtual Environment & Install Editable Packages
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install --upgrade pip
+          pip install -e packages/python/bee-logging
+          pip install -e packages/python/bee-hive
+          pip install -e packages/python/bee-core
+          pip install -e services
+          pip install -e apps/api
+          pip install -e apps/worker
+
+      - name: Run Pytest Suite (113+ Tests)
+        run: |
+          . .venv/bin/activate
+          pytest apps/api/tests
+
+      - name: OpenAPI Export Smoke Test
+        run: |
+          . .venv/bin/activate
+          python -c "from bee_api.main import app; assert app.openapi()"
+
+      - name: Codegen Drift Check
+        run: |
+          . .venv/bin/activate
+          pnpm codegen:check
+
+  pipeline-gatekeeper:
+    name: Pipeline Gatekeeper (Branch Protection)
+    needs: [detect-changes, build-desktop, build-web, test-backend]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate Subsystem Results & Render Summary
+        run: |
+          DESKTOP_CHANGED="${{ needs.detect-changes.outputs.desktop }}"
+          WEB_CHANGED="${{ needs.detect-changes.outputs.web }}"
+          BACKEND_CHANGED="${{ needs.detect-changes.outputs.backend }}"
+
+          DESKTOP_RESULT="${{ needs.build-desktop.result }}"
+          WEB_RESULT="${{ needs.build-web.result }}"
+          BACKEND_RESULT="${{ needs.test-backend.result }}"
+
+          echo "### 🐝 Master Build Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Subsystem | Changed? | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Desktop Client** | $DESKTOP_CHANGED | $DESKTOP_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Web Client** | $WEB_CHANGED | $WEB_RESULT |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Backend & Services** | $BACKEND_CHANGED | $BACKEND_RESULT |" >> $GITHUB_STEP_SUMMARY
+
+          FAILED=0
+          if [ "$DESKTOP_RESULT" = "failure" ] || [ "$DESKTOP_RESULT" = "cancelled" ]; then
+            FAILED=1
+          fi
+          if [ "$WEB_RESULT" = "failure" ] || [ "$WEB_RESULT" = "cancelled" ]; then
+            FAILED=1
+          fi
+          if [ "$BACKEND_RESULT" = "failure" ] || [ "$BACKEND_RESULT" = "cancelled" ]; then
+            FAILED=1
+          fi
+
+          if [ $FAILED -ne 0 ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ One or more executed subsystem builds failed." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ All active subsystems passed successfully (or skipped due to path isolation)." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi

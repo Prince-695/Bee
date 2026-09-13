@@ -11,6 +11,12 @@ from services.memory.models import (
     ScoredMemory,
 )
 
+from services.memory.retriever import (
+    HybridRetriever,
+    compute_embedding,
+    cosine_similarity,
+)
+
 __all__ = [
     "MemoryType",
     "MemoryScope",
@@ -20,4 +26,7 @@ __all__ = [
     "MemoryLink",
     "EpisodicRemediation",
     "ScoredMemory",
+    "HybridRetriever",
+    "compute_embedding",
+    "cosine_similarity",
 ]

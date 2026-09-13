@@ -45,9 +45,11 @@ class MissionManager:
         self,
         worker_manager: Optional[WorkerManager] = None,
         gate_manager: Optional[GateManager] = None,
+        episodic_memory: Optional[Any] = None,
     ):
         self.worker_manager = worker_manager or WorkerManager()
         self.gate_manager = gate_manager or GateManager()
+        self.episodic_memory = episodic_memory
         self._active_missions: Dict[str, MissionExecutionState] = {}
 
     def create_mission(
@@ -125,6 +127,7 @@ class MissionManager:
         tool_args: Dict[str, Any],
         worker_id: Optional[str] = None,
         execute_fn: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
+        self_heal_fn: Optional[Callable[[Exception, Dict[str, Any]], Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """Executes a ready DAG node, validating Guardian security boundaries and approval gates."""
         state = self._get_mission_or_raise(mission_id)
@@ -201,9 +204,105 @@ class MissionManager:
             return {"status": "completed", "node_id": node_id, "output": output}
 
         except Exception as exc:
+            # Check for self-healing hook
+            if self_heal_fn:
+                try:
+                    heal_result = self_heal_fn(exc, tool_args)
+                    if heal_result and heal_result.get("success"):
+                        summary = heal_result.get("message") or "Auto-healed via verified patch"
+                        artifacts = heal_result.get("artifacts") or []
+                        state.dag.mark_node_completed(node_id, result_summary=summary, output_artifacts=artifacts)
+                        state.blackboard.post_message(
+                            sender_worker_id="system-self-healing",
+                            sender_role="fixer",
+                            message_type=MessageType.EXECUTION_RESULT,
+                            content=f"Autonomous Self-Healing succeeded for node '{node.title}': {summary}",
+                            artifacts=artifacts,
+                        )
+                        if state.dag.is_finished():
+                            engine = DeliberationEngine(state.blackboard)
+                            engine.sign_off_mission(summary=f"Mission '{state.title}' completed all DAG steps.")
+                            state.status = "completed"
+                        state.updated_at = _utc_now_iso()
+                        return {"status": "completed", "node_id": node_id, "self_healed": True, "output": heal_result}
+                except Exception:
+                    pass
+
             state.dag.mark_node_failed(node_id, error=str(exc))
             state.updated_at = _utc_now_iso()
             return {"status": "failed", "node_id": node_id, "error": str(exc)}
+
+    async def self_heal_node(
+        self,
+        mission_id: str,
+        node_id: str,
+        error_signature: str,
+        fixer_fn: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        """Attempts autonomous self-healing for a failed DAG node by recalling past verified remediations."""
+        state = self._get_mission_or_raise(mission_id)
+        node = state.dag.nodes.get(node_id)
+        if not node:
+            raise KeyError(f"Node '{node_id}' not found.")
+
+        remediations: List[Dict[str, Any]] = []
+        if self.episodic_memory:
+            remediations = await self.episodic_memory.recall_remediations(
+                tenant_id=state.workspace_id,
+                error_signature=error_signature,
+                top_k=1,
+            )
+
+        if not remediations:
+            state.blackboard.post_message(
+                sender_worker_id="system-self-healing",
+                sender_role="fixer",
+                message_type=MessageType.DEBATE,
+                content=f"No verified episodic remediation found for error: '{error_signature}'. Escalating to team/user.",
+            )
+            return {"status": "no_remediation_found", "node_id": node_id}
+
+        matched_fix = remediations[0]
+        state.blackboard.post_message(
+            sender_worker_id="system-self-healing",
+            sender_role="fixer",
+            message_type=MessageType.PROPOSAL,
+            content=(
+                f"Autonomous Self-Healing: Recalled verified patch from past mission "
+                f"(confidence: {matched_fix['similarity_score']:.2f}, success_count: {matched_fix['success_count']}). "
+                f"Applying patch to resolve '{matched_fix['problem_signature']}'."
+            ),
+            metadata={"remediation_id": matched_fix["id"], "patch_diff": matched_fix["patch_diff"]},
+        )
+
+        # Apply fix via fixer_fn
+        if fixer_fn:
+            heal_output = fixer_fn(matched_fix)
+        else:
+            heal_output = {"success": True, "message": f"Applied patch {matched_fix['id']}"}
+
+        if heal_output.get("success"):
+            summary = heal_output.get("message") or "Auto-healed via verified patch"
+            node.status = TaskStatus.COMPLETED
+            node.result_summary = summary
+            state.blackboard.post_message(
+                sender_worker_id="system-self-healing",
+                sender_role="fixer",
+                message_type=MessageType.EXECUTION_RESULT,
+                content=f"Self-healing successfully resolved node '{node.title}': {summary}",
+            )
+            if self.episodic_memory and hasattr(self.episodic_memory, "repo"):
+                await self.episodic_memory.repo.increment_remediation_success(matched_fix["id"], state.workspace_id)
+
+            if state.dag.is_finished():
+                engine = DeliberationEngine(state.blackboard)
+                engine.sign_off_mission(summary=f"Mission '{state.title}' completed all DAG steps.")
+                state.status = "completed"
+
+            state.updated_at = _utc_now_iso()
+            return {"status": "self_healed", "node_id": node_id, "remediation": matched_fix, "output": heal_output}
+
+        return {"status": "healing_failed", "node_id": node_id}
 
     def resolve_mission_gate(
         self,

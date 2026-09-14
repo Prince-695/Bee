@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { useState } from 'react'
 import {
   Bot,
+  Boxes,
   BrainCircuit,
   ChevronLeft,
   ChevronRight,
@@ -32,8 +33,9 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   const navItems = [
     { id: 'chat', label: 'Chat & Swarm', icon: MessageSquare, badge: 'Phase 3' },
     { id: 'workers', label: 'Worker Fleet', icon: Bot, badge: '6 Core' },
-    { id: 'memory', label: 'Memory Graph', icon: Database, badge: 'Hybrid' },
+    { id: 'integrations', label: 'Integrations & MCP', icon: Boxes, badge: 'Hybrid' },
     { id: 'missions', label: 'DAG Missions', icon: GitFork },
+    { id: 'memory', label: 'Memory Graph', icon: Database },
     { id: 'approvals', label: 'Gate Approvals', icon: ShieldAlert, badge: 'Zero-Trust' },
   ]
 

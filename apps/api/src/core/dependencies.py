@@ -228,3 +228,29 @@ def resolve_request_user(request: Request) -> dict | None:
     from bee_core.stores.user_store import get_user_for_token
     return get_user_for_token(token)
 
+
+async def get_runtime_auth(request: Request) -> Dict[str, Any]:
+    """Authenticates a local workstation runtime using X-Runtime-Key or Bearer bee_rt_..."""
+    runtime_key = request.headers.get("X-Runtime-Key") or ""
+    if not runtime_key:
+        auth_hdr = request.headers.get("Authorization") or ""
+        if auth_hdr.lower().startswith("bearer bee_rt_"):
+            runtime_key = auth_hdr[7:].strip()
+
+    if not runtime_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing runtime authentication key (X-Runtime-Key or Bearer bee_rt_...)",
+        )
+
+    from services.data.repositories.runtime_repo import RuntimeRepository
+    repo = RuntimeRepository()
+    runtime = await repo.verify_pairing_key(runtime_key)
+    if not runtime:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or revoked runtime pairing key",
+        )
+    return runtime
+
+

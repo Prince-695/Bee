@@ -315,6 +315,19 @@ CREATE TABLE IF NOT EXISTS run_steps (
     started_at TIMESTAMP WITH TIME ZONE,
     completed_at TIMESTAMP WITH TIME ZONE
 );
+
+CREATE TABLE IF NOT EXISTS paired_runtimes (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    machine_name TEXT NOT NULL,
+    os_name TEXT NOT NULL, -- 'windows' | 'darwin' | 'linux'
+    capabilities_json TEXT DEFAULT '["filesystem", "terminal", "docker", "git"]',
+    pairing_key_hash TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'online', -- 'online' | 'busy' | 'idle' | 'offline'
+    last_heartbeat_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 # SQLite DDL for zero-config local desktop execution
@@ -642,5 +655,19 @@ CREATE TABLE IF NOT EXISTS run_steps (
     started_at TEXT,
     completed_at TEXT,
     FOREIGN KEY(run_id) REFERENCES runs(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS paired_runtimes (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    machine_name TEXT NOT NULL,
+    os_name TEXT NOT NULL,
+    capabilities_json TEXT DEFAULT '["filesystem", "terminal", "docker", "git"]',
+    pairing_key_hash TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'online',
+    last_heartbeat_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
 """

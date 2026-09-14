@@ -68,3 +68,42 @@ class McpToolExecuteResponse(BaseModel):
     execution_time_ms: int
     execution_scope: ToolExecutionScope = ToolExecutionScope.CLOUD
     dispatched_runtime_id: Optional[str] = None
+
+
+class IntegrationItemResponse(BaseModel):
+    id: str
+    name: str
+    category: str
+    description: str
+    icon: str
+    is_connected: bool = False
+    masked_credential_preview: Optional[str] = None
+    requires_credentials: bool = True
+    credential_keys: List[str] = Field(default_factory=list)
+    tools: List[str] = Field(default_factory=list)
+    execution_scope: ToolExecutionScope = ToolExecutionScope.CLOUD
+    documentation_url: Optional[str] = None
+
+
+class IntegrationsListResponse(BaseModel):
+    integrations: List[IntegrationItemResponse]
+    count: int
+
+
+class ConnectIntegrationRequest(BaseModel):
+    credential_key: str = Field(..., description="Key name e.g. 'API_KEY', 'BOT_TOKEN', 'CONNECTION_STRING'")
+    credential_value: str = Field(..., min_length=1, description="Secret plaintext value to encrypt and vault")
+    label: Optional[str] = Field(default="", description="Friendly name for the credential")
+
+
+class WorkerProvisionRequest(BaseModel):
+    allowed_tools: List[str] = Field(..., description="List of tool names to grant this worker")
+
+
+class WorkerProvisionResponse(BaseModel):
+    worker_id: str
+    name: str
+    role: str
+    allowed_tools: List[str]
+    updated_at: str
+

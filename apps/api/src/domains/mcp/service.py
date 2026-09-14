@@ -416,7 +416,7 @@ class McpCatalogService:
         repo = RuntimeRepository()
         online_runtimes = [
             r for r in await repo.list_runtimes(tenant_id)
-            if r.get("status") in ("online", "busy", "idle")
+            if r.get("status") in ("online", "busy", "idle", "connected")
         ]
 
         # ─── LOCAL Scope Routing ───

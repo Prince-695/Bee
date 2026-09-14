@@ -45,7 +45,7 @@ async def test_runtime_pairing_lifecycle_and_heartbeats():
         assert runtime_id.startswith("rt_")
         assert pairing_key.startswith("bee_rt_")
         assert reg_data["machine_name"] == "MacBook-Pro-M3.local"
-        assert reg_data["status"] == "online"
+        assert reg_data["status"] == "connected"
         assert "filesystem" in reg_data["capabilities"]
 
         # 3. List runtimes for tenant
@@ -61,7 +61,7 @@ async def test_runtime_pairing_lifecycle_and_heartbeats():
         status_data = status_res.json()
         assert status_data["runtime_id"] == runtime_id
         assert status_data["is_online"] is True
-        assert status_data["status"] == "online"
+        assert status_data["status"] == "connected"
 
         # 5. Heartbeat ping from runtime
         hb_res = await client.post(

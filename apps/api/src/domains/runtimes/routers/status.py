@@ -28,7 +28,7 @@ async def get_runtime_status(
             detail=f"Runtime '{runtime_id}' not found for tenant '{tenant_id}'",
         )
 
-    is_online = matched["status"] in ("online", "busy", "idle")
+    is_online = matched["status"] in ("online", "busy", "idle", "connected")
     return RuntimeStatusResponse(
         runtime_id=matched["runtime_id"],
         machine_name=matched["machine_name"],

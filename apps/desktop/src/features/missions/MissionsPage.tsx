@@ -1,195 +1,472 @@
 import type { FC } from 'react'
 import { useState } from 'react'
 import {
-  GitFork,
   CheckCircle2,
-  Clock,
+  GitFork,
+  Plus,
   RotateCw,
-  Bot,
+  ShieldAlert,
 } from 'lucide-react'
+import type { DAGNodeData, MissionData } from './types'
+import { DAGCanvas } from './components/DAGCanvas'
+import { NodeInspectorDrawer } from './components/NodeInspectorDrawer'
+import { CrewLauncherModal } from './components/CrewLauncherModal'
 
-interface DAGNode {
-  id: string
-  label: string
-  worker: string
-  status: 'completed' | 'in_progress' | 'pending' | 'failed'
-  duration: string
-}
-
-interface Mission {
-  id: string
-  title: string
-  status: 'completed' | 'running' | 'paused'
-  started_at: string
-  nodes: DAGNode[]
-}
+const INITIAL_MISSIONS: MissionData[] = [
+  {
+    id: 'msn-01',
+    title: 'Autonomous Phase 4 Visual DAG Engine Synthesis',
+    objective:
+      'Build dynamic topological multi-worker DAG execution canvas with real-time SSE token stream, SVG bezier connectors, and in-canvas zero-trust gate resolution.',
+    crew_template_id: 'coding_flight',
+    crew_name: 'Coding Flight Crew',
+    status: 'running',
+    created_at: '2026-09-14 18:30:00',
+    topological_tiers: [['scout'], ['planner'], ['builder'], ['verifier'], ['reviewer']],
+    nodes: [
+      {
+        id: 'scout',
+        label: 'Scout Worker',
+        title: 'Codebase & Dependency Mapping',
+        assigned_role: 'scout',
+        assigned_worker_id: 'ScoutWorker',
+        instruction: 'Analyzes repository AST symbols, changed files, and dependency graph.',
+        dependencies: [],
+        status: 'completed',
+        duration_seconds: 1.2,
+        stdout_log:
+          '[ScoutWorker] Initializing AST symbol extractor...\n[ScoutWorker] Found 34 source files in services/orchestrator\n[ScoutWorker] Symbol graph mapped without circular dependencies.\n',
+        output_artifacts: ['ast_symbol_index.json', 'dependency_edges.json'],
+      },
+      {
+        id: 'planner',
+        label: 'Planner Worker',
+        title: 'DAG Route & Strategy Formulation',
+        assigned_role: 'planner',
+        assigned_worker_id: 'PlannerWorker',
+        instruction: 'Formulates atomic patch strategy and defines verification acceptance criteria.',
+        dependencies: ['scout'],
+        status: 'completed',
+        duration_seconds: 0.8,
+        stdout_log:
+          '[PlannerWorker] Formulating topological DAG flight plan...\n[PlannerWorker] Generated 5 execution stages with linear dependency chain.\n[PlannerWorker] Verification criteria: 100% pytest suite pass rate.\n',
+        output_artifacts: ['flight_plan.md'],
+      },
+      {
+        id: 'builder',
+        label: 'Builder Worker',
+        title: 'Patch Application & Code Synthesis',
+        assigned_role: 'builder',
+        assigned_worker_id: 'BuilderWorker',
+        instruction: 'Generates atomic code modifications and refactors target files.',
+        dependencies: ['planner'],
+        status: 'completed',
+        duration_seconds: 3.4,
+        stdout_log:
+          '[BuilderWorker] Drafting DAGCanvas.tsx with SVG bezier connectors...\n[BuilderWorker] Implemented NodeCard.tsx with pulsating status halos.\n[BuilderWorker] Implemented NodeInspectorDrawer.tsx with terminal stdout buffer.\n',
+        output_artifacts: ['patch_diff.diff'],
+      },
+      {
+        id: 'verifier',
+        label: 'Verifier Worker',
+        title: 'Regression & Test Suite QA',
+        assigned_role: 'verifier',
+        assigned_worker_id: 'VerifierWorker',
+        instruction: 'Executes test runner (pytest/vitest) and enforces test contract pass.',
+        dependencies: ['builder'],
+        status: 'running',
+        duration_seconds: 2.1,
+        stdout_log:
+          '[VerifierWorker] Running pytest test_dag_engine.py...\n[VerifierWorker] test_crew_templates_registry PASSED\n[VerifierWorker] test_dag_engine_acyclic_and_topological_sort PASSED\n[VerifierWorker] Running pnpm --filter @bee/desktop build...\n',
+        output_artifacts: [],
+      },
+      {
+        id: 'reviewer',
+        label: 'Reviewer Worker',
+        title: 'Architecture & Gate Verification',
+        assigned_role: 'reviewer',
+        assigned_worker_id: 'ReviewerWorker',
+        instruction: 'Audits diff against zero-trust policies and requests developer gate authorization.',
+        dependencies: ['verifier'],
+        status: 'waiting_gate',
+        gate_required: true,
+        gate_id: 'gate-981244',
+        gate_risk_level: 'MEDIUM',
+        duration_seconds: 0.0,
+        stdout_log:
+          '[ReviewerWorker] Checking zero-trust security invariants...\n[ReviewerWorker] Privileged action intercepted: code modification to core packages.\n[ReviewerWorker] Paused at interactive gate approval checkpoint.\n',
+        output_artifacts: [],
+      },
+    ],
+  },
+  {
+    id: 'msn-02',
+    title: 'Context Graph Recall & SQLite-vec Optimization',
+    objective: 'Benchmark reciprocal rank fusion and vector indexing latency across 10k items.',
+    crew_template_id: 'research_swarm',
+    crew_name: 'Research & Discovery Swarm',
+    status: 'completed',
+    created_at: '2026-09-14 17:15:00',
+    topological_tiers: [['scout'], ['searcher'], ['synthesizer'], ['writer']],
+    nodes: [
+      {
+        id: 'scout',
+        label: 'Scout Worker',
+        title: 'Context Discovery',
+        assigned_role: 'scout',
+        assigned_worker_id: 'ScoutWorker',
+        instruction: 'Inspects existing pgvector retriever implementations.',
+        dependencies: [],
+        status: 'completed',
+        duration_seconds: 0.9,
+      },
+      {
+        id: 'searcher',
+        label: 'Search Worker',
+        title: 'SQLite-vec Research',
+        assigned_role: 'searcher',
+        assigned_worker_id: 'SearchWorker',
+        instruction: 'Scans sqlite-vec v0.1 bindings for Node and Python runtimes.',
+        dependencies: ['scout'],
+        status: 'completed',
+        duration_seconds: 1.4,
+      },
+      {
+        id: 'synthesizer',
+        label: 'Synthesizer Worker',
+        title: 'Benchmark Analysis',
+        assigned_role: 'synthesizer',
+        assigned_worker_id: 'ContextSynthesizer',
+        instruction: 'Synthesizes latency numbers into citation graph.',
+        dependencies: ['scout', 'searcher'],
+        status: 'completed',
+        duration_seconds: 1.1,
+      },
+      {
+        id: 'writer',
+        label: 'Documentation Worker',
+        title: 'RFC Synthesis',
+        assigned_role: 'scribe',
+        assigned_worker_id: 'DocumentationWorker',
+        instruction: 'Generates final RFC document.',
+        dependencies: ['synthesizer'],
+        status: 'completed',
+        duration_seconds: 0.8,
+      },
+    ],
+  },
+]
 
 export const MissionsPage: FC = () => {
-  const [missions] = useState<Mission[]>([
-    {
-      id: 'msn-01',
-      title: 'Autonomous Phase 3 Surface Synthesis',
-      status: 'running',
-      started_at: '2026-09-13 22:45:00',
-      nodes: [
-        { id: '1', label: 'Explore Existing Codebase Schema', worker: 'scout', status: 'completed', duration: '1.2s' },
-        { id: '2', label: 'Formulate DAG Flight Route', worker: 'planner', status: 'completed', duration: '0.8s' },
-        { id: '3', label: 'Build Chat & Runner Engine', worker: 'builder', status: 'completed', duration: '4.5s' },
-        { id: '4', label: 'Zero-Trust Gate Audit', worker: 'reviewer', status: 'completed', duration: '1.1s' },
-        { id: '5', label: 'Run Pytest & Codegen Verification', worker: 'verifier', status: 'in_progress', duration: 'running' },
-        { id: '6', label: 'Deploy Web & Desktop Surfaces', worker: 'builder', status: 'pending', duration: '-' },
-      ],
-    },
-    {
-      id: 'msn-02',
-      title: 'Context Graph Recall Optimization',
-      status: 'completed',
-      started_at: '2026-09-13 21:10:00',
-      nodes: [
-        { id: '1', label: 'Profile HybridRetriever Scores', worker: 'scout', status: 'completed', duration: '0.9s' },
-        { id: '2', label: 'Tune Dynamic Reciprocal Reranking', worker: 'builder', status: 'completed', duration: '2.1s' },
-        { id: '3', label: 'Execute Regression Tests', worker: 'verifier', status: 'completed', duration: '18.4s' },
-      ],
-    },
-  ])
+  const [missions, setMissions] = useState<MissionData[]>(INITIAL_MISSIONS)
+  const [selectedMissionId, setSelectedMissionId] = useState<string>(INITIAL_MISSIONS[0].id)
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const [isLauncherOpen, setIsLauncherOpen] = useState(false)
 
-  const [selectedMission, setSelectedMission] = useState<Mission>(missions[0])
+  const activeMission =
+    missions.find((m) => m.id === selectedMissionId) || missions[0]
+
+  const selectedNode =
+    activeMission.nodes.find((n) => n.id === selectedNodeId) || null
+
+  // Calculate completion progress
+  const completedNodes = activeMission.nodes.filter((n) => n.status === 'completed').length
+  const progressPercent = activeMission.nodes.length
+    ? Math.round((completedNodes / activeMission.nodes.length) * 100)
+    : 0
+
+  const hasWaitingGate = activeMission.nodes.some((n) => n.status === 'waiting_gate')
+
+  // Handle in-canvas gate resolution
+  const handleResolveGate = (
+    nodeId: string,
+    gateId: string,
+    action: 'approved' | 'rejected'
+  ) => {
+    setMissions((prev) =>
+      prev.map((m) => {
+        if (m.id !== activeMission.id) return m
+        const updatedNodes = m.nodes.map((n) => {
+          if (n.id === nodeId) {
+            return {
+              ...n,
+              status: action === 'approved' ? ('completed' as const) : ('failed' as const),
+              stdout_log:
+                (n.stdout_log || '') +
+                `\n[GateGuardian] Gate ${gateId} was ${action.toUpperCase()} by developer. Execution resumed.\n`,
+              duration_seconds: 1.5,
+            }
+          }
+          return n
+        })
+
+        const allDone = updatedNodes.every((n) => n.status === 'completed')
+        return {
+          ...m,
+          status: allDone ? ('completed' as const) : m.status,
+          nodes: updatedNodes,
+        }
+      })
+    )
+
+    // Call backend gate resolution endpoint asynchronously
+    try {
+      fetch(
+        `http://localhost:8000/v1/missions/${activeMission.id}/gates/${gateId}/resolve`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, reason: 'Developer in-canvas approval' }),
+        }
+      ).catch(() => {})
+    } catch {
+      // Offline fallback
+    }
+  }
+
+  // Handle launching a new mission
+  const handleLaunchFlight = (
+    templateId: string,
+    title: string,
+    objective: string
+  ) => {
+    const newMissionId = `msn-${Date.now().toString().slice(-4)}`
+    let tiers = [['scout'], ['planner'], ['builder'], ['verifier'], ['reviewer']]
+    let newNodes: DAGNodeData[] = []
+
+    if (templateId === 'research_swarm') {
+      tiers = [['scout'], ['searcher'], ['synthesizer'], ['writer']]
+      newNodes = [
+        {
+          id: 'scout',
+          label: 'Scout Worker',
+          title: 'Repository Context Discovery',
+          assigned_role: 'scout',
+          assigned_worker_id: 'ScoutWorker',
+          instruction: 'Index codebase symbols and structure.',
+          dependencies: [],
+          status: 'running',
+          duration_seconds: 0.5,
+          stdout_log: '[ScoutWorker] Exploring repo architecture...\n',
+        },
+        {
+          id: 'searcher',
+          label: 'Search Worker',
+          title: 'External Intelligence Crawl',
+          assigned_role: 'searcher',
+          assigned_worker_id: 'SearchWorker',
+          instruction: 'Search external documentation and web citations in parallel.',
+          dependencies: ['scout'],
+          status: 'pending',
+          duration_seconds: 0,
+        },
+        {
+          id: 'synthesizer',
+          label: 'Synthesizer Worker',
+          title: 'Context Graph Synthesis',
+          assigned_role: 'synthesizer',
+          assigned_worker_id: 'ContextSynthesizer',
+          instruction: 'Cross-reference internal patterns with external citations.',
+          dependencies: ['scout', 'searcher'],
+          status: 'pending',
+          duration_seconds: 0,
+        },
+        {
+          id: 'writer',
+          label: 'Documentation Worker',
+          title: 'Technical RFC Drafting',
+          assigned_role: 'scribe',
+          assigned_worker_id: 'DocumentationWorker',
+          instruction: 'Generate formatted markdown report.',
+          dependencies: ['synthesizer'],
+          status: 'pending',
+          duration_seconds: 0,
+        },
+      ]
+    } else {
+      newNodes = [
+        {
+          id: 'scout',
+          label: 'Scout Worker',
+          title: 'Codebase & Dependency Mapping',
+          assigned_role: 'scout',
+          assigned_worker_id: 'ScoutWorker',
+          instruction: 'Analyzes repository AST symbols and dependencies.',
+          dependencies: [],
+          status: 'running',
+          duration_seconds: 0.3,
+          stdout_log: '[ScoutWorker] Initializing AST mapping for flight...\n',
+        },
+        {
+          id: 'planner',
+          label: 'Planner Worker',
+          title: 'DAG Route Synthesis',
+          assigned_role: 'planner',
+          assigned_worker_id: 'PlannerWorker',
+          instruction: 'Formulate execution route.',
+          dependencies: ['scout'],
+          status: 'pending',
+          duration_seconds: 0,
+        },
+        {
+          id: 'builder',
+          label: 'Builder Worker',
+          title: 'Patch Implementation',
+          assigned_role: 'builder',
+          assigned_worker_id: 'BuilderWorker',
+          instruction: 'Generate code patches.',
+          dependencies: ['planner'],
+          status: 'pending',
+          duration_seconds: 0,
+        },
+        {
+          id: 'verifier',
+          label: 'Verifier Worker',
+          title: 'Test Verification QA',
+          assigned_role: 'verifier',
+          assigned_worker_id: 'VerifierWorker',
+          instruction: 'Execute pytest and regression tests.',
+          dependencies: ['builder'],
+          status: 'pending',
+          duration_seconds: 0,
+        },
+        {
+          id: 'reviewer',
+          label: 'Reviewer Worker',
+          title: 'Zero-Trust Gate Audit',
+          assigned_role: 'reviewer',
+          assigned_worker_id: 'ReviewerWorker',
+          instruction: 'Audit policy rules and require gate approval.',
+          dependencies: ['verifier'],
+          status: 'pending',
+          gate_required: true,
+          gate_risk_level: 'MEDIUM',
+          duration_seconds: 0,
+        },
+      ]
+    }
+
+    const newFlight: MissionData = {
+      id: newMissionId,
+      title,
+      objective,
+      crew_template_id: templateId,
+      crew_name: templateId === 'research_swarm' ? 'Research Swarm' : 'Coding Flight Crew',
+      status: 'running',
+      created_at: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      topological_tiers: tiers,
+      nodes: newNodes,
+    }
+
+    setMissions((prev) => [newFlight, ...prev])
+    setSelectedMissionId(newMissionId)
+    setSelectedNodeId('scout')
+  }
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden bg-[#080a0f] p-6">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <GitFork className="h-5 w-5 text-amber-400" />
-            DAG Autonomous Missions
-          </h2>
-          <p className="mt-0.5 text-xs text-slate-400">
-            Topological flight execution routes coordinating multi-worker parallel DAG task graphs.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 flex items-center gap-1.5">
-            <RotateCw className="h-3 w-3 animate-spin" /> Swarm Execution Engine Active
-          </span>
-        </div>
-      </div>
-
-      <div className="grid flex-1 grid-cols-1 gap-6 lg:grid-cols-3 overflow-hidden">
-        {/* Left: Mission List */}
-        <div className="flex flex-col space-y-3 overflow-y-auto rounded-xl border border-white/8 bg-[#0b0e14]/60 p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            Active & Recent Flights
-          </span>
-          {missions.map((mission) => {
-            const isSelected = selectedMission.id === mission.id
-            return (
-              <button
-                key={mission.id}
-                onClick={() => setSelectedMission(mission)}
-                className={`flex flex-col text-left rounded-lg border p-3 transition-all ${
-                  isSelected
-                    ? 'border-amber-500/50 bg-amber-500/10 text-white shadow-sm'
-                    : 'border-white/6 bg-white/2 text-slate-300 hover:border-white/12 hover:bg-white/4'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-mono text-[10px] text-amber-400">{mission.id}</span>
-                  <span
-                    className={`rounded px-1.5 py-0.5 text-[9px] font-medium uppercase ${
-                      mission.status === 'running'
-                        ? 'bg-amber-500/20 text-amber-300'
-                        : 'bg-emerald-500/20 text-emerald-300'
-                    }`}
-                  >
-                    {mission.status}
-                  </span>
-                </div>
-                <div className="font-medium text-xs text-slate-100">{mission.title}</div>
-                <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400">
-                  <span>{mission.nodes.length} DAG Nodes</span>
-                  <span>{mission.started_at}</span>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Right: DAG Visualizer */}
-        <div className="lg:col-span-2 flex flex-col rounded-xl border border-white/8 bg-[#0b0e14]/60 p-6 overflow-y-auto">
-          <div className="flex items-center justify-between border-b border-white/8 pb-4 mb-5">
-            <div>
-              <span className="font-mono text-xs text-amber-400">{selectedMission.id}</span>
-              <h3 className="text-base font-semibold text-white mt-0.5">{selectedMission.title}</h3>
-            </div>
+    <div className="flex h-full w-full flex-col overflow-hidden bg-[#07090e]">
+      {/* Top Orchestration Control Bar */}
+      <div className="flex flex-wrap items-center justify-between border-b border-white/8 bg-[#0b0e14]/90 px-6 py-3 backdrop-blur-xl z-10 gap-3">
+        {/* Left: Mission Selector & Title */}
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400">
+            <GitFork className="h-4.5 w-4.5" />
+          </div>
+          <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400">Execution Mode:</span>
-              <span className="rounded bg-white/6 px-2 py-0.5 text-xs font-mono text-cyan-400">
-                Topological Parallel
+              <select
+                value={selectedMissionId}
+                onChange={(e) => {
+                  setSelectedMissionId(e.target.value)
+                  setSelectedNodeId(null)
+                }}
+                className="bg-transparent font-bold text-xs text-white outline-none cursor-pointer hover:text-amber-300 transition-colors border-none p-0 pr-2"
+              >
+                {missions.map((m) => (
+                  <option key={m.id} value={m.id} className="bg-[#0e121a] text-white">
+                    {m.id} • {m.title}
+                  </option>
+                ))}
+              </select>
+
+              {hasWaitingGate ? (
+                <span className="flex items-center gap-1 rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] font-mono font-bold text-rose-300 border border-rose-500/40 animate-pulse">
+                  <ShieldAlert className="h-3 w-3" /> PAUSED (APPROVAL REQUIRED)
+                </span>
+              ) : activeMission.status === 'running' ? (
+                <span className="flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-mono font-medium text-amber-300 border border-amber-500/30">
+                  <RotateCw className="h-3 w-3 animate-spin" /> SWARM RUNNING
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-mono font-medium text-emerald-400 border border-emerald-500/30">
+                  <CheckCircle2 className="h-3 w-3" /> COMPLETED
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-[10px] text-slate-400">
+              <span className="font-mono text-amber-400">{activeMission.crew_name}</span>
+              <span>•</span>
+              <span>{activeMission.nodes.length} Topological Nodes</span>
+              <span>•</span>
+              <span className="truncate max-w-[280px]">{activeMission.objective}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Progress bar & Launch Button */}
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-2.5">
+            <div className="flex flex-col items-end text-[10px] font-mono text-slate-400">
+              <span>
+                Progress: <strong className="text-white">{progressPercent}%</strong>
+              </span>
+              <span>
+                {completedNodes}/{activeMission.nodes.length} nodes done
               </span>
             </div>
-          </div>
-
-          <div className="space-y-4">
-            <span className="text-xs font-semibold text-slate-300">DAG Step Flow:</span>
-            <div className="space-y-3">
-              {selectedMission.nodes.map((node, index) => {
-                const isLast = index === selectedMission.nodes.length - 1
-                return (
-                  <div key={node.id} className="relative">
-                    <div
-                      className={`flex items-center justify-between rounded-xl border p-3.5 transition-all ${
-                        node.status === 'completed'
-                          ? 'border-emerald-500/20 bg-emerald-950/10 text-slate-200'
-                          : node.status === 'in_progress'
-                          ? 'border-amber-500/40 bg-amber-950/20 text-white shadow-md'
-                          : 'border-white/6 bg-white/2 text-slate-400'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex h-7 w-7 items-center justify-center rounded-lg border text-xs font-mono font-bold ${
-                            node.status === 'completed'
-                              ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-300'
-                              : node.status === 'in_progress'
-                              ? 'border-amber-500/40 bg-amber-500/20 text-amber-300 animate-pulse'
-                              : 'border-white/10 bg-white/5 text-slate-400'
-                          }`}
-                        >
-                          {node.id}
-                        </div>
-                        <div>
-                          <div className="font-medium text-xs text-slate-200">{node.label}</div>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="flex items-center gap-1 text-[10px] font-mono text-amber-400/90">
-                              <Bot className="h-3 w-3" /> Worker: {node.worker}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono text-[10px] text-slate-400">{node.duration}</span>
-                        {node.status === 'completed' && (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                        )}
-                        {node.status === 'in_progress' && (
-                          <RotateCw className="h-4 w-4 text-amber-400 animate-spin" />
-                        )}
-                        {node.status === 'pending' && <Clock className="h-4 w-4 text-slate-400" />}
-                      </div>
-                    </div>
-
-                    {!isLast && (
-                      <div className="ml-7 h-3 w-0.5 bg-gradient-to-b from-white/20 to-white/5" />
-                    )}
-                  </div>
-                )
-              })}
+            <div className="h-2 w-28 overflow-hidden rounded-full bg-white/6 border border-white/8">
+              <div
+                className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-500"
+                style={{ width: `${progressPercent}%` }}
+              />
             </div>
           </div>
+
+          <button
+            onClick={() => setIsLauncherOpen(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black px-3.5 py-1.5 text-xs font-semibold shadow-md transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+            Launch Flight
+          </button>
         </div>
       </div>
+
+      {/* Main Interactive Visual DAG Canvas */}
+      <div className="relative flex-1 overflow-hidden">
+        <DAGCanvas
+          nodes={activeMission.nodes}
+          topologicalTiers={activeMission.topological_tiers}
+          selectedNodeId={selectedNodeId}
+          onSelectNode={(id) => setSelectedNodeId(id)}
+        />
+
+        {/* Live Node Inspector Drawer */}
+        <NodeInspectorDrawer
+          node={selectedNode}
+          isOpen={selectedNode !== null}
+          onClose={() => setSelectedNodeId(null)}
+          onResolveGate={handleResolveGate}
+        />
+      </div>
+
+      {/* Crew Launcher Modal */}
+      <CrewLauncherModal
+        isOpen={isLauncherOpen}
+        onClose={() => setIsLauncherOpen(false)}
+        onLaunch={handleLaunchFlight}
+      />
     </div>
   )
 }

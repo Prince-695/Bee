@@ -1084,7 +1084,11 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
+        /**
+         * Update Member Role
+         * @description Update role for a member of the tenant organization (owner or admin only).
+         */
+        put: operations["update_member_role_v1_tenants__tenant_id__members__target_user_id__put"];
         post?: never;
         /**
          * Remove Tenant Member
@@ -2654,6 +2658,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/security/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Tenant Audit Logs
+         * @description Retrieve security and governance audit logs for the active tenant organization.
+         */
+        get: operations["get_tenant_audit_logs_v1_security_audit_logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/oauth/providers": {
         parameters: {
             query?: never;
@@ -4160,6 +4184,14 @@ export interface components {
              * @default Critical Sev-1 gate pending human authorization
              */
             urgency_reason: string;
+        };
+        /** UpdateMemberRoleRequest */
+        UpdateMemberRoleRequest: {
+            /**
+             * Role
+             * @description 'admin' | 'member' | 'viewer' | 'guest'
+             */
+            role: string;
         };
         /** UpdateMemoryRequest */
         UpdateMemoryRequest: {
@@ -6122,6 +6154,44 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_member_role_v1_tenants__tenant_id__members__target_user_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+                target_user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMemberRoleRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -8987,6 +9057,41 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_tenant_audit_logs_v1_security_audit_logs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                action?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

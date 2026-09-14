@@ -6,6 +6,7 @@ import { MemoryPage } from './features/memory/MemoryPage'
 import { MissionsPage } from './features/missions/MissionsPage'
 import { ApprovalsPage } from './features/approvals/ApprovalsPage'
 import { MarketplacePage } from './features/marketplace/MarketplacePage'
+import { GovernancePage } from './features/governance/GovernancePage'
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('chat')
@@ -33,6 +34,7 @@ export function App() {
         <WorkersPage onStartChat={handleStartWorkerChat} />
       )}
       {activeTab === 'integrations' && <MarketplacePage />}
+      {activeTab === 'governance' && <GovernancePage />}
       {activeTab === 'memory' && <MemoryPage />}
       {activeTab === 'missions' && <MissionsPage />}
       {activeTab === 'approvals' && <ApprovalsPage />}

@@ -82,16 +82,35 @@ async def test_multi_tenant_rbac_lifecycle():
         members = members_res.json()["members"]
         assert len(members) == 2  # Alice (Owner) + Bob (Member)
 
-        # 8. Member tries to remove Owner (Should fail with 403)
+        # 8. Update Bob's role to Admin (Owner updates member role)
+        update_role_res = await client.put(
+            f"/v1/tenants/{org_id}/members/{member_id}",
+            json={"role": "admin"},
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+        assert update_role_res.status_code == 200
+        assert update_role_res.json()["role"] == "admin"
+
+        # 9. Verify audit logs query for tenant
+        audit_res = await client.get(
+            "/v1/security/audit-logs",
+            headers={"Authorization": f"Bearer {owner_token}"},
+        )
+        assert audit_res.status_code == 200
+        assert "logs" in audit_res.json()
+        assert "total" in audit_res.json()
+
+        # 10. Member tries to remove Owner (Should fail with 403)
         unauth_remove = await client.delete(
             f"/v1/tenants/{org_id}/members/{owner_id}",
             headers={"Authorization": f"Bearer {member_token}"},
         )
         assert unauth_remove.status_code == 403
 
-        # 9. Owner removes Member (Should succeed)
+        # 11. Owner removes Member (Should succeed)
         remove_res = await client.delete(
             f"/v1/tenants/{org_id}/members/{member_id}",
             headers={"Authorization": f"Bearer {owner_token}"},
         )
         assert remove_res.status_code == 200
+

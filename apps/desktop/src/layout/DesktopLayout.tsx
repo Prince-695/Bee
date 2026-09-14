@@ -10,6 +10,7 @@ import {
   GitFork,
   MessageSquare,
   ShieldAlert,
+  ShieldCheck,
   Zap,
 } from 'lucide-react'
 
@@ -37,6 +38,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
     { id: 'missions', label: 'DAG Missions', icon: GitFork },
     { id: 'memory', label: 'Memory Graph', icon: Database },
     { id: 'approvals', label: 'Gate Approvals', icon: ShieldAlert, badge: 'Zero-Trust' },
+    { id: 'governance', label: 'Governance & Usage', icon: ShieldCheck, badge: 'RBAC' },
   ]
 
   return (

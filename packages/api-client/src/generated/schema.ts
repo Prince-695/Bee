@@ -996,6 +996,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/missions/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get All Crew Templates
+         * @description List all registered autonomous crew templates.
+         */
+        get: operations["get_all_crew_templates_v1_missions_templates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/missions/templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Single Crew Template
+         * @description Retrieve details and topological stages for a specific crew template.
+         */
+        get: operations["get_single_crew_template_v1_missions_templates__template_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/missions": {
         parameters: {
             query?: never;
@@ -1069,11 +1109,31 @@ export interface paths {
         };
         /**
          * Get Mission Dag
-         * @description Retrieve 5-worker DAG execution topology and stage node progression.
+         * @description Retrieve dynamic DAG execution topology, node progression, and topological tiers.
          */
         get: operations["get_mission_dag_v1_missions__mission_id__dag_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/missions/{mission_id}/gates/{gate_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resolve Mission Gate
+         * @description Resolve an interactive approval gate to unblock execution of a paused DAG node.
+         */
+        post: operations["resolve_mission_gate_v1_missions__mission_id__gates__gate_id__resolve_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3021,6 +3081,49 @@ export interface components {
              */
             label: string | null;
         };
+        /** CrewStageSchema */
+        CrewStageSchema: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Worker Role */
+            worker_role: string;
+            /** Worker Name */
+            worker_name: string;
+            /** Description */
+            description: string;
+            /** Dependencies */
+            dependencies?: string[];
+            /** Allowed Tools */
+            allowed_tools?: string[];
+            /**
+             * Requires Gate
+             * @default false
+             */
+            requires_gate: boolean;
+            /** Gate Risk Level */
+            gate_risk_level?: string | null;
+        };
+        /** CrewTemplateResponse */
+        CrewTemplateResponse: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Tagline */
+            tagline: string;
+            /** Description */
+            description: string;
+            /** Category */
+            category: string;
+            /** Icon */
+            icon: string;
+            /** Estimated Duration */
+            estimated_duration: string;
+            /** Stages */
+            stages: components["schemas"]["CrewStageSchema"][];
+        };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
             /** Email */
@@ -3044,6 +3147,35 @@ export interface components {
              * @description Optional explanation for decision
              */
             reason?: string | null;
+        };
+        /**
+         * GateResolveRequest
+         * @description Request to resolve a human authorization gate.
+         */
+        GateResolveRequest: {
+            /**
+             * Action
+             * @description 'approved' | 'rejected'
+             */
+            action: string;
+            /**
+             * Reason
+             * @description Developer feedback or rationale
+             */
+            reason?: string | null;
+        };
+        /** GateResolveResponse */
+        GateResolveResponse: {
+            /** Gate Id */
+            gate_id: string;
+            /** Mission Id */
+            mission_id: string;
+            /** Action */
+            action: string;
+            /** Status */
+            status: string;
+            /** Resumed */
+            resumed: boolean;
         };
         /** GeneralChatStartRequest */
         GeneralChatStartRequest: {
@@ -3301,12 +3433,30 @@ export interface components {
             id: string;
             /** Label */
             label: string;
+            /** Title */
+            title?: string | null;
             /** Status */
             status: string;
             /** Worker */
             worker: string;
             /** Dependencies */
             dependencies?: string[];
+            /**
+             * Gate Required
+             * @default false
+             */
+            gate_required: boolean;
+            /** Gate Id */
+            gate_id?: string | null;
+            /** Gate Risk Level */
+            gate_risk_level?: string | null;
+            /** Stdout Log */
+            stdout_log?: string | null;
+            /**
+             * Duration Seconds
+             * @default 0
+             */
+            duration_seconds: number | null;
         };
         /** MissionDagResponse */
         MissionDagResponse: {
@@ -3318,6 +3468,18 @@ export interface components {
             status: string;
             /** Nodes */
             nodes: components["schemas"]["MissionDagNode"][];
+            /** Topological Tiers */
+            topological_tiers?: string[][];
+            /**
+             * Progress Percent
+             * @default 0
+             */
+            progress_percent: number;
+            /**
+             * Has Waiting Gates
+             * @default false
+             */
+            has_waiting_gates: boolean;
         };
         /** MissionListResponse */
         MissionListResponse: {
@@ -5475,6 +5637,57 @@ export interface operations {
             };
         };
     };
+    get_all_crew_templates_v1_missions_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrewTemplateResponse"][];
+                };
+            };
+        };
+    };
+    get_single_crew_template_v1_missions_templates__template_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrewTemplateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_tenant_missions_v1_missions_get: {
         parameters: {
             query?: {
@@ -5622,6 +5835,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MissionDagResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_mission_gate_v1_missions__mission_id__gates__gate_id__resolve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mission_id: string;
+                gate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GateResolveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateResolveResponse"];
                 };
             };
             /** @description Validation Error */

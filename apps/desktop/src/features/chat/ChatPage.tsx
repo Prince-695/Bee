@@ -89,13 +89,31 @@ const SYSTEM_WORKERS: WorkerInfo[] = [
   },
 ]
 
+const createWelcomeMessage = (worker: (typeof SYSTEM_WORKERS)[0]): Message => ({
+  id: 'welcome',
+  sender_type: 'worker',
+  sender_id: worker.id,
+  content: `Hello! I am **${worker.name}** (${worker.role}).\n\n${worker.description}\n\nI am connected to the living **Memory Graph** and protected by the **Guardian Zero-Trust Shield**. How can I assist you with your engineering objectives today?`,
+  recalled_memory_ids: ['mem-rule-01', 'mem-rule-02'],
+  created_at: '2026-09-14T00:00:00.000Z',
+  metadata: {
+    worker_name: worker.name,
+    role: worker.role,
+  },
+})
+
+const createMessageId = (prefix: string) => `${prefix}-${Date.now()}`
+const getIsoTimestamp = () => new Date().toISOString()
+
 interface ChatPageProps {
   activeWorkerId: string | null
   onWorkerSelect: (workerId: string | null) => void
 }
 
 export const ChatPage: FC<ChatPageProps> = ({ activeWorkerId, onWorkerSelect }) => {
-  const [messages, setMessages] = useState<Message[]>([])
+  const activeWorker = SYSTEM_WORKERS.find((w) => (activeWorkerId ? w.id === activeWorkerId : w.id === 'universal')) || SYSTEM_WORKERS[0]
+  const [prevWorkerId, setPrevWorkerId] = useState(activeWorkerId)
+  const [messages, setMessages] = useState<Message[]>(() => [createWelcomeMessage(activeWorker)])
   const [inputPrompt, setInputPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [threadId] = useState<string>('default-thread')
@@ -103,24 +121,10 @@ export const ChatPage: FC<ChatPageProps> = ({ activeWorkerId, onWorkerSelect }) 
   const [forgottenMemoryIds, setForgottenMemoryIds] = useState<Set<string>>(new Set())
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const activeWorker = SYSTEM_WORKERS.find((w) => (activeWorkerId ? w.id === activeWorkerId : w.id === 'universal')) || SYSTEM_WORKERS[0]
-
-  useEffect(() => {
-    // Initial welcome message
-    const welcomeMsg: Message = {
-      id: 'welcome',
-      sender_type: 'worker',
-      sender_id: activeWorker.id,
-      content: `Hello! I am **${activeWorker.name}** (${activeWorker.role}).\n\n${activeWorker.description}\n\nI am connected to the living **Memory Graph** and protected by the **Guardian Zero-Trust Shield**. How can I assist you with your engineering objectives today?`,
-      recalled_memory_ids: ['mem-rule-01', 'mem-rule-02'],
-      created_at: new Date().toISOString(),
-      metadata: {
-        worker_name: activeWorker.name,
-        role: activeWorker.role,
-      },
-    }
-    setMessages([welcomeMsg])
-  }, [activeWorkerId])
+  if (activeWorkerId !== prevWorkerId) {
+    setPrevWorkerId(activeWorkerId)
+    setMessages([createWelcomeMessage(activeWorker)])
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -133,11 +137,11 @@ export const ChatPage: FC<ChatPageProps> = ({ activeWorkerId, onWorkerSelect }) 
     setInputPrompt('')
 
     const userMsg: Message = {
-      id: `usr-${Date.now()}`,
+      id: createMessageId('usr'),
       sender_type: 'user',
       sender_id: 'developer',
       content: userText,
-      created_at: new Date().toISOString(),
+      created_at: getIsoTimestamp(),
     }
 
     setMessages((prev) => [...prev, userMsg])
@@ -174,18 +178,18 @@ export const ChatPage: FC<ChatPageProps> = ({ activeWorkerId, onWorkerSelect }) 
     // Check if query was asking for a sensitive or gated action
     if (query.toLowerCase().includes('.env') || query.toLowerCase().includes('secret')) {
       const reply: Message = {
-        id: `reply-${Date.now()}`,
+        id: createMessageId('reply'),
         sender_type: 'worker',
         sender_id: activeWorker.id,
         content: `❌ **Guardian Security Block**: FileGuard prevented access to environment and credential files. Reading or modifying \`.env\` is prohibited by policy.`,
-        created_at: new Date().toISOString(),
+        created_at: getIsoTimestamp(),
       }
       setMessages((prev) => [...prev, reply])
       return
     }
 
     if (query.toLowerCase().includes('run') || query.toLowerCase().includes('test') || query.toLowerCase().includes('deploy')) {
-      gateId = `gate-${Date.now().toString().slice(-6)}`
+      gateId = createMessageId('gate').slice(-11)
       toolInv = [
         {
           tool: 'bash',
@@ -196,14 +200,14 @@ export const ChatPage: FC<ChatPageProps> = ({ activeWorkerId, onWorkerSelect }) 
     }
 
     const fallbackReply: Message = {
-      id: `reply-${Date.now()}`,
+      id: createMessageId('reply'),
       sender_type: 'worker',
       sender_id: activeWorker.id,
       content: `I have received your instruction: "${query}".\n\nAs **${activeWorker.name}**, I'm analyzing the codebase context and cross-referencing past episodic remediations. All actions remain governed under Zero-Trust approval gates.`,
       recalled_memory_ids: ['mem-rule-01'],
       tool_invocations: toolInv,
       gate_id: gateId,
-      created_at: new Date().toISOString(),
+      created_at: getIsoTimestamp(),
     }
     setMessages((prev) => [...prev, fallbackReply])
   }
@@ -211,13 +215,13 @@ export const ChatPage: FC<ChatPageProps> = ({ activeWorkerId, onWorkerSelect }) 
   const handleGateAction = (gateId: string, action: 'approved' | 'rejected') => {
     setGateStatuses((prev) => ({ ...prev, [gateId]: action }))
     const systemNotice: Message = {
-      id: `sys-${Date.now()}`,
+      id: createMessageId('sys'),
       sender_type: 'system',
       sender_id: 'gate-manager',
       content: action === 'approved'
         ? `✅ **Approval Gate ${gateId} Approved**: Human developer granted permission. Tool execution resumed.`
         : `🛑 **Approval Gate ${gateId} Denied**: Developer denied authorization. Action cancelled.`,
-      created_at: new Date().toISOString(),
+      created_at: getIsoTimestamp(),
     }
     setMessages((prev) => [...prev, systemNotice])
   }

@@ -101,7 +101,7 @@ export const MemoryPage: FC = () => {
         ].map((tier) => (
           <button
             key={tier.id}
-            onClick={() => setActiveTier(tier.id as any)}
+            onClick={() => setActiveTier(tier.id as 'all' | 'episodic' | 'semantic' | 'working')}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
               activeTier === tier.id
                 ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30'

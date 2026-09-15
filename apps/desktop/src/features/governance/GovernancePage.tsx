@@ -30,7 +30,7 @@ interface PairedRuntime {
   capabilities: string[]
   status: 'online' | 'busy' | 'idle' | 'offline' | 'connected'
   last_heartbeat_at: string
-  metadata: Record<string, any>
+  metadata: Record<string, unknown>
   created_at: string
 }
 
@@ -42,7 +42,7 @@ interface AuditLogEntry {
   resource_id?: string | null
   ip_address?: string | null
   created_at: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export const GovernancePage: FC = () => {
@@ -67,14 +67,7 @@ export const GovernancePage: FC = () => {
   const [enforceFlightGates, setEnforceFlightGates] = useState(true)
   const [autoReapStale, setAutoReapStale] = useState(true)
 
-  useEffect(() => {
-    fetchTenantData()
-    fetchRuntimes()
-    fetchAuditLogs()
-  }, [])
-
   const fetchTenantData = async () => {
-    setLoadingMembers(true)
     try {
       // 1. Fetch user's tenants
       const tRes = await fetch('/v1/tenants', {
@@ -102,7 +95,6 @@ export const GovernancePage: FC = () => {
   }
 
   const fetchRuntimes = async () => {
-    setLoadingRuntimes(true)
     try {
       const res = await fetch('/v1/runtimes', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
@@ -119,7 +111,6 @@ export const GovernancePage: FC = () => {
   }
 
   const fetchAuditLogs = async () => {
-    setLoadingAudit(true)
     try {
       const res = await fetch('/v1/security/audit-logs?limit=50', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
@@ -134,6 +125,44 @@ export const GovernancePage: FC = () => {
       setLoadingAudit(false)
     }
   }
+
+  useEffect(() => {
+    let ignore = false
+    const initData = async () => {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const [tRes, rRes, aRes] = await Promise.all([
+          fetch('/v1/tenants', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/v1/runtimes', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/v1/security/audit-logs?limit=50', { headers: { Authorization: `Bearer ${token}` } }),
+        ])
+        if (!ignore && tRes.ok) {
+          const tData = await tRes.json()
+          const primary = tData.tenants?.[0]?.id || 'default'
+          setCurrentTenantId(primary)
+          const mRes = await fetch(`/v1/tenants/${primary}/members`, { headers: { Authorization: `Bearer ${token}` } })
+          if (!ignore && mRes.ok) {
+            const mData = await mRes.json()
+            setMembers(mData.members || [])
+          }
+        }
+        if (!ignore && rRes.ok) {
+          const rData = await rRes.json()
+          setRuntimes(rData.runtimes || [])
+        }
+        if (!ignore && aRes.ok) {
+          const aData = await aRes.json()
+          setAuditLogs(aData.logs || [])
+        }
+      } catch (err) {
+        console.error('Failed to load governance data', err)
+      }
+    }
+    initData()
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   const handleUpdateRole = async (userId: string, newRole: string) => {
     try {
@@ -216,7 +245,7 @@ export const GovernancePage: FC = () => {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveSubTab(tab.id as any)}
+              onClick={() => setActiveSubTab(tab.id as 'team' | 'fleet' | 'audit' | 'usage')}
               className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition-all ${
                 isSelected
                   ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm shadow-amber-500/5'

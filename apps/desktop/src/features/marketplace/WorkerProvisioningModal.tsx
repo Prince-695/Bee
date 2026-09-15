@@ -44,29 +44,39 @@ export const WorkerProvisioningModal: FC<WorkerProvisioningModalProps> = ({
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchWorkerTools(selectedWorkerId)
-  }, [selectedWorkerId])
-
-  const fetchWorkerTools = async (workerId: string) => {
-    setLoading(true)
-    setError(null)
-    setSavedSuccess(false)
-    try {
-      const res = await fetch(`/v1/mcp/workers/${workerId}/tools`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-        },
-      })
-      if (!res.ok) throw new Error('Failed to load worker tool matrix')
-      const data = await res.json()
-      setAllowedTools(data.allowed_tools || [])
-      setAvailableTools(data.available_catalog_tools || [])
-    } catch (err: any) {
-      setError(err.message || 'Error loading tools')
-    } finally {
-      setLoading(false)
+    let ignore = false
+    const fetchWorkerTools = async () => {
+      setLoading(true)
+      setError(null)
+      setSavedSuccess(false)
+      try {
+        const res = await fetch(`/v1/mcp/workers/${selectedWorkerId}/tools`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+          },
+        })
+        if (!res.ok) throw new Error('Failed to load worker tool matrix')
+        const data = await res.json()
+        if (!ignore) {
+          setAllowedTools(data.allowed_tools || [])
+          setAvailableTools(data.available_catalog_tools || [])
+        }
+      } catch (err: unknown) {
+        if (!ignore) {
+          setError(err instanceof Error ? err.message : 'Error loading tools')
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false)
+        }
+      }
     }
-  }
+
+    fetchWorkerTools()
+    return () => {
+      ignore = true
+    }
+  }, [selectedWorkerId])
 
   const toggleTool = (toolName: string) => {
     if (allowedTools.includes(toolName)) {
@@ -94,8 +104,8 @@ export const WorkerProvisioningModal: FC<WorkerProvisioningModalProps> = ({
       if (!res.ok) throw new Error('Failed to save worker provisioning')
       setSavedSuccess(true)
       setTimeout(() => setSavedSuccess(false), 3000)
-    } catch (err: any) {
-      setError(err.message || 'Error saving provisioning')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error saving provisioning')
     } finally {
       setSaving(false)
     }

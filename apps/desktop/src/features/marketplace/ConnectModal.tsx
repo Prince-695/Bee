@@ -53,8 +53,8 @@ export const ConnectModal: FC<ConnectModalProps> = ({
 
       onConnected()
       onClose()
-    } catch (err: any) {
-      setError(err.message || 'Error connecting integration')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error connecting integration')
     } finally {
       setLoading(false)
     }

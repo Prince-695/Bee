@@ -44,8 +44,8 @@ export const InviteMemberModal: FC<InviteMemberModalProps> = ({
 
       onInvited()
       onClose()
-    } catch (err: any) {
-      setError(err.message || 'Error inviting member')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error inviting member')
     } finally {
       setLoading(false)
     }
@@ -109,7 +109,7 @@ export const InviteMemberModal: FC<InviteMemberModalProps> = ({
                 return (
                   <div
                     key={r.id}
-                    onClick={() => setRole(r.id as any)}
+                    onClick={() => setRole(r.id as 'admin' | 'member' | 'viewer')}
                     className={`flex items-start gap-3 rounded-lg p-2.5 border cursor-pointer transition-all ${
                       isSelected
                         ? 'border-amber-500/30 bg-amber-500/5 text-white'

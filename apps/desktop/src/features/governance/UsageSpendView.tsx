@@ -29,41 +29,54 @@ export const UsageSpendView: FC = () => {
   const [records, setRecords] = useState<UsageRecord[]>([])
   const [loading, setLoading] = useState(true)
 
+  const [reloadCounter, setReloadCounter] = useState(0)
+
   useEffect(() => {
-    fetchUsageData()
-  }, [])
+    let ignore = false
+    const fetchUsage = async () => {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const [spendRes, recRes] = await Promise.all([
+          fetch('/v1/usage/spend', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch('/v1/usage/records?limit=25', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ])
 
-  const fetchUsageData = async () => {
-    setLoading(true)
-    try {
-      const [spendRes, recRes] = await Promise.all([
-        fetch('/v1/usage/spend', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
-        }),
-        fetch('/v1/usage/records?limit=25', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
-        }),
-      ])
+        if (!ignore && spendRes.ok) {
+          const data = await spendRes.json()
+          setSpend({
+            total_prompt_tokens: data.total_prompt_tokens || 0,
+            total_completion_tokens: data.total_completion_tokens || 0,
+            total_tokens: data.total_tokens || 0,
+            total_cost_usd: data.total_cost_usd || 0,
+          })
+        }
 
-      if (spendRes.ok) {
-        const data = await spendRes.json()
-        setSpend({
-          total_prompt_tokens: data.total_prompt_tokens || 0,
-          total_completion_tokens: data.total_completion_tokens || 0,
-          total_tokens: data.total_tokens || 0,
-          total_cost_usd: data.total_cost_usd || 0,
-        })
+        if (!ignore && recRes.ok) {
+          const data = await recRes.json()
+          setRecords(data.records || [])
+        }
+      } catch (err) {
+        console.error('Failed to load usage and spend telemetry', err)
+      } finally {
+        if (!ignore) {
+          setLoading(false)
+        }
       }
-
-      if (recRes.ok) {
-        const data = await recRes.json()
-        setRecords(data.records || [])
-      }
-    } catch (err) {
-      console.error('Error loading usage data', err)
-    } finally {
-      setLoading(false)
     }
+
+    fetchUsage()
+    return () => {
+      ignore = true
+    }
+  }, [reloadCounter])
+
+  const handleRefresh = () => {
+    setLoading(true)
+    setReloadCounter((c) => c + 1)
   }
 
   const formatNumber = (n: number) => n.toLocaleString()
@@ -175,7 +188,7 @@ export const UsageSpendView: FC = () => {
             <p className="text-xs text-slate-400">Itemized inference token events</p>
           </div>
           <button
-            onClick={fetchUsageData}
+            onClick={handleRefresh}
             className="rounded-lg p-1.5 text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
             title="Refresh records"
           >

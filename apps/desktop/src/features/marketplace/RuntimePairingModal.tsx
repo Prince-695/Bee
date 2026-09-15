@@ -39,8 +39,8 @@ export const RuntimePairingModal: FC<RuntimePairingModalProps> = ({
       const data = await res.json()
       setPairingKey(data.pairing_key)
       onPaired()
-    } catch (err: any) {
-      setError(err.message || 'Registration error')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Registration error')
     } finally {
       setLoading(false)
     }

@@ -14,6 +14,12 @@ import { IntegrationCard, type Integration } from './IntegrationCard'
 import { RuntimePairingModal } from './RuntimePairingModal'
 import { WorkerProvisioningModal } from './WorkerProvisioningModal'
 
+interface PairedRuntimeSummary {
+  id: string
+  machine_name: string
+  status: string
+}
+
 export const MarketplacePage: FC = () => {
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [loading, setLoading] = useState(true)
@@ -22,7 +28,7 @@ export const MarketplacePage: FC = () => {
   const [selectedScope, setSelectedScope] = useState<string>('all')
 
   // Runtime Bridge State
-  const [pairedRuntimes, setPairedRuntimes] = useState<any[]>([])
+  const [pairedRuntimes, setPairedRuntimes] = useState<PairedRuntimeSummary[]>([])
   const [hasOnlineRuntime, setHasOnlineRuntime] = useState(false)
 
   // Modals
@@ -30,13 +36,7 @@ export const MarketplacePage: FC = () => {
   const [provisionTarget, setProvisionTarget] = useState<Integration | null>(null)
   const [showPairingModal, setShowPairingModal] = useState(false)
 
-  useEffect(() => {
-    fetchIntegrations()
-    fetchRuntimes()
-  }, [])
-
   const fetchIntegrations = async () => {
-    setLoading(true)
     try {
       const res = await fetch('/v1/mcp/integrations', {
         headers: {
@@ -63,9 +63,9 @@ export const MarketplacePage: FC = () => {
       })
       if (res.ok) {
         const data = await res.json()
-        const runtimes = data.runtimes || []
+        const runtimes: PairedRuntimeSummary[] = data.runtimes || []
         setPairedRuntimes(runtimes)
-        const online = runtimes.some((r: any) =>
+        const online = runtimes.some((r) =>
           ['online', 'busy', 'idle', 'connected'].includes(r.status)
         )
         setHasOnlineRuntime(online)
@@ -74,6 +74,42 @@ export const MarketplacePage: FC = () => {
       console.error('Failed to fetch runtimes', err)
     }
   }
+
+  useEffect(() => {
+    let ignore = false
+    const initData = async () => {
+      try {
+        const token = localStorage.getItem('token') || ''
+        const [intRes, runRes] = await Promise.all([
+          fetch('/v1/mcp/integrations', { headers: { Authorization: `Bearer ${token}` } }),
+          fetch('/v1/runtimes', { headers: { Authorization: `Bearer ${token}` } }),
+        ])
+        if (!ignore && intRes.ok) {
+          const data = await intRes.json()
+          setIntegrations(data.integrations || [])
+        }
+        if (!ignore && runRes.ok) {
+          const data = await runRes.json()
+          const runtimes: PairedRuntimeSummary[] = data.runtimes || []
+          setPairedRuntimes(runtimes)
+          const online = runtimes.some((r) =>
+            ['online', 'busy', 'idle', 'connected'].includes(r.status)
+          )
+          setHasOnlineRuntime(online)
+        }
+      } catch (err) {
+        console.error('Failed to fetch marketplace data', err)
+      } finally {
+        if (!ignore) {
+          setLoading(false)
+        }
+      }
+    }
+    initData()
+    return () => {
+      ignore = true
+    }
+  }, [])
 
   const handleDisconnect = async (intg: Integration) => {
     if (!confirm(`Are you sure you want to disconnect ${intg.name} and purge its credentials?`)) {

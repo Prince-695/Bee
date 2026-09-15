@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Apple,
   Bot,
@@ -15,20 +15,15 @@ import {
 } from 'lucide-react'
 
 export const HeroSection: FC = () => {
-  const [detectedOS, setDetectedOS] = useState<'windows' | 'mac' | 'linux'>('linux')
+  const [detectedOS, setDetectedOS] = useState<'windows' | 'mac' | 'linux'>(() => {
+    if (typeof window === 'undefined') return 'linux'
+    const userAgent = window.navigator.userAgent.toLowerCase()
+    if (userAgent.includes('win')) return 'windows'
+    if (userAgent.includes('mac')) return 'mac'
+    return 'linux'
+  })
   const [copied, setCopied] = useState(false)
   const [showOsMenu, setShowOsMenu] = useState(false)
-
-  useEffect(() => {
-    const userAgent = window.navigator.userAgent.toLowerCase()
-    if (userAgent.includes('win')) {
-      setDetectedOS('windows')
-    } else if (userAgent.includes('mac')) {
-      setDetectedOS('mac')
-    } else {
-      setDetectedOS('linux')
-    }
-  }, [])
 
   const osDetails = {
     windows: {

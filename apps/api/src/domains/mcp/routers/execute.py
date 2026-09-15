@@ -16,9 +16,11 @@ async def execute_mcp_tool(
     body: McpToolExecuteRequest,
     tenant: CurrentTenantDep,
 ) -> McpToolExecuteResponse:
-    """Execute a cloud-hosted FastMCP tool in zero-bloat server environment."""
+    """Execute a hybrid or cloud-hosted FastMCP tool with scope verification."""
+    tenant_id = tenant.get("tenant_id") or tenant.get("id") or "default"
     return await McpCatalogService.execute_tool(
         server_name=body.server_name,
         tool_name=body.tool_name,
         arguments=body.arguments,
+        tenant_id=tenant_id,
     )

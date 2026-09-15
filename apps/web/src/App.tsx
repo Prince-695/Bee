@@ -1,40 +1,28 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LandingPage from "./features/landing/LandingPage";
-import FeaturesPage from "./features/features-page/FeaturesPage";
-import ArchitecturePage from "./features/architecture/ArchitecturePage";
-import PricingPage from "./features/pricing/PricingPage";
-import ContactPage from "./features/contact/ContactPage";
-import DocsPage from "./features/docs/DocsPage";
-import LoginPage from "./features/auth/LoginPage";
-import SignUpPage from "./features/auth/SignUpPage";
-import PrivacyPolicyPage from "./features/legal/PrivacyPolicyPage";
-import TermsOfServicePage from "./features/legal/TermsOfServicePage";
-import SecurityPage from "./features/legal/SecurityPage";
-import NotFoundPage from "./features/not-found/NotFoundPage";
-import { CookieConsentBanner } from "./components/CookieConsentBanner";
+import type { FC } from 'react'
+import { Navbar } from './components/Navbar'
+import { HeroSection } from './components/HeroSection'
+import { StatsBanner } from './components/StatsBanner'
+import { FeatureGrid } from './components/FeatureGrid'
+import { ArchitectureVisualizer } from './components/ArchitectureVisualizer'
+import { DocsSection } from './components/DocsSection'
+import { DownloadSection } from './components/DownloadSection'
+import { Footer } from './components/Footer'
 
-export default function App() {
+export const App: FC = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/features" element={<FeaturesPage />} />
-        <Route path="/architecture" element={<ArchitecturePage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/docs" element={<DocsPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-        
-        {/* Compliance & Legal Suite */}
-        <Route path="/privacy" element={<PrivacyPolicyPage />} />
-        <Route path="/terms" element={<TermsOfServicePage />} />
-        <Route path="/security" element={<SecurityPage />} />
-
-        {/* 404 Fallback */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-      <CookieConsentBanner />
-    </BrowserRouter>
-  );
+    <div className="min-h-screen bg-[#07090e] text-slate-100 flex flex-col selection:bg-amber-500 selection:text-black">
+      <Navbar />
+      <main className="flex-1">
+        <HeroSection />
+        <StatsBanner />
+        <FeatureGrid />
+        <ArchitectureVisualizer />
+        <DocsSection />
+        <DownloadSection />
+      </main>
+      <Footer />
+    </div>
+  )
 }
+
+export default App

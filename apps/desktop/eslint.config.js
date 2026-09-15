@@ -16,13 +16,7 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     languageOptions: {
-      ecmaVersion: 2020,
       globals: globals.browser,
-    },
-    rules: {
-      // Console pages sync external API state in effects; keep lint actionable.
-      "react-hooks/set-state-in-effect": "off",
-      "react-refresh/only-export-components": "off",
     },
   },
 ])

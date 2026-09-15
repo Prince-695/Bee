@@ -23,3 +23,11 @@ def configure_test_db():
             os.remove(test_db_path)
         except OSError:
             pass
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limits():
+    """Clear sliding-window rate limit store between test cases."""
+    from bee_api.middleware import _RATE_LIMIT_STORE
+    _RATE_LIMIT_STORE.clear()
+

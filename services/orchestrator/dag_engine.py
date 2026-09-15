@@ -16,6 +16,7 @@ def _utc_now_iso() -> str:
 class TaskStatus(str, Enum):
     PENDING = "pending"
     RUNNING = "running"
+    WAITING_GATE = "waiting_gate"
     COMPLETED = "completed"
     FAILED = "failed"
     BLOCKED = "blocked"
@@ -39,6 +40,11 @@ class DAGNode(BaseModel):
     max_retries: int = 2
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
+    gate_required: bool = False
+    gate_risk_level: Optional[str] = None
+    gate_id: Optional[str] = None
+    stdout_log: str = ""
+    duration_seconds: float = 0.0
 
 
 class DAGGraph(BaseModel):
@@ -53,7 +59,6 @@ class DAGGraph(BaseModel):
         if node.id in self.nodes:
             raise ValueError(f"Duplicate node ID '{node.id}' in DAG.")
 
-        # Check that referenced dependencies exist or will exist
         self.nodes[node.id] = node
         self.validate_dag()
         self.updated_at = _utc_now_iso()
@@ -126,6 +131,26 @@ class DAGGraph(BaseModel):
 
         return ordered
 
+    def get_topological_tiers(self) -> List[List[str]]:
+        """Calculates execution tiers (depths) for multi-column visual graph layouts."""
+        self.validate_dag()
+        tiers: Dict[str, int] = {}
+
+        # Roots have depth 0
+        ordered = self.topological_sort()
+        for node in ordered:
+            if not node.dependencies:
+                tiers[node.id] = 0
+            else:
+                max_parent_tier = max(tiers.get(dep, 0) for dep in node.dependencies if dep in tiers)
+                tiers[node.id] = max_parent_tier + 1
+
+        max_tier = max(tiers.values()) if tiers else 0
+        grouped: List[List[str]] = [[] for _ in range(max_tier + 1)]
+        for nid, tier in tiers.items():
+            grouped[tier].append(nid)
+        return grouped
+
     def get_ready_nodes(self) -> List[DAGNode]:
         """Discovers all PENDING nodes whose prerequisite dependencies are COMPLETED."""
         ready: List[DAGNode] = []
@@ -154,16 +179,49 @@ class DAGGraph(BaseModel):
         self.updated_at = _utc_now_iso()
         return node
 
+    def mark_node_waiting_gate(self, node_id: str, gate_id: str) -> DAGNode:
+        """Transitions a node to WAITING_GATE, pausing downstream execution."""
+        node = self._get_node(node_id)
+        node.status = TaskStatus.WAITING_GATE
+        node.gate_id = gate_id
+        self.updated_at = _utc_now_iso()
+        return node
+
+    def resolve_gate(self, node_id: str, action: str) -> DAGNode:
+        """Applies human gate decision: 'approved' transitions to running, 'rejected' fails node."""
+        node = self._get_node(node_id)
+        if node.status != TaskStatus.WAITING_GATE:
+            return node
+
+        if action.lower() == "approved":
+            node.status = TaskStatus.RUNNING
+        else:
+            node.status = TaskStatus.FAILED
+            node.error = f"Rejected by human gate approval ({node.gate_id})"
+            node.completed_at = _utc_now_iso()
+            self._cascade_blocked(node_id)
+
+        self.updated_at = _utc_now_iso()
+        return node
+
+    def append_node_stdout(self, node_id: str, chunk: str) -> None:
+        """Appends streaming log chunk to the node's stdout buffer."""
+        node = self._get_node(node_id)
+        node.stdout_log += chunk
+        self.updated_at = _utc_now_iso()
+
     def mark_node_completed(
         self,
         node_id: str,
         result_summary: str = "",
         output_artifacts: Optional[List[str]] = None,
+        duration_seconds: float = 0.0,
     ) -> DAGNode:
         node = self._get_node(node_id)
         node.status = TaskStatus.COMPLETED
         node.completed_at = _utc_now_iso()
         node.result_summary = result_summary
+        node.duration_seconds = duration_seconds
         if output_artifacts:
             node.output_artifacts.extend(output_artifacts)
         self.updated_at = _utc_now_iso()
@@ -191,7 +249,7 @@ class DAGGraph(BaseModel):
         while queue:
             curr_id = queue.popleft()
             for node in self.nodes.values():
-                if curr_id in node.dependencies and node.status in (TaskStatus.PENDING, TaskStatus.RUNNING):
+                if curr_id in node.dependencies and node.status in (TaskStatus.PENDING, TaskStatus.RUNNING, TaskStatus.WAITING_GATE):
                     node.status = TaskStatus.BLOCKED
                     node.error = f"Blocked by failure of upstream dependency '{curr_id}'"
                     queue.append(node.id)
@@ -200,6 +258,10 @@ class DAGGraph(BaseModel):
         """Returns True if every node is in a terminal state."""
         terminal = {TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.BLOCKED, TaskStatus.SKIPPED}
         return all(n.status in terminal for n in self.nodes.values())
+
+    def has_waiting_gates(self) -> bool:
+        """Returns True if any node is currently waiting for human gate approval."""
+        return any(n.status == TaskStatus.WAITING_GATE for n in self.nodes.values())
 
     def progress_percent(self) -> float:
         """Calculates current completion percentage (0.0 to 100.0)."""

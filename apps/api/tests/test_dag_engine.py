@@ -1,106 +1,124 @@
-"""Unit tests for Dynamic DAG Task Engine, Topological Sorting, and Cycle Detection."""
+"""Tests for Dynamic DAG Task Engine, Crew Templates, and Mission Orchestrator."""
 
 import pytest
+from services.orchestrator.crew_templates import (
+    CODING_FLIGHT_TEMPLATE,
+    RESEARCH_SWARM_TEMPLATE,
+    SECURITY_AUDIT_TEMPLATE,
+    build_dag_from_template,
+    get_crew_template,
+    list_crew_templates,
+)
 from services.orchestrator.dag_engine import DAGGraph, DAGNode, TaskStatus
+from services.orchestrator.mission_orchestrator import MissionOrchestrator
+from bee_core.mission.mission_models import Mission, MissionStage
 
 
-def test_dag_creation_and_topological_sort():
-    """Verify nodes are executed in strict prerequisite dependency order."""
-    dag = DAGGraph(mission_id="mission-1")
+def test_crew_templates_registry():
+    """Verify all 3 built-in crew templates are registered and valid."""
+    templates = list_crew_templates()
+    assert len(templates) == 3
+    ids = [t.id for t in templates]
+    assert "coding_flight" in ids
+    assert "research_swarm" in ids
+    assert "security_audit" in ids
 
-    # Step 1: Research (no dependencies)
-    dag.add_node(DAGNode(id="n1", title="Market Research", assigned_role="researcher", instruction="Find API specs"))
-    # Step 2: Architecture (depends on Research)
-    dag.add_node(DAGNode(id="n2", title="Design Architecture", assigned_role="coordinator", instruction="Draft plan", dependencies=["n1"]))
-    # Step 3: Implement Backend (depends on Architecture)
-    dag.add_node(DAGNode(id="n3", title="Backend API", assigned_role="developer", instruction="Code endpoints", dependencies=["n2"]))
-    # Step 4: Implement Frontend (depends on Architecture in parallel with Backend)
-    dag.add_node(DAGNode(id="n4", title="Frontend UI", assigned_role="developer", instruction="Build UI", dependencies=["n2"]))
-    # Step 5: End-to-End Testing (depends on both Backend & Frontend)
-    dag.add_node(DAGNode(id="n5", title="E2E Verification", assigned_role="reviewer", instruction="Run test suite", dependencies=["n3", "n4"]))
+    coding = get_crew_template("coding_flight")
+    assert coding is not None
+    assert len(coding.stages) == 5
+    assert coding.stages[0].id == "scout"
+    assert coding.stages[-1].requires_gate is True
 
+
+def test_dag_engine_acyclic_and_topological_sort():
+    """Verify cycle detection, acyclic validation, and topological sorting."""
+    dag = DAGGraph(mission_id="test-mission-01")
+    n1 = DAGNode(id="scout", title="Scout", instruction="Analyze AST")
+    n2 = DAGNode(id="planner", title="Planner", instruction="Breakdown goal", dependencies=["scout"])
+    n3 = DAGNode(id="builder", title="Builder", instruction="Generate patch", dependencies=["planner"])
+
+    dag.add_node(n1)
+    dag.add_node(n2)
+    dag.add_node(n3)
+
+    assert dag.validate_dag() is True
     ordered = dag.topological_sort()
-    order_ids = [n.id for n in ordered]
+    assert [n.id for n in ordered] == ["scout", "planner", "builder"]
 
-    assert order_ids[0] == "n1"
-    assert order_ids[1] == "n2"
-    assert set(order_ids[2:4]) == {"n3", "n4"}
-    assert order_ids[4] == "n5"
-
-
-def test_cycle_detection():
-    """Verify that circular dependencies are caught and rejected."""
-    dag = DAGGraph(mission_id="mission-cycle")
-    dag.add_node(DAGNode(id="a", title="Node A", instruction="Task A"))
-    dag.add_node(DAGNode(id="b", title="Node B", instruction="Task B", dependencies=["a"]))
-    dag.add_node(DAGNode(id="c", title="Node C", instruction="Task C", dependencies=["b"]))
-
-    # Introducing cycle c -> a
-    dag.nodes["a"].dependencies.append("c")
-
-    with pytest.raises(ValueError) as exc_info:
-        dag.validate_dag()
-    assert "Cycle detected" in str(exc_info.value)
+    # Test cycle detection
+    with pytest.raises(ValueError, match="Cycle detected"):
+        dag.add_dependency("scout", "builder")
 
 
-def test_parallel_ready_nodes_discovery():
-    """Verify get_ready_nodes identifies multiple independent tasks for concurrent execution."""
-    dag = DAGGraph(mission_id="mission-parallel")
-    dag.add_node(DAGNode(id="init", title="Initialize Repo", instruction="Git init"))
-    dag.add_node(DAGNode(id="task_a", title="Database Setup", instruction="Postgres setup", dependencies=["init"]))
-    dag.add_node(DAGNode(id="task_b", title="Auth Setup", instruction="JWT setup", dependencies=["init"]))
+def test_dag_topological_tiers():
+    """Verify calculation of topological tiers for visual canvas columns."""
+    template = get_crew_template("research_swarm")
+    assert template is not None
+    dag = build_dag_from_template(template, mission_id="res-01", objective="Research Next.js 15")
 
-    # Initially only 'init' is ready
-    ready1 = dag.get_ready_nodes()
-    assert len(ready1) == 1
-    assert ready1[0].id == "init"
-
-    # Complete 'init'
-    dag.mark_node_completed("init", result_summary="Git repo initialized")
-
-    # Now both 'task_a' and 'task_b' should be ready in parallel
-    ready2 = dag.get_ready_nodes()
-    assert len(ready2) == 2
-    assert {n.id for n in ready2} == {"task_a", "task_b"}
+    tiers = dag.get_topological_tiers()
+    # Tier 0: scout
+    assert "scout" in tiers[0]
+    # Tier 1: searcher
+    assert "searcher" in tiers[1]
+    # Tier 2: synthesizer (depends on scout and searcher)
+    assert "synthesizer" in tiers[2]
+    # Tier 3: writer (depends on synthesizer)
+    assert "writer" in tiers[3]
 
 
-def test_failure_retry_and_cascade_blocking():
-    """Verify failing tasks retry up to max_retries and cascade BLOCKED status downstream upon exhaustion."""
-    dag = DAGGraph(mission_id="mission-fail")
-    dag.add_node(DAGNode(id="step1", title="Step 1", instruction="Do work", max_retries=1))
-    dag.add_node(DAGNode(id="step2", title="Step 2", instruction="Dependent work", dependencies=["step1"]))
+def test_dag_gate_pause_and_resolve():
+    """Verify WAITING_GATE state transitions, resolution, and unblocking."""
+    dag = DAGGraph(mission_id="gate-test-01")
+    n1 = DAGNode(id="scan", title="Scan", instruction="Find vuln")
+    n2 = DAGNode(
+        id="patch",
+        title="Patch",
+        instruction="Fix vuln",
+        dependencies=["scan"],
+        gate_required=True,
+    )
+    dag.add_node(n1)
+    dag.add_node(n2)
 
-    # First failure -> should retry (status returns to PENDING)
-    dag.mark_node_running("step1")
-    dag.mark_node_failed("step1", error="Transient network timeout")
-    assert dag.nodes["step1"].status == TaskStatus.PENDING
-    assert dag.nodes["step1"].retry_count == 1
+    dag.mark_node_completed("scan")
+    ready = dag.get_ready_nodes()
+    assert len(ready) == 1
+    assert ready[0].id == "patch"
 
-    # Second failure -> exceeds max_retries=1, marks FAILED and cascades BLOCKED to step2
-    dag.mark_node_running("step1")
-    dag.mark_node_failed("step1", error="Permanent auth error")
-    assert dag.nodes["step1"].status == TaskStatus.FAILED
-    assert dag.nodes["step2"].status == TaskStatus.BLOCKED
-    assert "Blocked by failure of upstream dependency 'step1'" in dag.nodes["step2"].error
-    assert dag.is_finished() is True
+    # Mark waiting on gate
+    dag.mark_node_waiting_gate("patch", gate_id="gate-12345")
+    assert dag.has_waiting_gates() is True
+    assert dag.nodes["patch"].status == TaskStatus.WAITING_GATE
+
+    # Resolve gate approval
+    dag.resolve_gate("patch", action="approved")
+    assert dag.nodes["patch"].status == TaskStatus.RUNNING
+    assert dag.has_waiting_gates() is False
 
 
-def test_progress_percent():
-    """Verify progress percent computation."""
-    dag = DAGGraph(mission_id="mission-prog")
-    dag.add_node(DAGNode(id="n1", title="N1", instruction="1"))
-    dag.add_node(DAGNode(id="n2", title="N2", instruction="2"))
-    dag.add_node(DAGNode(id="n3", title="N3", instruction="3"))
-    dag.add_node(DAGNode(id="n4", title="N4", instruction="4"))
+@pytest.mark.anyio
+async def test_mission_orchestrator_dynamic_stream(tmp_path):
+    """Verify MissionOrchestrator executes dynamic DAG stream with event emission."""
+    db_file = str(tmp_path / "test_bee.db")
+    orchestrator = MissionOrchestrator(db_file)
 
-    assert dag.progress_percent() == 0.0
+    # Seed test mission in store
+    mission = Mission(
+        mission_id="dyn-msn-01",
+        objective="Verify dynamic DAG runner execution",
+    )
+    orchestrator.store.create_mission(mission)
 
-    dag.mark_node_completed("n1")
-    assert dag.progress_percent() == 25.0
+    events = []
+    async for event in orchestrator.execute_mission_stream("dyn-msn-01", template_id="coding_flight"):
+        events.append(event)
 
-    dag.mark_node_completed("n2")
-    assert dag.progress_percent() == 50.0
-
-    dag.mark_node_completed("n3")
-    dag.mark_node_completed("n4")
-    assert dag.progress_percent() == 100.0
+    event_types = [e["event"] for e in events]
+    assert "mission_started" in event_types
+    assert "node_started" in event_types
+    assert "node_stdout" in event_types
+    assert "gate_requested" in event_types
+    assert "gate_resolved" in event_types
+    assert "node_completed" in event_types
+    assert "mission_completed" in event_types

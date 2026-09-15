@@ -32,3 +32,8 @@ class TenantListResponse(BaseModel):
 class MemberListResponse(BaseModel):
     tenant_id: str
     members: List[Dict[str, Any]]
+
+
+class UpdateMemberRoleRequest(BaseModel):
+    role: str = Field(..., description="'admin' | 'member' | 'viewer' | 'guest'")
+

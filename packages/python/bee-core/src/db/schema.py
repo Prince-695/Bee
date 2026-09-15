@@ -246,6 +246,88 @@ CREATE TABLE IF NOT EXISTS remediations (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS chat_threads (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+    worker_id TEXT,
+    title TEXT NOT NULL,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    thread_id TEXT NOT NULL REFERENCES chat_threads(id) ON DELETE CASCADE,
+    sender_type TEXT NOT NULL,
+    sender_id TEXT NOT NULL,
+    content TEXT NOT NULL,
+    recalled_memory_ids_json TEXT DEFAULT '[]',
+    tool_invocations_json TEXT DEFAULT '[]',
+    gate_id TEXT REFERENCES approval_gates(id) ON DELETE SET NULL,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS crew_templates (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    tagline TEXT DEFAULT '',
+    description TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'engineering',
+    icon TEXT DEFAULT 'Code2',
+    estimated_duration TEXT DEFAULT '1m',
+    stages_json TEXT NOT NULL DEFAULT '[]',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS runs (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+    crew_template_id TEXT,
+    title TEXT NOT NULL,
+    objective TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'created',
+    current_stage TEXT DEFAULT 'scout',
+    findings_json TEXT DEFAULT '[]',
+    artifacts_json TEXT DEFAULT '{}',
+    checkpoint_state TEXT DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS run_steps (
+    id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+    node_id TEXT NOT NULL,
+    worker_role TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    gate_id TEXT REFERENCES approval_gates(id) ON DELETE SET NULL,
+    input_json TEXT DEFAULT '{}',
+    output_json TEXT DEFAULT '{}',
+    stdout_log TEXT DEFAULT '',
+    duration_ms INTEGER DEFAULT 0,
+    started_at TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE IF NOT EXISTS paired_runtimes (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    machine_name TEXT NOT NULL,
+    os_name TEXT NOT NULL, -- 'windows' | 'darwin' | 'linux'
+    capabilities_json TEXT DEFAULT '["filesystem", "terminal", "docker", "git"]',
+    pairing_key_hash TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'online', -- 'online' | 'busy' | 'idle' | 'offline'
+    last_heartbeat_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 # SQLite DDL for zero-config local desktop execution
@@ -497,6 +579,95 @@ CREATE TABLE IF NOT EXISTS remediations (
     embedding_json TEXT DEFAULT '[]',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS chat_threads (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    project_id TEXT,
+    worker_id TEXT,
+    title TEXT NOT NULL,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    thread_id TEXT NOT NULL,
+    sender_type TEXT NOT NULL,
+    sender_id TEXT NOT NULL,
+    content TEXT NOT NULL,
+    recalled_memory_ids_json TEXT DEFAULT '[]',
+    tool_invocations_json TEXT DEFAULT '[]',
+    gate_id TEXT,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY(thread_id) REFERENCES chat_threads(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS crew_templates (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    tagline TEXT DEFAULT '',
+    description TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'engineering',
+    icon TEXT DEFAULT 'Code2',
+    estimated_duration TEXT DEFAULT '1m',
+    stages_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS runs (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    project_id TEXT,
+    crew_template_id TEXT,
+    title TEXT NOT NULL,
+    objective TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'created',
+    current_stage TEXT DEFAULT 'scout',
+    findings_json TEXT DEFAULT '[]',
+    artifacts_json TEXT DEFAULT '{}',
+    checkpoint_state TEXT DEFAULT '{}',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS run_steps (
+    id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL,
+    node_id TEXT NOT NULL,
+    worker_role TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    gate_id TEXT,
+    input_json TEXT DEFAULT '{}',
+    output_json TEXT DEFAULT '{}',
+    stdout_log TEXT DEFAULT '',
+    duration_ms INTEGER DEFAULT 0,
+    started_at TEXT,
+    completed_at TEXT,
+    FOREIGN KEY(run_id) REFERENCES runs(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS paired_runtimes (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    machine_name TEXT NOT NULL,
+    os_name TEXT NOT NULL,
+    capabilities_json TEXT DEFAULT '["filesystem", "terminal", "docker", "git"]',
+    pairing_key_hash TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'online',
+    last_heartbeat_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    metadata_json TEXT DEFAULT '{}',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 );
 """

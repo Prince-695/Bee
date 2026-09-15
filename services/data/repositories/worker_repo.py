@@ -162,6 +162,21 @@ class WorkerRepository(BaseRepository):
                 conn.commit()
                 return cursor.rowcount > 0
 
+    def update_worker_tools(self, worker_id: str, allowed_tools: List[str], workspace_id: str = "default") -> Optional[Dict[str, Any]]:
+        worker = self.get_worker(worker_id, workspace_id)
+        if not worker:
+            return None
+        tools_json = json.dumps(allowed_tools)
+        now_iso = _utc_now_iso()
+        with _DB_LOCK:
+            with _get_connection() as conn:
+                conn.execute(
+                    "UPDATE workers SET allowed_tools_json = ?, updated_at = ? WHERE id = ?",
+                    (tools_json, now_iso, worker_id),
+                )
+                conn.commit()
+        return self.get_worker(worker_id, workspace_id)
+
     @staticmethod
     def _row_to_dict(row: sqlite3.Row) -> Dict[str, Any]:
         data = dict(row)

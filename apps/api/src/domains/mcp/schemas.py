@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
+
+
+class ToolExecutionScope(str, Enum):
+    LOCAL = "LOCAL"      # Requires workstation runtime access (filesystem, shell, local git, docker)
+    CLOUD = "CLOUD"      # Serverless cloud execution (web search, SaaS APIs, FastMCP)
+    HYBRID = "HYBRID"    # Prefers local if workstation connected, falls back to cloud
 
 
 class McpToolItem(BaseModel):
@@ -15,6 +22,12 @@ class McpToolItem(BaseModel):
     parameters_schema: Dict[str, Any] = Field(default_factory=dict)
     is_installed: bool = True
     cloud_hosted: bool = True
+    execution_scope: ToolExecutionScope = ToolExecutionScope.CLOUD
+    requires_credentials: bool = False
+    credential_platform: Optional[str] = None
+    risk_level: str = Field(default="low", description="'low' | 'medium' | 'high'")
+    requires_approval: bool = False
+    required_capabilities: List[str] = Field(default_factory=list)
 
 
 class McpCatalogResponse(BaseModel):
@@ -38,6 +51,7 @@ class McpServerInfo(BaseModel):
     transport: str = "cloud_fastmcp"
     tool_count: int
     description: str
+    execution_scope: ToolExecutionScope = ToolExecutionScope.CLOUD
 
 
 class McpToolExecuteRequest(BaseModel):
@@ -52,3 +66,44 @@ class McpToolExecuteResponse(BaseModel):
     server_name: str
     tool_name: str
     execution_time_ms: int
+    execution_scope: ToolExecutionScope = ToolExecutionScope.CLOUD
+    dispatched_runtime_id: Optional[str] = None
+
+
+class IntegrationItemResponse(BaseModel):
+    id: str
+    name: str
+    category: str
+    description: str
+    icon: str
+    is_connected: bool = False
+    masked_credential_preview: Optional[str] = None
+    requires_credentials: bool = True
+    credential_keys: List[str] = Field(default_factory=list)
+    tools: List[str] = Field(default_factory=list)
+    execution_scope: ToolExecutionScope = ToolExecutionScope.CLOUD
+    documentation_url: Optional[str] = None
+
+
+class IntegrationsListResponse(BaseModel):
+    integrations: List[IntegrationItemResponse]
+    count: int
+
+
+class ConnectIntegrationRequest(BaseModel):
+    credential_key: str = Field(..., description="Key name e.g. 'API_KEY', 'BOT_TOKEN', 'CONNECTION_STRING'")
+    credential_value: str = Field(..., min_length=1, description="Secret plaintext value to encrypt and vault")
+    label: Optional[str] = Field(default="", description="Friendly name for the credential")
+
+
+class WorkerProvisionRequest(BaseModel):
+    allowed_tools: List[str] = Field(..., description="List of tool names to grant this worker")
+
+
+class WorkerProvisionResponse(BaseModel):
+    worker_id: str
+    name: str
+    role: str
+    allowed_tools: List[str]
+    updated_at: str
+

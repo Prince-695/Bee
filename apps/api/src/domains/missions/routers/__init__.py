@@ -12,9 +12,11 @@ from bee_api.domains.missions.routers import (
     dag,
     cancel,
     api_missions,
+    templates,
 )
 
 router = APIRouter()
+router.include_router(templates.router)
 router.include_router(create.router)
 router.include_router(list_missions.router)
 router.include_router(get.router)

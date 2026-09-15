@@ -573,7 +573,7 @@ export interface paths {
         };
         /**
          * Get Mcp Catalog
-         * @description Browse and fuzzy-search the global catalog of cloud-hosted FastMCP tools.
+         * @description Browse and fuzzy-search the global catalog of cloud-hosted and hybrid FastMCP tools.
          */
         get: operations["get_mcp_catalog_v1_mcp_catalog_get"];
         put?: never;
@@ -635,9 +635,109 @@ export interface paths {
         put?: never;
         /**
          * Execute Mcp Tool
-         * @description Execute a cloud-hosted FastMCP tool in zero-bloat server environment.
+         * @description Execute a hybrid or cloud-hosted FastMCP tool with scope verification.
          */
         post: operations["execute_mcp_tool_v1_mcp_execute_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/mcp/integrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Curated Integrations
+         * @description List all 12+ curated integrations with live connection and credential vaulting status.
+         */
+        get: operations["list_curated_integrations_v1_mcp_integrations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/mcp/integrations/{platform}/connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Connect Curated Integration
+         * @description Safely store encrypted platform credentials in enterprise vault and mark integration connected.
+         */
+        post: operations["connect_curated_integration_v1_mcp_integrations__platform__connect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/mcp/integrations/{platform}/disconnect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Disconnect Curated Integration
+         * @description Revoke credentials and disconnect a curated integration.
+         */
+        post: operations["disconnect_curated_integration_v1_mcp_integrations__platform__disconnect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/mcp/workers/{worker_id}/tools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Worker Tools
+         * @description Retrieve allowed tools for a worker and all available tools in the MCP catalog.
+         */
+        get: operations["get_worker_tools_v1_mcp_workers__worker_id__tools_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/mcp/workers/{worker_id}/provision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Provision Worker Tools
+         * @description Provision or deprovision allowed tools on a specific worker.
+         */
+        post: operations["provision_worker_tools_v1_mcp_workers__worker_id__provision_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -984,13 +1084,57 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
+        /**
+         * Update Member Role
+         * @description Update role for a member of the tenant organization (owner or admin only).
+         */
+        put: operations["update_member_role_v1_tenants__tenant_id__members__target_user_id__put"];
         post?: never;
         /**
          * Remove Tenant Member
          * @description Remove a member from the organization (Requires 'admin' or 'owner' role).
          */
         delete: operations["remove_tenant_member_v1_tenants__tenant_id__members__target_user_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/missions/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get All Crew Templates
+         * @description List all registered autonomous crew templates.
+         */
+        get: operations["get_all_crew_templates_v1_missions_templates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/missions/templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Single Crew Template
+         * @description Retrieve details and topological stages for a specific crew template.
+         */
+        get: operations["get_single_crew_template_v1_missions_templates__template_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1069,11 +1213,31 @@ export interface paths {
         };
         /**
          * Get Mission Dag
-         * @description Retrieve 5-worker DAG execution topology and stage node progression.
+         * @description Retrieve dynamic DAG execution topology, node progression, and topological tiers.
          */
         get: operations["get_mission_dag_v1_missions__mission_id__dag_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/missions/{mission_id}/gates/{gate_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resolve Mission Gate
+         * @description Resolve an interactive approval gate to unblock execution of a paused DAG node.
+         */
+        post: operations["resolve_mission_gate_v1_missions__mission_id__gates__gate_id__resolve_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1611,6 +1775,66 @@ export interface paths {
          */
         post: operations["runtime_heartbeat_v1_runtimes_heartbeat_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/runtimes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Runtimes
+         * @description List all workstation runtimes paired with the active tenant organization.
+         */
+        get: operations["list_runtimes_v1_runtimes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/runtimes/{runtime_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Runtime Status
+         * @description Retrieve detailed connectivity status and health of a specific runtime.
+         */
+        get: operations["get_runtime_status_v1_runtimes__runtime_id__status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/runtimes/{runtime_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke Runtime
+         * @description Revoke pairing key and unregister a workstation runtime.
+         */
+        delete: operations["revoke_runtime_v1_runtimes__runtime_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2200,6 +2424,122 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/chat/threads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Threads
+         * @description Lists recent conversation threads for the user.
+         */
+        get: operations["list_threads_v1_chat_threads_get"];
+        put?: never;
+        /**
+         * Create Thread
+         * @description Creates a new Universal or 1:1 Worker chat thread.
+         */
+        post: operations["create_thread_v1_chat_threads_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/threads/{thread_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Thread
+         * @description Retrieves metadata for a specific chat thread.
+         */
+        get: operations["get_thread_v1_chat_threads__thread_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Thread
+         * @description Deletes a chat thread and all associated messages.
+         */
+        delete: operations["delete_thread_v1_chat_threads__thread_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/threads/{thread_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Messages
+         * @description Retrieves chronologically ordered messages in a chat thread.
+         */
+        get: operations["get_messages_v1_chat_threads__thread_id__messages_get"];
+        put?: never;
+        /**
+         * Send Message
+         * @description Sends a user message into a chat thread and triggers a contextual worker turn.
+         */
+        post: operations["send_message_v1_chat_threads__thread_id__messages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/threads/{thread_id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Ephemeral Tool
+         * @description Spawns an ephemeral single-worker tool run from chat with FileGuard and GateManager checks.
+         */
+        post: operations["run_ephemeral_tool_v1_chat_threads__thread_id__runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/threads/{thread_id}/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stream Chat Turn Get
+         * @description Streams assistant tokens, memory citations, and tool progress using standard GET EventSource.
+         */
+        get: operations["stream_chat_turn_get_v1_chat_threads__thread_id__stream_get"];
+        put?: never;
+        /**
+         * Stream Chat Turn Post
+         * @description Streams assistant tokens, memory citations, and tool progress using POST payload.
+         */
+        post: operations["stream_chat_turn_post_v1_chat_threads__thread_id__stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/logs/stream": {
         parameters: {
             query?: never;
@@ -2312,6 +2652,26 @@ export interface paths {
          * @description Record token consumption for a flight or route.
          */
         post: operations["record_flight_usage_api_security_record_spend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/security/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Tenant Audit Logs
+         * @description Retrieve security and governance audit logs for the active tenant organization.
+         */
+        get: operations["get_tenant_audit_logs_v1_security_audit_logs_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2497,10 +2857,75 @@ export interface components {
             /** Primary Channel */
             primary_channel?: string | null;
         };
+        /**
+         * ChatEphemeralRunRequest
+         * @description Payload to request an ephemeral single-worker execution run from chat.
+         */
+        ChatEphemeralRunRequest: {
+            /**
+             * Worker Id
+             * @description Target worker ID to execute the action
+             */
+            worker_id: string;
+            /**
+             * Tool
+             * @description Tool name, e.g. read_file, list_dir, web_search
+             */
+            tool: string;
+            /**
+             * Args
+             * @description Tool arguments
+             */
+            args?: {
+                [key: string]: unknown;
+            };
+        };
         /** ChatMessageRequest */
         ChatMessageRequest: {
             /** Message */
             message: string;
+        };
+        /**
+         * ChatMessageSendRequest
+         * @description Payload for user sending a message into a chat thread.
+         */
+        ChatMessageSendRequest: {
+            /**
+             * Content
+             * @description Message text or command prompt
+             */
+            content: string;
+            /**
+             * Stream
+             * @description Whether to request SSE token streaming
+             * @default false
+             */
+            stream: boolean;
+        };
+        /**
+         * ChatThreadCreateRequest
+         * @description Payload to create a new Universal or 1:1 Worker chat thread.
+         */
+        ChatThreadCreateRequest: {
+            /**
+             * Worker Id
+             * @description Worker UUID for 1:1 chat, or null for Universal Orchestrator
+             */
+            worker_id?: string | null;
+            /**
+             * Project Id
+             * @description Optional associated project UUID
+             */
+            project_id?: string | null;
+            /**
+             * Title
+             * @description Optional custom title for the chat thread
+             */
+            title?: string | null;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
         };
         /** CheckoutResponse */
         CheckoutResponse: {
@@ -2547,6 +2972,25 @@ export interface components {
             type: string;
             /** Dependencies */
             dependencies?: string[];
+        };
+        /** ConnectIntegrationRequest */
+        ConnectIntegrationRequest: {
+            /**
+             * Credential Key
+             * @description Key name e.g. 'API_KEY', 'BOT_TOKEN', 'CONNECTION_STRING'
+             */
+            credential_key: string;
+            /**
+             * Credential Value
+             * @description Secret plaintext value to encrypt and vault
+             */
+            credential_value: string;
+            /**
+             * Label
+             * @description Friendly name for the credential
+             * @default
+             */
+            label: string | null;
         };
         /** ConnectWorkspaceRequest */
         ConnectWorkspaceRequest: {
@@ -2840,6 +3284,49 @@ export interface components {
              */
             label: string | null;
         };
+        /** CrewStageSchema */
+        CrewStageSchema: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Worker Role */
+            worker_role: string;
+            /** Worker Name */
+            worker_name: string;
+            /** Description */
+            description: string;
+            /** Dependencies */
+            dependencies?: string[];
+            /** Allowed Tools */
+            allowed_tools?: string[];
+            /**
+             * Requires Gate
+             * @default false
+             */
+            requires_gate: boolean;
+            /** Gate Risk Level */
+            gate_risk_level?: string | null;
+        };
+        /** CrewTemplateResponse */
+        CrewTemplateResponse: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Tagline */
+            tagline: string;
+            /** Description */
+            description: string;
+            /** Category */
+            category: string;
+            /** Icon */
+            icon: string;
+            /** Estimated Duration */
+            estimated_duration: string;
+            /** Stages */
+            stages: components["schemas"]["CrewStageSchema"][];
+        };
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
             /** Email */
@@ -2863,6 +3350,35 @@ export interface components {
              * @description Optional explanation for decision
              */
             reason?: string | null;
+        };
+        /**
+         * GateResolveRequest
+         * @description Request to resolve a human authorization gate.
+         */
+        GateResolveRequest: {
+            /**
+             * Action
+             * @description 'approved' | 'rejected'
+             */
+            action: string;
+            /**
+             * Reason
+             * @description Developer feedback or rationale
+             */
+            reason?: string | null;
+        };
+        /** GateResolveResponse */
+        GateResolveResponse: {
+            /** Gate Id */
+            gate_id: string;
+            /** Mission Id */
+            mission_id: string;
+            /** Action */
+            action: string;
+            /** Status */
+            status: string;
+            /** Resumed */
+            resumed: boolean;
         };
         /** GeneralChatStartRequest */
         GeneralChatStartRequest: {
@@ -2925,6 +3441,17 @@ export interface components {
              */
             status: string;
         };
+        /** HeartbeatResponse */
+        HeartbeatResponse: {
+            /** Runtime Id */
+            runtime_id: string;
+            /** Status */
+            status: string;
+            /** Last Heartbeat At */
+            last_heartbeat_at: string;
+            /** Acknowledged */
+            acknowledged: boolean;
+        };
         /** IndexCodeRequest */
         IndexCodeRequest: {
             /** Project Id */
@@ -2935,6 +3462,46 @@ export interface components {
             chunk_content: string;
             /** Symbol Name */
             symbol_name?: string | null;
+        };
+        /** IntegrationItemResponse */
+        IntegrationItemResponse: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Category */
+            category: string;
+            /** Description */
+            description: string;
+            /** Icon */
+            icon: string;
+            /**
+             * Is Connected
+             * @default false
+             */
+            is_connected: boolean;
+            /** Masked Credential Preview */
+            masked_credential_preview?: string | null;
+            /**
+             * Requires Credentials
+             * @default true
+             */
+            requires_credentials: boolean;
+            /** Credential Keys */
+            credential_keys?: string[];
+            /** Tools */
+            tools?: string[];
+            /** @default CLOUD */
+            execution_scope: components["schemas"]["ToolExecutionScope"];
+            /** Documentation Url */
+            documentation_url?: string | null;
+        };
+        /** IntegrationsListResponse */
+        IntegrationsListResponse: {
+            /** Integrations */
+            integrations: components["schemas"]["IntegrationItemResponse"][];
+            /** Count */
+            count: number;
         };
         /** LinkResponse */
         LinkResponse: {
@@ -3007,6 +3574,8 @@ export interface components {
             tool_count: number;
             /** Description */
             description: string;
+            /** @default CLOUD */
+            execution_scope: components["schemas"]["ToolExecutionScope"];
         };
         /** McpToolExecuteRequest */
         McpToolExecuteRequest: {
@@ -3031,6 +3600,10 @@ export interface components {
             tool_name: string;
             /** Execution Time Ms */
             execution_time_ms: number;
+            /** @default CLOUD */
+            execution_scope: components["schemas"]["ToolExecutionScope"];
+            /** Dispatched Runtime Id */
+            dispatched_runtime_id?: string | null;
         };
         /** McpToolItem */
         McpToolItem: {
@@ -3058,6 +3631,28 @@ export interface components {
              * @default true
              */
             cloud_hosted: boolean;
+            /** @default CLOUD */
+            execution_scope: components["schemas"]["ToolExecutionScope"];
+            /**
+             * Requires Credentials
+             * @default false
+             */
+            requires_credentials: boolean;
+            /** Credential Platform */
+            credential_platform?: string | null;
+            /**
+             * Risk Level
+             * @description 'low' | 'medium' | 'high'
+             * @default low
+             */
+            risk_level: string;
+            /**
+             * Requires Approval
+             * @default false
+             */
+            requires_approval: boolean;
+            /** Required Capabilities */
+            required_capabilities?: string[];
         };
         /** MeResponse */
         MeResponse: {
@@ -3120,12 +3715,30 @@ export interface components {
             id: string;
             /** Label */
             label: string;
+            /** Title */
+            title?: string | null;
             /** Status */
             status: string;
             /** Worker */
             worker: string;
             /** Dependencies */
             dependencies?: string[];
+            /**
+             * Gate Required
+             * @default false
+             */
+            gate_required: boolean;
+            /** Gate Id */
+            gate_id?: string | null;
+            /** Gate Risk Level */
+            gate_risk_level?: string | null;
+            /** Stdout Log */
+            stdout_log?: string | null;
+            /**
+             * Duration Seconds
+             * @default 0
+             */
+            duration_seconds: number | null;
         };
         /** MissionDagResponse */
         MissionDagResponse: {
@@ -3137,6 +3750,18 @@ export interface components {
             status: string;
             /** Nodes */
             nodes: components["schemas"]["MissionDagNode"][];
+            /** Topological Tiers */
+            topological_tiers?: string[][];
+            /**
+             * Progress Percent
+             * @default 0
+             */
+            progress_percent: number;
+            /**
+             * Has Waiting Gates
+             * @default false
+             */
+            has_waiting_gates: boolean;
         };
         /** MissionListResponse */
         MissionListResponse: {
@@ -3239,15 +3864,56 @@ export interface components {
         };
         /** RegisterRuntimeRequest */
         RegisterRuntimeRequest: {
-            /** Machine Name */
+            /**
+             * Machine Name
+             * @description Hostname or friendly name of the workstation
+             */
             machine_name: string;
             /**
              * Os Name
              * @description 'windows' | 'darwin' | 'linux'
              */
             os_name: string;
-            /** Capabilities */
+            /**
+             * Capabilities
+             * @description List of workstation local capabilities
+             */
             capabilities?: string[];
+            /**
+             * Metadata
+             * @description OS architecture, CPU, or memory specs
+             */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** RegisterRuntimeResponse */
+        RegisterRuntimeResponse: {
+            /** Runtime Id */
+            runtime_id: string;
+            /** Tenant Id */
+            tenant_id: string;
+            /** Machine Name */
+            machine_name: string;
+            /** Os Name */
+            os_name: string;
+            /** Capabilities */
+            capabilities: string[];
+            /**
+             * Pairing Key
+             * @description Secret one-time pairing key to authenticate the workstation runtime
+             */
+            pairing_key: string;
+            /** Status */
+            status: string;
+            /** Last Heartbeat At */
+            last_heartbeat_at: string;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
+            /** Created At */
+            created_at: string;
         };
         /** ResetPasswordRequest */
         ResetPasswordRequest: {
@@ -3257,6 +3923,62 @@ export interface components {
             otp_code: string;
             /** New Password */
             new_password: string;
+        };
+        /** RuntimeItemResponse */
+        RuntimeItemResponse: {
+            /** Id */
+            id: string;
+            /** Runtime Id */
+            runtime_id: string;
+            /** Tenant Id */
+            tenant_id: string;
+            /** Machine Name */
+            machine_name: string;
+            /** Os Name */
+            os_name: string;
+            /** Capabilities */
+            capabilities: string[];
+            /**
+             * Status
+             * @description 'online' | 'busy' | 'idle' | 'offline'
+             */
+            status: string;
+            /** Last Heartbeat At */
+            last_heartbeat_at: string;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
+            /** Created At */
+            created_at: string;
+        };
+        /** RuntimeListResponse */
+        RuntimeListResponse: {
+            /** Runtimes */
+            runtimes: components["schemas"]["RuntimeItemResponse"][];
+            /** Count */
+            count: number;
+        };
+        /** RuntimeStatusResponse */
+        RuntimeStatusResponse: {
+            /** Runtime Id */
+            runtime_id: string;
+            /** Machine Name */
+            machine_name: string;
+            /** Os Name */
+            os_name: string;
+            /** Status */
+            status: string;
+            /** Capabilities */
+            capabilities: string[];
+            /** Is Online */
+            is_online: boolean;
+            /** Last Heartbeat At */
+            last_heartbeat_at: string;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
         };
         /** SaveRemediationRequest */
         SaveRemediationRequest: {
@@ -3443,6 +4165,11 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /**
+         * ToolExecutionScope
+         * @enum {string}
+         */
+        ToolExecutionScope: "LOCAL" | "CLOUD" | "HYBRID";
         /** TwilioVoiceEscalationRequest */
         TwilioVoiceEscalationRequest: {
             /** Gate Id */
@@ -3457,6 +4184,14 @@ export interface components {
              * @default Critical Sev-1 gate pending human authorization
              */
             urgency_reason: string;
+        };
+        /** UpdateMemberRoleRequest */
+        UpdateMemberRoleRequest: {
+            /**
+             * Role
+             * @description 'admin' | 'member' | 'viewer' | 'guest'
+             */
+            role: string;
         };
         /** UpdateMemoryRequest */
         UpdateMemoryRequest: {
@@ -3587,6 +4322,27 @@ export interface components {
             created_at?: string | null;
             /** Updated At */
             updated_at?: string | null;
+        };
+        /** WorkerProvisionRequest */
+        WorkerProvisionRequest: {
+            /**
+             * Allowed Tools
+             * @description List of tool names to grant this worker
+             */
+            allowed_tools: string[];
+        };
+        /** WorkerProvisionResponse */
+        WorkerProvisionResponse: {
+            /** Worker Id */
+            worker_id: string;
+            /** Name */
+            name: string;
+            /** Role */
+            role: string;
+            /** Allowed Tools */
+            allowed_tools: string[];
+            /** Updated At */
+            updated_at: string;
         };
         /**
          * WorkerUpdateRequest
@@ -4549,6 +5305,8 @@ export interface operations {
                 q?: string | null;
                 /** @description Filter by category slug */
                 category?: string | null;
+                /** @description Filter by tool execution scope (LOCAL | CLOUD | HYBRID) */
+                scope?: string | null;
                 page?: number;
                 page_size?: number;
             };
@@ -4638,6 +5396,162 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["McpToolExecuteResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_curated_integrations_v1_mcp_integrations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationsListResponse"];
+                };
+            };
+        };
+    };
+    connect_curated_integration_v1_mcp_integrations__platform__connect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                platform: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectIntegrationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegrationItemResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disconnect_curated_integration_v1_mcp_integrations__platform__disconnect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                platform: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_worker_tools_v1_mcp_workers__worker_id__tools_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    provision_worker_tools_v1_mcp_workers__worker_id__provision_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worker_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkerProvisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkerProvisionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -5260,6 +6174,44 @@ export interface operations {
             };
         };
     };
+    update_member_role_v1_tenants__tenant_id__members__target_user_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+                target_user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMemberRoleRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     remove_tenant_member_v1_tenants__tenant_id__members__target_user_id__delete: {
         parameters: {
             query?: never;
@@ -5281,6 +6233,57 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_all_crew_templates_v1_missions_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrewTemplateResponse"][];
+                };
+            };
+        };
+    };
+    get_single_crew_template_v1_missions_templates__template_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CrewTemplateResponse"];
                 };
             };
             /** @description Validation Error */
@@ -5441,6 +6444,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MissionDagResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_mission_gate_v1_missions__mission_id__gates__gate_id__resolve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mission_id: string;
+                gate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GateResolveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GateResolveResponse"];
                 };
             };
             /** @description Validation Error */
@@ -6397,7 +7436,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["RegisterRuntimeResponse"];
                 };
             };
             /** @description Validation Error */
@@ -6430,7 +7469,91 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["HeartbeatResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_runtimes_v1_runtimes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuntimeListResponse"];
+                };
+            };
+        };
+    };
+    get_runtime_status_v1_runtimes__runtime_id__status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runtime_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuntimeStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_runtime_v1_runtimes__runtime_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runtime_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */
@@ -7426,6 +8549,310 @@ export interface operations {
             };
         };
     };
+    list_threads_v1_chat_threads_get: {
+        parameters: {
+            query?: {
+                /** @description Filter by worker ID or 'universal' */
+                worker_id?: string | null;
+                /** @description Filter by project ID */
+                project_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_thread_v1_chat_threads_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatThreadCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_thread_v1_chat_threads__thread_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_thread_v1_chat_threads__thread_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_messages_v1_chat_threads__thread_id__messages_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_message_v1_chat_threads__thread_id__messages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatMessageSendRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_ephemeral_tool_v1_chat_threads__thread_id__runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatEphemeralRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stream_chat_turn_get_v1_chat_threads__thread_id__stream_get: {
+        parameters: {
+            query: {
+                /** @description User prompt to stream */
+                prompt: string;
+            };
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stream_chat_turn_post_v1_chat_threads__thread_id__stream_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatMessageSendRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     stream_logs_api_logs_stream_get: {
         parameters: {
             query?: {
@@ -7630,6 +9057,41 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_tenant_audit_logs_v1_security_audit_logs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                action?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

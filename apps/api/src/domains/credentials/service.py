@@ -131,3 +131,23 @@ class CredentialVaultService:
             (tenant_id, platform_norm, key_norm),
         )
         return True
+
+    @staticmethod
+    async def delete_platform_credentials(
+        tenant_id: str,
+        platform: str,
+    ) -> int:
+        db = get_db_engine()
+        platform_norm = platform.strip().lower()
+        rows = await db.fetch_all(
+            "SELECT id FROM tenant_credentials WHERE tenant_id = ? AND platform = ?",
+            (tenant_id, platform_norm),
+        )
+        if not rows:
+            return 0
+        await db.execute(
+            "DELETE FROM tenant_credentials WHERE tenant_id = ? AND platform = ?",
+            (tenant_id, platform_norm),
+        )
+        return len(rows)
+
